@@ -1,0 +1,12 @@
+Update to use the watch API.
+
+* Allow Persona to be the site's only auth option
+* Auto create users when they login and they do not have an account.
+
+--This line, and those below, will be ignored--
+
+M    login.js
+M    browserid.php
+M    browserid-en_US.png
+A    wp-browserid-only-login.php
+M    comments.js
