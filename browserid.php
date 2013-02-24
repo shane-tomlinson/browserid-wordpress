@@ -70,8 +70,10 @@ if (!class_exists('M66BrowserID')) {
 			add_action('generate_rewrite_rules', array(&$this, 'Generate_rewrite_rules'));
 
 			// Comment integration
-			if (isset($options['browserid_comments']) && $options['browserid_comments'])
+			if (isset($options['browserid_comments']) && $options['browserid_comments']) {
+        add_filter('comment_form_default_fields', array(&$this, 'Comment_form_fields'));
 				add_action('comment_form', array(&$this, 'Comment_form'));
+      }
 
 			// bbPress integration
 			if (isset($options['browserid_bbpress']) && $options['browserid_bbpress']) {
@@ -122,32 +124,21 @@ if (!class_exists('M66BrowserID')) {
 			$browserid_error = (isset($_REQUEST['browserid_error']) ? $_REQUEST['browserid_error'] : null);
 			$browserid_failed = __('Verification failed', c_bid_text_domain);
 			$data_array = array(
-				'browserid_siteurl' => get_site_url(null, '/'),
-				'browserid_redirect' => $redirect,
-				'browserid_error' => $browserid_error,
-				'browserid_failed' => $browserid_failed,
-				'browserid_sitename' => self::Get_sitename(),
-				'browserid_sitelogo' => self::Get_sitelogo(),
-                                'wp_logout_url' => wp_logout_url(),
-                                'logged_in_user' => $user_email
+				'siteurl' => get_site_url(null, '/'),
+				'login_redirect' => $redirect,
+				'error' => $browserid_error,
+				'failed' => $failed,
+        // If the user posted a comment and they are not logged in to WordPress
+        // that means the user used Persona only to submit a comment. Force a 
+        // persona logout.
+        'logout' => !is_user_logged_in(),
+				'sitename' => self::Get_sitename(),
+				'sitelogo' => self::Get_sitelogo(),
+        'logout_redirect' => wp_logout_url(),
+        'logged_in_user' => $user_email
 			);
 			wp_localize_script( 'browserid_common', 'browserid_common', $data_array );
 			wp_enqueue_script('browserid_common');
-
-
-			// Prepare for comments and bbPress
-			$options = get_option('browserid_options');
-			if ((isset($options['browserid_comments']) && $options['browserid_comments']) ||
-				(isset($options['browserid_bbpress']) && $options['browserid_bbpress'])) {
-				wp_enqueue_script('browserid_comments', plugins_url('comments.js', __FILE__), array('jquery', 'browserid'), '', true);
-				$data_array = array(
-					'browserid_failed' => __('Verification failed', c_bid_text_domain),
-					'browserid_sitename' => self::Get_sitename(),
-					'browserid_sitelogo' => self::Get_sitelogo()
-				);
-				wp_localize_script('browserid_comments', 'browserid_comments', $data_array);
-			}
-
 		}
 
 		function Check_assertion() {
@@ -310,7 +301,9 @@ if (!class_exists('M66BrowserID')) {
 			$user = self::Login_by_email($result['email'], $rememberme);
 			if ($user) {
 				// Beam me up, Scotty!
-				if (isset($options['browserid_login_redir']) && $options['browserid_login_redir'])
+        if (isset($result['redirect_to'])) 
+          $redirect_to = $result['redirect_to'];
+				else if (isset($options['browserid_login_redir']) && $options['browserid_login_redir'])
 					$redirect_to = $options['browserid_login_redir'];
 				else if (isset($_REQUEST['redirect_to']))
 					$redirect_to = $_REQUEST['redirect_to'];
@@ -330,6 +323,11 @@ if (!class_exists('M66BrowserID')) {
 					$user_id = wp_create_user($result['email'], 'password', $result['email']);
 					
 					if ($user_id) {
+            if (isset($options['browserid_newuser_redir']) && $options['browserid_newuser_redir']) {
+              $result['redirect_to'] = $options['browserid_newuser_redir'];
+            } else {
+              $result['redirect_to'] = admin_url() . 'profile.php';
+            }
 						self::Handle_login($result, $rememberme);
 					} else {				
 						$message = __('New user creation failed', c_bid_text_domain);
@@ -367,8 +365,8 @@ if (!class_exists('M66BrowserID')) {
 		function Handle_comment($result) {
 			// Initialize
 			$email = $result['email'];
-			$author = '';
-			$url = '';
+      $author = $_REQUEST['author'];
+      $url = $_REQUEST['url'];
 
 			// Check WordPress user
 			$userdata = get_user_by('email', $email);
@@ -376,20 +374,25 @@ if (!class_exists('M66BrowserID')) {
 				$author = $userdata->display_name;
 				$url = $userdata->user_url;
 			}
-			else {
-				// Check Gravatar profile
-				$response = wp_remote_get('http://www.gravatar.com/' . md5($email) . '.json');
-				if (!is_wp_error($response)) {
-					$json = json_decode($response['body']);
-					$author = $json->entry[0]->displayName;
-					$url = $json->entry[0]->profileUrl;
-				}
+			else if (empty($author) || empty($url)) {
+        // Check Gravatar profile
+        $response = wp_remote_get('http://www.gravatar.com/' . md5($email) . '.json');
+        if (!is_wp_error($response)) {
+          $json = json_decode($response['body']);
+          if (empty($author)) 
+            $author = $json->entry[0]->displayName;
+
+          if (empty($url)) 
+            $url = $json->entry[0]->profileUrl;
+        }
 			}
-			if (empty($author)) {
-				// Use first part of e-mail
-				$parts = explode('@', $email);
-				$author = $parts[0];
-			}
+
+      if (empty($author)) {
+        // Use first part of e-mail
+        $parts = explode('@', $email);
+        $author = $parts[0];
+      }
+
 
 			// Update post variables
 			$_POST['author'] = $author;
@@ -425,6 +428,12 @@ if (!class_exists('M66BrowserID')) {
 		function bbPress_anonymous() {
 			return !is_user_logged_in();
 		}
+
+    // Get rid of the email field in the comment form
+    function Comment_form_fields($fields) {
+      unset($fields['email']);
+      return $fields;
+    }
 
 		// Add BrowserID to comment form
 		function Comment_form($post_id) {
@@ -535,19 +544,19 @@ if (!class_exists('M66BrowserID')) {
 			return '';
 		}
 
-                // Override logout on site menu
-                function Admin_toolbar($wp_toolbar) {
-                        $wp_toolbar->remove_node('logout');
-                        $wp_toolbar->add_node(array(
-                                 'id' => 'logout',
-                                 'title' => self::Get_logout_text(),
-                                 'parent' => 'user-actions',
-                                 'href' => '#',
-                                 'meta' => array(
-                                          'onclick' => 'return browserid_logout()'
-                                 )
-                          ));
-                 }
+    // Override logout on site menu
+    function Admin_toolbar($wp_toolbar) {
+      $wp_toolbar->remove_node('logout');
+      $wp_toolbar->add_node(array(
+        'id' => 'logout',
+        'title' => self::Get_logout_text(),
+        'parent' => 'user-actions',
+        'href' => '#',
+        'meta' => array(
+          'onclick' => 'return browserid_logout()'
+         )
+       ));
+     }
 
 
 		// Register options page
@@ -570,6 +579,7 @@ if (!class_exists('M66BrowserID')) {
 			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_login_html', __('Custom login HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_logout_html', __('Custom logout HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_newuser_redir', __('New user redirection URL:', c_bid_text_domain), array(&$this, 'Option_newuser_redir'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_login_redir', __('Login redirection URL:', c_bid_text_domain), array(&$this, 'Option_login_redir'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_comments', __('Enable for comments:', c_bid_text_domain), array(&$this, 'Option_comments'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_bbpress', __('Enable bbPress integration:', c_bid_text_domain), array(&$this, 'Option_bbpress'), 'browserid', 'plugin_main');
@@ -641,6 +651,15 @@ if (!class_exists('M66BrowserID')) {
 			if (empty($options['browserid_logout_html']))
 				$options['browserid_logout_html'] = null;
 			echo "<input id='browserid_logout_html' name='browserid_options[browserid_logout_html]' type='text' size='100' value='{$options['browserid_logout_html']}' />";
+		}
+
+		// New user redir URL option
+		function Option_newuser_redir() {
+			$options = get_option('browserid_options');
+			if (empty($options['browserid_newuser_redir']))
+				$options['browserid_newuser_redir'] = null;
+			echo "<input id='browserid_newuser_redir' name='browserid_options[browserid_newuser_redir]' type='text' size='100' value='{$options['browserid_newuser_redir']}' />";
+			echo '<br />' . __('Default User Profile', c_bid_text_domain);
 		}
 
 		// Login redir URL option
