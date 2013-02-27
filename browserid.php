@@ -830,7 +830,14 @@ class BrowserID_Widget extends WP_Widget {
 
 	// Widget contents
 	function widget($args, $instance) {
-		echo M66BrowserID::Get_loginout_html();
+    extract($args);
+    $title = apply_filters('widget_title', $instance['title']);
+    echo $before_widget;
+    if (!empty($title))
+      echo $before_title . $title . $after_title;
+
+		echo "<ul><li class='only-child'>" . M66BrowserID::Get_loginout_html() . "</li></ul>";
+    echo $after_widget;
 	}
 
 	// Update settings
