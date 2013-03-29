@@ -66,8 +66,6 @@ if (!class_exists('M66BrowserID')) {
 			}
 			add_action('http_api_curl', array(&$this, 'http_api_curl'));
                         add_action('admin_bar_menu', array(&$this, 'Admin_toolbar'), 999);
-			add_action('update_option_browserid_options', array(&$this, 'Update_browserid_options'));
-			add_action('generate_rewrite_rules', array(&$this, 'Generate_rewrite_rules'));
 
 			// Comment integration
 			if (isset($options['browserid_comments']) && $options['browserid_comments']) {
@@ -297,6 +295,7 @@ if (!class_exists('M66BrowserID')) {
 
 		// Process login
 		function Handle_login($result, $rememberme) {
+			$options = get_option('browserid_options');
 			// Login
 			$user = self::Login_by_email($result['email'], $rememberme);
 			if ($user) {
@@ -314,9 +313,16 @@ if (!class_exists('M66BrowserID')) {
 				exit();
 			}
 			else {
-				// User not found? Try to create them!
+				// User not found? If auto-registration is enabled, try to create a
+        // new user with the email address as the username.
 				if ( !get_option('users_can_register') ) {
-					$message = __('User registration is currently not allowed');
+					$message = __('You must already have an account to log in with Persona.');
+					self::Handle_error($message);
+					exit();
+        } else if( !isset($options['browserid_auto_create_new_users']) || !$options['browserid_auto_create_new_users']) {
+					$message = __('You must already have an account to log in with Persona.');
+          $message .= '<br />You can register on the <a href="wp-login.php?action=register">Registration</a> page.';
+
 					self::Handle_error($message);
 					exit();
 				} else {
@@ -501,6 +507,12 @@ if (!class_exists('M66BrowserID')) {
 				$html = '<a href="#" onclick="return browserid_login();"  title="Mozilla Persona" class="browserid">' . $html . '</a>';
 				$html .= '<br />' . self::What_is();
 
+        // Hide the login form. While this does not truely prevent users from 
+        // from logging in using the standard authentication mechanism, it 
+        // cleans up the login form a bit.
+				if (!empty($options['browserid_only_auth']))
+          $html .= '<style>#user_login, [for=user_login], #user_pass, [for=user_pass], [name=log], [name=pwd] { display: none; }</style>';
+
 				return $html;
 			}
 		}
@@ -576,10 +588,12 @@ if (!class_exists('M66BrowserID')) {
 			add_settings_section('plugin_main', null, array(&$this, 'Options_main'), 'browserid');
 			add_settings_field('browserid_sitename', __('Site name:', c_bid_text_domain), array(&$this, 'Option_sitename'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_sitelogo', __('Site logo:', c_bid_text_domain), array(&$this, 'Option_sitelogo'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_only_auth', __('Hide non-Persona login form:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_login_html', __('Custom login HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_logout_html', __('Custom logout HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_auto_create_new_users', __('Automatically create new users with the email address as the username', c_bid_text_domain), array(&$this, 'Option_auto_create_new_users'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_newuser_redir', __('New user redirection URL:', c_bid_text_domain), array(&$this, 'Option_newuser_redir'), 'browserid', 'plugin_main');
+
 			add_settings_field('browserid_login_redir', __('Login redirection URL:', c_bid_text_domain), array(&$this, 'Option_login_redir'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_comments', __('Enable for comments:', c_bid_text_domain), array(&$this, 'Option_comments'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_bbpress', __('Enable bbPress integration:', c_bid_text_domain), array(&$this, 'Option_bbpress'), 'browserid', 'plugin_main');
@@ -588,30 +602,6 @@ if (!class_exists('M66BrowserID')) {
 			add_settings_field('browserid_novalid', __('Do not check valid until time:', c_bid_text_domain), array(&$this, 'Option_novalid'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_noverify', __('Do not verify SSL certificate:', c_bid_text_domain), array(&$this, 'Option_noverify'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_debug', __('Debug mode:', c_bid_text_domain), array(&$this, 'Option_debug'), 'browserid', 'plugin_main');
-		}
-
-		function Update_browserid_options() {
-			// force a flush of the rewrite rules cache because the 
-			// "browserid_only_auth" rule may have changed
-			global $wp_rewrite;
-			$wp_rewrite->flush_rules();
-		}
-	
-		// Generate rewrite rules
-		function Generate_rewrite_rules() {
-			// If the site only allows Persona logins, show the 
-			// specialized signin page.
-			$options = get_option('browserid_options');
-			if (isset($options['browserid_only_auth']) && $options['browserid_only_auth']) {
-
-				global $wp_rewrite;
-				$redirect_to = "wp-content/plugins/browserid/wp-browserid-only-login.php";
-				$non_wp_rules = array(
-					'wp-login.php(.*)$' => $redirect_to
-				);
-		
-				$wp_rewrite->non_wp_rules = $non_wp_rules + $wp_rewrite->non_wp_rules;
-			}
 		}
 
 		// Main options section
@@ -652,6 +642,14 @@ if (!class_exists('M66BrowserID')) {
 				$options['browserid_logout_html'] = null;
 			echo "<input id='browserid_logout_html' name='browserid_options[browserid_logout_html]' type='text' size='100' value='{$options['browserid_logout_html']}' />";
 		}
+
+    // Whether new users should be created automatically with the email address 
+    // for the username.
+    function Option_auto_create_new_users() {
+			$options = get_option('browserid_options');
+			$chk = (isset($options['browserid_auto_create_new_users']) && $options['browserid_auto_create_new_users'] ? " checked='checked'" : '');
+			echo "<input id='browserid_auto_create_new_users' name='browserid_options[browserid_auto_create_new_users]' type='checkbox'" . $chk. "/>";
+    }
 
 		// New user redir URL option
 		function Option_newuser_redir() {
