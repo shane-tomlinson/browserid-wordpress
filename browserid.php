@@ -416,8 +416,7 @@ if (!class_exists('M66BrowserID')) {
 		// Filter login error message
 		function Login_message($message) {
 			if (isset($_REQUEST['browserid_error']))
-				$message .= '<div id="login_error"><strong>' 
-				. htmlentities(stripslashes($_REQUEST['browserid_error'])) . '</strong></div>';
+				$message .= '<div id="login_error"><strong>' . htmlentities(stripslashes($_REQUEST['browserid_error'])) . '</strong></div>';
 			return $message;
 		}
 
