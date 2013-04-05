@@ -2,14 +2,17 @@
 /*
 Plugin Name: Mozilla Persona
 Plugin URI: http://wordpress.org/extend/plugins/browserid/
+Plugin Repo: https://github.com/shane-tomlinson/browserid-wordpress
 Description: Mozilla Persona, the safest & easiest way to sign in
-Version: 0.36
-Author: Marcel Bokhorst
-Author URI: http://blog.bokhorst.biz/about/
+Version: 0.37dev1
+Author: Shane Tomlinson
+Author URI: https://shanetomlinson.com
+Original Author: Marcel Bokhorst
+Original Author URI: http://blog.bokhorst.biz/about/
 */
 
 /*
-	Copyright (c) 2011, 2012 Marcel Bokhorst
+	Copyright (c) 2011, 2012, 2013 Marcel Bokhorst
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -454,6 +457,7 @@ if (!class_exists('M66BrowserID')) {
 				// Render link
 				echo '<a href="#" id="browserid_' . $post_id . '" onclick="return browserid_comment(' . $post_id . ');" title="Mozilla Persona" class="browserid">' . $html . '</a>';
 				echo self::What_is();
+        // If it is a Persona login, hide the submit button.
         echo '<style>#respond input[type=submit] { position: absolute; left: -9999px !important; }</style>';
 
 				// Display error message
@@ -487,11 +491,8 @@ if (!class_exists('M66BrowserID')) {
 			$options = get_option('browserid_options');
 
 			if ($check_login && is_user_logged_in()) {
-				// User logged in
-				if (empty($options['browserid_logout_html']))
-					$html = '';
-				else
-					$html = $options['browserid_logout_html'];
+        $html = self::Get_logout_text();
+
 				// Simple link
 				if (empty($html))
 					return '';
