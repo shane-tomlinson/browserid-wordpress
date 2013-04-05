@@ -3,80 +3,95 @@
 (function() {
   "use strict";
 
-  var login_type, post_id;
+  var loginType;
+
+  // Keep track of whether the onlogout callback should be ignored. Ignoring
+  // the onlogout callback prevents the user from being redirected to the
+  // logout page.
+  var ignoreLogout = false;
+
 
   window.browserid_login = function() {
-    return browserid_authenticate("login");
+    ignoreLogout = false;
+    return authenticate("login");
   };
 
-  window.browserid_comment = function(postid) {
-    return browserid_authenticate("comment", postid);
+  window.browserid_comment = function() {
+    ignoreLogout = true;
+    // Save the form state to localStorage. This allows a new user to close
+    // this tab while they are verifying and still have the comment form
+    // submitted once the address is verified.
+    saveState();
+
+    return authenticate("comment");
   };
 
   window.browserid_logout = function() {
-    // log user out from browserid.
+    ignoreLogout = false;
     navigator.id.logout();
 
     return false;
   };
 
-  if (browserid_common.logout || browserid_common.error) {
+  // If this is a comment verification, ignore the logout messages until
+  // the user explicitly requests a login.
+  if (document.location.hash === "#verification") {
+    ignoreLogout = true;
+
+    // load the state into the form to reduce flicker. The form data may not be
+    // needed, but load it anyways. If the form is not submitted, the page will
+    // be re-loaded clearing out the data anyways.
+    loadState();
+
+    // If the comment form is submitted in the original window, the user will
+    // be sitting at the top of the page. Instead, go to the submit form.
+    document.location.hash = "respond";
+
+    // login type is definitely comment, in onlogin, the comment form will
+    // be submitted if the original window has not already done it. If the
+    // original window has already submitted the comment, this window will wait
+    // until the comment is submitted and then refresh the page and go to the
+    // newly inserted comment.
+    loginType = "comment";
+  }
+
+  // If the user just completed comment submission, save the hash to
+  // localStorage so the other window can refresh to the new comment.
+  if (sessionStorage.getItem("save_hash")) {
+    ignoreLogout = true;
+
+    sessionStorage.removeItem("save_hash");
+    localStorage.setItem("hash", document.location.hash);
+  }
+
+  // If there was an error, or if the user was leaving a comment and were not
+  // logged in, log them out.  Only the window that submitted the comment
+  // form logs the user out.
+  if (sessionStorage.getItem("logout") || browserid_common.error) {
+    ignoreLogout = true;
+
+    sessionStorage.removeItem('logout');
+
     navigator.id.logout();
   }
 
   navigator.id.watch({
     loggedInUser: browserid_common.logged_in_user || null,
     onlogin: function(assertion) {
-      if (assertion) {
-        if(!login_type || login_type === "login") {
-          var rememberme = document.getElementById('rememberme');
-          if (rememberme !== null)
-            rememberme = rememberme.checked;
-
-          var form = document.createElement('form');
-          form.setAttribute('style', 'display: none;');
-          form.method = 'POST';
-          form.action = browserid_common.siteurl;
-
-          var fields = [
-            {name: 'browserid_assertion', value: assertion},
-            {name: 'rememberme', value: rememberme}
-          ];
-
-          if (browserid_common.login_redirect !== null)
-            fields.push({name: 'redirect_to', value: browserid_common.login_redirect});
-
-          for (var i = 0; i < fields.length; i++) {
-            var field = document.createElement('input');
-            field.type = 'hidden';
-            field.name = fields[i].name;
-            field.value = fields[i].value;
-            form.appendChild(field);
-          }
-
-          document.body.appendChild(form).submit();
-        }
-        else if(login_type === "comment") {
-          var form = jQuery('#browserid_' + post_id).closest('form')[0];
-          var fields = [
-            {name: 'browserid_comment', value: post_id},
-            {name: 'browserid_assertion', value: assertion}
-          ];
-          for (var i = 0; i < fields.length; i++) {
-            var field = document.createElement('input');
-            field.type = 'hidden';
-            field.name = fields[i].name;
-            field.value = fields[i].value;
-            form.appendChild(field);
-          }
-          form.submit();
-        }
-
+      loginType = loginType || "login";
+      if (loginType === "login") {
+        submitLoginForm(assertion);
       }
-      else
-        alert(browserid_common.failed);
+      else if (loginType === "comment") {
+        submitCommentForm(assertion);
+      }
     },
     onlogout: function() {
+      // The logout was either due to an error which must be shown or to
+      // the user leaving a comment but not being logged in. Either way,
+      // do not redirect the user, they are where they want to be.
+      if (ignoreLogout) return;
+
       // There is a bug in Persona with Chrome. When a user signs in, the
       // onlogout callback is first fired. Check if a user is actually
       // signed in before redirecting to the logout URL.
@@ -86,16 +101,138 @@
     }
   });
 
-  function browserid_authenticate(type, postid) {
-    login_type = type;
-    post_id = postid;
+  function authenticate(type) {
+    loginType = type;
 
-    navigator.id.request({
+    var opts = {
       siteName: browserid_common.sitename || '',
       siteLogo: browserid_common.sitelogo || ''
-    });
+    };
+
+    if (loginType === "comment") {
+      // If the user is signing in for a comment and must verify, redirect to
+      // with a special hash. The form will be submitted by the first page to
+      // receive an onlogin. Hopefully it will be the verification page, but we
+      // do not know.
+      var returnTo = document.location.href
+                      .replace(/http(s)?:\/\//, '')
+                      .replace(document.location.host, '')
+                      .replace(/#.*$/, "#verification");
+      opts.returnTo = returnTo;
+    }
+
+    navigator.id.request(opts);
 
     return false;
+  }
+
+  function submitLoginForm(assertion) {
+    var rememberme = document.getElementById('rememberme');
+    if (rememberme !== null)
+      rememberme = rememberme.checked;
+
+    var form = document.createElement('form');
+    form.setAttribute('style', 'display: none;');
+    form.method = 'POST';
+    form.action = browserid_common.siteurl;
+
+    var fields = {
+      browserid_assertion: assertion,
+      rememberme: rememberme
+    };
+
+    if (browserid_common.login_redirect !== null)
+      fields.redirect_to = browserid_common.login_redirect;
+
+    appendFormHiddenFields(form, fields);
+
+    jQuery('body').append(form);
+    form.submit();
+  }
+
+  function submitCommentForm(assertion) {
+    // If this is a new user that is verifying their email address in a new
+    // window, both the original window and this window will be trying to
+    // submit the comment form. The first one wins. The other one reloads.
+    var state = loadState();
+    if (!state) redirectWhenSubmitComplete();
+
+    localStorage.removeItem("comment_state");
+
+    var form = jQuery('#commentform');
+
+    // Get the post_id from the dom because the postID could in theory
+    // change from the original if the submission is happening in a
+    // new tab after email verification.
+    var post_id = jQuery("#comment_post_ID").val();
+
+    appendFormHiddenFields(form, {
+      browserid_comment: post_id,
+      browserid_assertion: assertion
+    });
+
+    // Save the hash so the other window can redirect to the proper comment
+    // when everything has completed.
+    sessionStorage.setItem("save_hash", true);
+
+    // If the user is submitting a comment and is not logged in,
+    // log them out of Persona as soon as the submit redirection
+    // completes. This will prevent an attempt to log in to the site.
+    sessionStorage.setItem("logout", !browserid_common.logged_in_user);
+
+    jQuery("#submit").click();
+  }
+
+  function appendFormHiddenFields(form, fields) {
+    form = jQuery(form);
+
+    for (var name in fields) {
+      var field = document.createElement('input');
+      field.type = 'hidden';
+      field.name = name;
+      field.value = fields[name];
+      form.append(field);
+    }
+  }
+
+  function saveState() {
+    var state = {
+      author: jQuery("#author").val(),
+      url: jQuery("#url").val(),
+      comment: jQuery("#comment").val(),
+      comment_parent: jQuery("#comment_parent").val()
+    };
+
+    localStorage.setItem("comment_state", JSON.stringify(state));
+  }
+
+  function loadState() {
+    var state = localStorage.getItem("comment_state");
+
+    if (state) {
+      state = JSON.parse(state);
+      jQuery("#author").val(state.author);
+      jQuery("#url").val(state.url);
+      jQuery("#comment").val(state.comment);
+      jQuery("#comment_parent").val(state.comment_parent);
+    }
+
+    return state;
+  }
+
+  function redirectWhenSubmitComplete() {
+    // wait until the other window has completed the comment submit. When it
+    // completes, it will store the hash of the comment that this window should
+    // show.
+    var hash = localStorage.getItem("hash");
+    if (hash) {
+      localStorage.removeItem("hash");
+      document.location.hash = hash;
+      document.location.reload(true);
+    }
+    else {
+      setTimeout(redirectWhenSubmitComplete, 100);
+    }
   }
 
 }());

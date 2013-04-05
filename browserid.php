@@ -127,11 +127,6 @@ if (!class_exists('M66BrowserID')) {
 				'login_redirect' => $redirect,
 				'error' => $browserid_error,
 				'failed' => $browserid_failed,
-				// If the user posted a comment and they are 
-				// not logged in to WordPress that means the 
-				// user used Persona only to submit a comment. 
-				// Force a Persona logout.
-				'logout' => !is_user_logged_in(),
 				'sitename' => self::Get_sitename(),
 				'sitelogo' => self::Get_sitelogo(),
 				'logout_redirect' => wp_logout_url(),
@@ -324,7 +319,6 @@ if (!class_exists('M66BrowserID')) {
 					exit();
 				} else if( !isset($options['browserid_auto_create_new_users']) || !$options['browserid_auto_create_new_users']) {
 					$message = __('You must already have an account to log in with Persona.');
-					$message .= '<br />You can register on the <a href="wp-login.php?action=register">Registration</a> page.';
 
 					self::Handle_error($message);
 					exit();
@@ -440,7 +434,10 @@ if (!class_exists('M66BrowserID')) {
 
 		// Get rid of the email field in the comment form
 		function Comment_form_fields($fields) {
-			unset($fields['email']);
+			$options = get_option('browserid_options');
+			if ((isset($options['browserid_comments']) && $options['browserid_comments'])) {
+        unset($fields['email']);
+      }
 			return $fields;
 		}
 
@@ -457,6 +454,7 @@ if (!class_exists('M66BrowserID')) {
 				// Render link
 				echo '<a href="#" id="browserid_' . $post_id . '" onclick="return browserid_comment(' . $post_id . ');" title="Mozilla Persona" class="browserid">' . $html . '</a>';
 				echo self::What_is();
+        echo '<style>#respond input[type=submit] { position: absolute; left: -9999px !important; }</style>';
 
 				// Display error message
 				if (isset($_REQUEST['browserid_error'])) {
