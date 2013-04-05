@@ -1,7 +1,6 @@
 === Mozilla Persona (BrowserID) ===
-Contributors: Marcel Bokhorst, M66B
-Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=AJSBB7DGNA3MJ&lc=US&item_name=BrowserID%20WordPress%20plugin&item_number=Marcel%20Bokhorst&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted
-Tags: security, admin, authentication, access, widget, login, shortcode, comment, comments, discussion, bbPress, bbPress 2.0
+Contributors: Marcel Bokhorst, M66B, Shane Tomlinson
+Tags: security, admin, authentication, access, widget, login, shortcode, comment, comments, discussion, bbPress, bbPress 2.0, browserid, mozilla, persona
 Requires at least: 3.1
 Tested up to: 3.5.1
 Stable tag: 0.36
@@ -9,8 +8,6 @@ Stable tag: 0.36
 Implementation of Mozilla Persona (BrowserID) for WordPress
 
 == Description ==
-
-**This plugin is no longer supported**
 
 "*As a user of Mozilla Persona (BrowserID), you confirm your email addresses once. Then, you can sign into any web site that supports Mozilla Persona with just two clicks.*"
 
@@ -22,14 +19,11 @@ There is also a widget, shortcode and template tag. It is possible to customize 
 * Submit comments with Mozilla Persona
 * [bbPress 2](http://bbpress.org/ "bbPress") integration: create topics / reply with Mozilla Persona
 
-[Mozilla Persona](https://login.persona.org/ "Mozilla Persona") is an open source experiment from the [Identity Team](http://identity.mozilla.com/ "Identity Team") at [Mozilla Labs](https://mozillalabs.com/ "Mozilla Labs").
+[Mozilla Persona](https://login.persona.org/ "Mozilla Persona") is an open source identity system from the [Identity Team](http://identity.mozilla.com/ "Identity Team") at [Mozilla](https://mozilla.org/ "Mozilla").
 
-**Mozilla Persona and this plugin are experimental !**
+** Reporting problems:**
 
-Please report any issue you have with this plugin on the [forum](http://forum.bokhorst.biz/), so I can at least try to fix it.
-If you rate this plugin low, please let me know why.
-
-See my [other plugins](http://wordpress.org/extend/plugins/profile/m66b "Marcel Bokhorst")
+Please report any issues on [GitHub](https://github.com/shane-tomlinson/browserid-wordpress/issues).
 
 == Installation ==
 
@@ -95,13 +89,20 @@ You could check the option *Do not check valid until time* to solve this.
 
 = Where can I ask questions, report bugs and request features? =
 
-You can write comments on the [forum](http://forum.bokhorst.biz/).
+You can write comments on [GitHub](https://github.com/shane-tomlinson/browserid-wordpress/issues).
 
 == Screenshots ==
 
 1. Mozilla Persona logo
 1. Mozilla Persona login button
 1. WordPress login dialog
+
+== Getting Involved ==
+
+== Maintainers ==
+* [Shane Tomlinson](https://shanetomlinson.com) - shane@shanetomlinson.com or stomlinson@mozilla.com 
+* [Marcel Bokhorst](http://blog.bokhorst.biz)
+
 
 == Changelog ==
 
@@ -120,7 +121,7 @@ Follow these steps to install the development version:
 * Click *Install*, then *Activate Plugin*
 
 = 0.36 =
-* Bgufix: *browserid_error*
+* Bugfix: *browserid_error*
 
 = 0.35 =
 * Bugfix: redirect option, thanks *Lwangaman*!
@@ -366,6 +367,8 @@ One bugfix
 First public release
 
 == Acknowledgments ==
+[Marcel Bokhorst](http://blog.bokhorst.biz/) is the original author of this plugin. His awesome work has allowed me to continue.
+
 
 This plugin uses:
 
