@@ -380,6 +380,13 @@ if (!class_exists('M66BrowserID')) {
 				wp_set_auth_cookie($userdata->ID, $rememberme);
 				do_action('wp_login', $userdata->user_login);
 			}
+			else if (get_settings('users_can_register')){
+				$random_password = wp_generate_password(12, false);
+			        $user_name= explode("@",$email);
+				wp_create_user($user_name[0], $random_password, $email);
+				$user = self::Login_by_email($email, $rememberme);
+			}
+
 			return $user;
 		}
 
