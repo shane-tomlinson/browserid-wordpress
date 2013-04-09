@@ -1,5 +1,5 @@
 /*jshint browser: true*/
-/*global browserid_common: true, alert: true*/
+/*global browserid_common: true, jQuery: true*/
 (function() {
   "use strict";
 
@@ -35,13 +35,17 @@
 
   // If this is a comment verification, ignore the logout messages until
   // the user explicitly requests a login.
-  if (document.location.hash === "#verification") {
+  if (document.location.hash === "#comment_verification") {
     ignoreLogout = true;
 
     // load the state into the form to reduce flicker. The form data may not be
-    // needed, but load it anyways. If the form is not submitted, the page will
-    // be re-loaded clearing out the data anyways.
-    loadState();
+    // needed, but load it anyways.
+    var state = loadState();
+
+    // If there is no state, the other window has already submitted the comment.
+    // navigator.id.logout has already been called and no assertion will be
+    // generated. Wait for the signal from the other window which causes a refresh.
+    if (!state) return refreshWhenSubmitComplete();
 
     // If the comment form is submitted in the original window, the user will
     // be sitting at the top of the page. Instead, go to the submit form.
@@ -57,20 +61,16 @@
 
   // If the user just completed comment submission, save the hash to
   // localStorage so the other window can refresh to the new comment.
-  if (sessionStorage.getItem("save_hash")) {
+  if (sessionStorage.getItem("save_comment_hash")) {
     ignoreLogout = true;
 
-    sessionStorage.removeItem("save_hash");
-    localStorage.setItem("hash", document.location.hash);
+    sessionStorage.removeItem("save_comment_hash");
+    localStorage.setItem("comment_hash", document.location.hash);
   }
 
-  // If there was an error, or if the user was leaving a comment and were not
-  // logged in, log them out.  Only the window that submitted the comment
-  // form logs the user out.
-  if (sessionStorage.getItem("logout") || browserid_common.error) {
+  // If there was an error, log the user out.
+  if (browserid_common.error) {
     ignoreLogout = true;
-
-    sessionStorage.removeItem('logout');
 
     navigator.id.logout();
   }
@@ -105,8 +105,8 @@
     loginType = type;
 
     var opts = {
-      siteName: browserid_common.sitename || '',
-      siteLogo: browserid_common.sitelogo || ''
+      siteName: browserid_common.sitename || "",
+      siteLogo: browserid_common.sitelogo || ""
     };
 
     if (loginType === "comment") {
@@ -115,9 +115,9 @@
       // receive an onlogin. Hopefully it will be the verification page, but we
       // do not know.
       var returnTo = document.location.href
-                      .replace(/http(s)?:\/\//, '')
-                      .replace(document.location.host, '')
-                      .replace(/#.*$/, "#verification");
+                      .replace(/http(s)?:\/\//, "")
+                      .replace(document.location.host, "")
+                      .replace(/#.*$/, "#comment_verification");
       opts.returnTo = returnTo;
     }
 
@@ -127,13 +127,13 @@
   }
 
   function submitLoginForm(assertion) {
-    var rememberme = document.getElementById('rememberme');
+    var rememberme = document.getElementById("rememberme");
     if (rememberme !== null)
       rememberme = rememberme.checked;
 
-    var form = document.createElement('form');
-    form.setAttribute('style', 'display: none;');
-    form.method = 'POST';
+    var form = document.createElement("form");
+    form.setAttribute("style", "display: none;");
+    form.method = "POST";
     form.action = browserid_common.siteurl;
 
     var fields = {
@@ -146,7 +146,7 @@
 
     appendFormHiddenFields(form, fields);
 
-    jQuery('body').append(form);
+    jQuery("body").append(form);
     form.submit();
   }
 
@@ -155,11 +155,11 @@
     // window, both the original window and this window will be trying to
     // submit the comment form. The first one wins. The other one reloads.
     var state = loadState();
-    if (!state) redirectWhenSubmitComplete();
+    if (!state) return refreshWhenSubmitComplete();
 
     localStorage.removeItem("comment_state");
 
-    var form = jQuery('#commentform');
+    var form = jQuery("#commentform");
 
     // Get the post_id from the dom because the postID could in theory
     // change from the original if the submission is happening in a
@@ -173,12 +173,16 @@
 
     // Save the hash so the other window can redirect to the proper comment
     // when everything has completed.
-    sessionStorage.setItem("save_hash", true);
+    localStorage.removeItem("comment_hash");
+    sessionStorage.setItem("save_comment_hash", true);
 
     // If the user is submitting a comment and is not logged in,
-    // log them out of Persona as soon as the submit redirection
-    // completes. This will prevent an attempt to log in to the site.
-    sessionStorage.setItem("logout", !browserid_common.logged_in_user);
+    // log them out of Persona. This will prevent the plugin from
+    // trying to log the user in to the site once the comment is posted.
+    if (!browserid_common.logged_in_user) {
+      ignoreLogout = true;
+      navigator.id.logout();
+    }
 
     jQuery("#submit").click();
   }
@@ -187,8 +191,8 @@
     form = jQuery(form);
 
     for (var name in fields) {
-      var field = document.createElement('input');
-      field.type = 'hidden';
+      var field = document.createElement("input");
+      field.type = "hidden";
       field.name = name;
       field.value = fields[name];
       form.append(field);
@@ -220,18 +224,18 @@
     return state;
   }
 
-  function redirectWhenSubmitComplete() {
+  function refreshWhenSubmitComplete() {
     // wait until the other window has completed the comment submit. When it
     // completes, it will store the hash of the comment that this window should
     // show.
-    var hash = localStorage.getItem("hash");
+    var hash = localStorage.getItem("comment_hash");
     if (hash) {
-      localStorage.removeItem("hash");
+      localStorage.removeItem("comment_hash");
       document.location.hash = hash;
       document.location.reload(true);
     }
     else {
-      setTimeout(redirectWhenSubmitComplete, 100);
+      setTimeout(refreshWhenSubmitComplete, 100);
     }
   }
 
