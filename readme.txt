@@ -1,25 +1,24 @@
 === Mozilla Persona (BrowserID) ===
-Contributors: Marcel Bokhorst, M66B, Shane Tomlinson
+Contributors: stomlinson, Marcel Bokhorst, M66B
 Tags: security, admin, authentication, access, widget, login, shortcode, comment, comments, discussion, bbPress, bbPress 2.0, browserid, mozilla, persona
 Requires at least: 3.1
 Tested up to: 3.5.1
-Stable tag: 0.36
+Stable tag: 0.37
 
 Implementation of Mozilla Persona (BrowserID) for WordPress
 
 == Description ==
 
+[Mozilla Persona](https://login.persona.org/ "Mozilla Persona") is an open source identity system from the [Identity Team](http://identity.mozilla.com/ "Identity Team") at [Mozilla](https://mozilla.org/ "Mozilla").
+
 "*As a user of Mozilla Persona (BrowserID), you confirm your email addresses once. Then, you can sign into any web site that supports Mozilla Persona with just two clicks.*"
 
-This plugin adds a Mozilla Persona login button as an additional way to login to your login page.
-There is also a widget, shortcode and template tag. It is possible to customize the login and logout button/link.
+This plugin allows users to sign into your site using Mozilla Persona. A widget, shortcode and template tags are provided. Custom login and logout links can be created.
 
 **Beta features:**
 
 * Submit comments with Mozilla Persona
 * [bbPress 2](http://bbpress.org/ "bbPress") integration: create topics / reply with Mozilla Persona
-
-[Mozilla Persona](https://login.persona.org/ "Mozilla Persona") is an open source identity system from the [Identity Team](http://identity.mozilla.com/ "Identity Team") at [Mozilla](https://mozilla.org/ "Mozilla").
 
 ** Reporting problems:**
 
@@ -119,6 +118,9 @@ Follow these steps to install the development version:
 * Click *Upload* (a link at the top)
 * Click *Choose file* and select the file you downloaded before
 * Click *Install*, then *Activate Plugin*
+
+= 0.37 =
+* Bump version number for new maintainer info.
 
 = 0.36 =
 * Bugfix: *browserid_error*
