@@ -61,8 +61,8 @@ if (!class_exists('M66BrowserID')) {
 
 			// Register actions & filters
 			add_action('init', array(&$this, 'Init'), 0);
-      add_action('set_auth_cookie', array(&$this, 'Set_auth_cookie'));
-      add_action('clear_auth_cookie', array(&$this, 'Clear_auth_cookie'));
+			add_action('set_auth_cookie', array(&$this, 'Set_auth_cookie'));
+			add_action('clear_auth_cookie', array(&$this, 'Clear_auth_cookie'));
 			add_filter('login_message', array(&$this, 'Login_message'));
 			add_action('login_form', array(&$this, 'Login_form'));
 			add_action('widgets_init', create_function('', 'return register_widget("BrowserID_Widget");'));
@@ -77,7 +77,7 @@ if (!class_exists('M66BrowserID')) {
 			if (isset($options['browserid_comments']) && $options['browserid_comments']) {
 				add_filter('comment_form_default_fields', array(&$this, 'Comment_form_fields'));
 				add_action('comment_form', array(&$this, 'Comment_form'));
-      }
+			}
 
 			// bbPress integration
 			if (isset($options['browserid_bbpress']) && $options['browserid_bbpress']) {
@@ -111,8 +111,8 @@ if (!class_exists('M66BrowserID')) {
 
 		// Initialization
 		function Init() {
-                        global $user_email;
-                        get_currentuserinfo();
+			global $user_email;
+			get_currentuserinfo();
 
 			// I18n
 			load_plugin_textdomain(c_bid_text_domain, false, dirname(plugin_basename(__FILE__)));
@@ -375,7 +375,7 @@ if (!class_exists('M66BrowserID')) {
 			$userdata = get_user_by('email', $email);
 			if ($userdata) {
 				$user = new WP_User($userdata->ID);
-        $this->browserid_login = true;
+				$this->browserid_login = true;
 				wp_set_current_user($userdata->ID, $userdata->user_login);
 				wp_set_auth_cookie($userdata->ID, $rememberme);
 				do_action('wp_login', $userdata->user_login);
@@ -426,26 +426,26 @@ if (!class_exists('M66BrowserID')) {
 			$_POST['bbp_anonymous_website'] = $url;
 		}
 
-    // Set a cookie that keeps track whether the user signed in using BrowserID
-    function Set_auth_cookie($auth_cookie, $expire, $expiration, $user_id, $scheme) {
-      // Persona should only manage Persona logins. If this is a BrowserID login, 
-      // keep track of it so that the user is not automatically logged out if 
-      // they log in via other means.
-      if ($this->browserid_login) {
-        $secure = $scheme == "secure_auth";
-        setcookie(c_bid_browserid_login_cookie, 1, $expire, COOKIEPATH, COOKIE_DOMAIN, $secure, true);
-      }
-      else {
-        // If the user is not logged in via BrowserID, clear the cookie.
-        self::Clear_auth_cookie();
-      }
-    }
+		// Set a cookie that keeps track whether the user signed in using BrowserID
+		function Set_auth_cookie($auth_cookie, $expire, $expiration, $user_id, $scheme) {
+			// Persona should only manage Persona logins. If this is a BrowserID login, 
+			// keep track of it so that the user is not automatically logged out if 
+			// they log in via other means.
+			if ($this->browserid_login) {
+				$secure = $scheme == "secure_auth";
+				setcookie(c_bid_browserid_login_cookie, 1, $expire, COOKIEPATH, COOKIE_DOMAIN, $secure, true);
+			}
+			else {
+				// If the user is not logged in via BrowserID, clear the cookie.
+				self::Clear_auth_cookie();
+			}
+		}
 
-    // Clear the cookie that keeps track of whether hte user signed in using BrowserID
-    function Clear_auth_cookie() {
-      $expire = time() - YEAR_IN_SECONDS;
-      setcookie(c_bid_browserid_login_cookie, ' ', $expire, COOKIEPATH, COOKIE_DOMAIN);
-    }
+		// Clear the cookie that keeps track of whether hte user signed in using BrowserID
+		function Clear_auth_cookie() {
+			$expire = time() - YEAR_IN_SECONDS;
+			setcookie(c_bid_browserid_login_cookie, ' ', $expire, COOKIEPATH, COOKIE_DOMAIN);
+		}
 
 		// Filter login error message
 		function Login_message($message) {
@@ -476,8 +476,8 @@ if (!class_exists('M66BrowserID')) {
 		function Comment_form_fields($fields) {
 			$options = get_option('browserid_options');
 			if ((isset($options['browserid_comments']) && $options['browserid_comments'])) {
-        unset($fields['email']);
-      }
+				unset($fields['email']);
+			}
 			return $fields;
 		}
 
@@ -511,16 +511,16 @@ if (!class_exists('M66BrowserID')) {
 			return self::Get_loginout_html();
 		}
 
-                // Git spiffy logout text for Persona
-                function Get_logout_text() {
-                       // User logged in
-                       if (empty($options['browserid_logout_html']))
-                                $html = __('Logout');
-                       else
-                                $html = $options['browserid_logout_html'];
+		// Git spiffy logout text for Persona
+		function Get_logout_text() {
+			// User logged in
+			if (empty($options['browserid_logout_html']))
+				$html = __('Logout');
+			else
+				$html = $options['browserid_logout_html'];
 
-                       return $html;
-                }
+			return $html;
+		}
 
 
 		// Build HTML for login/out button/link
@@ -528,7 +528,7 @@ if (!class_exists('M66BrowserID')) {
 			$options = get_option('browserid_options');
 
 			if ($check_login && is_user_logged_in()) {
-        $html = self::Get_logout_text();
+				$html = self::Get_logout_text();
 
 				// Simple link
 				if (empty($html))
@@ -546,11 +546,11 @@ if (!class_exists('M66BrowserID')) {
 				$html = '<a href="#" onclick="return browserid_login();"  title="Mozilla Persona" class="browserid">' . $html . '</a>';
 				$html .= '<br />' . self::What_is();
 
-        // Hide the login form. While this does not truely prevent users from 
-        // from logging in using the standard authentication mechanism, it 
-        // cleans up the login form a bit.
+				// Hide the login form. While this does not truely prevent users from 
+				// from logging in using the standard authentication mechanism, it 
+				// cleans up the login form a bit.
 				if (!empty($options['browserid_only_auth']))
-          $html .= '<style>#user_login, [for=user_login], #user_pass, [for=user_pass], [name=log], [name=pwd] { display: none; }</style>';
+					$html .= '<style>#user_login, [for=user_login], #user_pass, [for=user_pass], [name=log], [name=pwd] { display: none; }</style>';
 
 				return $html;
 			}
@@ -597,22 +597,22 @@ if (!class_exists('M66BrowserID')) {
 
 		// Override logout on site menu
 		function Admin_toolbar($wp_toolbar) {
-      $logged_in_user = self::Get_browserid_loggedin_user();
-      
-      // If the user is signed in via Persona, replace their toolbar logout 
-      // with a logout that will work with Persona.
-      if ( $logged_in_user ) {
-        $wp_toolbar->remove_node('logout');
-        $wp_toolbar->add_node(array(
-          'id' => 'logout',
-          'title' => self::Get_logout_text(),
-          'parent' => 'user-actions',
-          'href' => '#',
-          'meta' => array(
-          'onclick' => 'return browserid_logout()'
-          )
-        ));
-      }
+			$logged_in_user = self::Get_browserid_loggedin_user();
+
+			// If the user is signed in via Persona, replace their toolbar logout 
+			// with a logout that will work with Persona.
+			if ( $logged_in_user ) {
+				$wp_toolbar->remove_node('logout');
+				$wp_toolbar->add_node(array(
+					'id' => 'logout',
+					'title' => self::Get_logout_text(),
+					'parent' => 'user-actions',
+					'href' => '#',
+					'meta' => array(
+						'onclick' => 'return browserid_logout()'
+					)
+				));
+			}
 		}
 
 
