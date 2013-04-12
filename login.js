@@ -16,6 +16,11 @@
     return authenticate("login");
   };
 
+  window.browserid_register = function() {
+    ignoreLogout = false;
+    return authenticate("register");
+  };
+
   window.browserid_comment = function() {
     ignoreLogout = true;
     // Save the form state to localStorage. This allows a new user to close
@@ -78,10 +83,13 @@
   navigator.id.watch({
     loggedInUser: browserid_common.logged_in_user || null,
     onlogin: function(assertion) {
-      loginType = loginType || "login";
+      loginType = getLoginType(loginType);
       if (loginType === "login") {
         submitLoginForm(assertion);
       }
+	  else if (loginType === "register") {
+        submitRegistrationForm(assertion);
+	  }
       else if (loginType === "comment") {
         submitCommentForm(assertion);
       }
@@ -100,6 +108,10 @@
       }
     }
   });
+
+  function getLoginType(loginType) {
+	return loginType || "login";
+  }
 
   function authenticate(type) {
     loginType = type;
@@ -131,6 +143,8 @@
     if (rememberme !== null)
       rememberme = rememberme.checked;
 
+	// Since login can happen on any page, create a form and submit it manually
+	// ignoring the normal sign in form.
     var form = document.createElement("form");
     form.setAttribute("style", "display: none;");
     form.method = "POST";
@@ -148,6 +162,13 @@
 
     jQuery("body").append(form);
     form.submit();
+  }
+
+  function submitRegistrationForm(assertion) {
+	jQuery("#browserid_assertion").val(assertion);
+	jQuery("#browserid_assertion").val(assertion);
+
+    jQuery("#wp-submit").click();
   }
 
   function submitCommentForm(assertion) {

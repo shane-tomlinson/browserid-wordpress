@@ -66,6 +66,11 @@ if (!class_exists('M66BrowserID')) {
 			add_filter('wp_authenticate_user', array(&$this, 'Check_username_password_auth_allowed_allowed'));
 			add_filter('login_message', array(&$this, 'Login_message'));
 			add_action('login_form', array(&$this, 'Login_form'));
+
+			add_action('register_form', array(&$this, 'Register_form'));
+			add_action('user_register', array(&$this, 'Register_user_register_action'));
+			add_filter('registration_redirect', array(&$this, 'Register_redirect_filter'));
+
 			add_action('widgets_init', create_function('', 'return register_widget("BrowserID_Widget");'));
 			if (is_admin()) {
 				add_action('admin_menu', array(&$this, 'Admin_menu'));
@@ -143,17 +148,17 @@ if (!class_exists('M66BrowserID')) {
 			wp_enqueue_script('browserid_common');
 		}
 
-    // Get the currently logged in user, iff they authenticated using BrowserID
-    function Get_browserid_loggedin_user() {
-      global $user_email;
-      get_currentuserinfo();
+		// Get the currently logged in user, iff they authenticated using BrowserID
+		function Get_browserid_loggedin_user() {
+		  global $user_email;
+		  get_currentuserinfo();
 
-      if ( isset( $_COOKIE[c_bid_browserid_login_cookie] ) ) {
-        return $user_email;
-      }
+		  if ( isset( $_COOKIE[c_bid_browserid_login_cookie] ) ) {
+			return $user_email;
+		  }
 
-      return null;
-    }
+		  return null;
+		}
 
 		function Check_assertion() {
 			// Workaround for Microsoft IIS bug
@@ -250,6 +255,8 @@ if (!class_exists('M66BrowserID')) {
 							// Succeeded
 							if (self::Is_comment())
 								self::Handle_comment($result);
+							else if (self::Is_registration())
+								self::Handle_registration($result);
 							else
 								self::Handle_login($result, $rememberme);
 						}
@@ -295,6 +302,11 @@ if (!class_exists('M66BrowserID')) {
 				return (isset($_REQUEST['browserid_comment']) ? $_REQUEST['browserid_comment'] : null);
 			else
 				return null;
+		}
+
+		function Is_registration() {
+			$action = isset($_REQUEST['action']) ? $_REQUEST['action'] : null;
+			return $action == 'register';
 		}
 
 		// Generic error handling
@@ -370,10 +382,19 @@ if (!class_exists('M66BrowserID')) {
 
 		// Login user using e-mail address
 		function Login_by_email($email, $rememberme) {
+			$userdata = get_user_by('email', $email);
+			return self::Login_by_userdata($userdata, $rememberme);
+		}
+
+		function Login_by_id($user_id) {
+			$userdata = get_user_by('id', $user_id);
+			return self::Login_by_userdata($userdata, true);
+		}
+
+		function Login_by_userdata($userdata, $rememberme) {
 			global $user;
 			$user = null;
 
-			$userdata = get_user_by('email', $email);
 			if ($userdata) {
 				$user = new WP_User($userdata->ID);
 				$this->browserid_login = true;
@@ -450,15 +471,12 @@ if (!class_exists('M66BrowserID')) {
 
 		// Check whether normal username/password authentication is allowed
 		function Check_username_password_auth_allowed_allowed($user, $password) {
-			$options = get_option('browserid_options');
-
-			if ((isset($options['browserid_only_auth']) && $options['browserid_only_auth'])) {
+			if (self::Is_browserid_only_auth()) {
 				return new WP_error('invalid_login', 'Only BrowserID logins are allowed');
 			}
 
 			return $user;
 		}
-
 
 		// Filter login error message
 		function Login_message($message) {
@@ -471,6 +489,61 @@ if (!class_exists('M66BrowserID')) {
 		function Login_form() {
 			echo '<p>' . self::Get_loginout_html(false) . '<br /><br /></p>';
 		}
+
+		// Does the site have browserid only authentication enabled.
+		function Is_browserid_only_auth() {
+			$options = get_option('browserid_options');
+
+			return ((isset($options['browserid_only_auth']) && 
+						$options['browserid_only_auth']));
+		}
+
+		// Add Persona button to registration form and remove the email form.
+		function Register_form() {
+			// Only enable registration via Persona if Persona is the only 
+			// authentication mechanism or else the user will not see the
+			// "check your email" screen.
+			if (self::Is_browserid_only_auth()) {
+				echo '<input type="hidden" name="browserid_assertion" id="browserid_assertion" />';
+
+				// XXX collapse the link stuff into Get_login_html
+				$html = '<img src="' . self::Get_image_url() . '" style="border: none; vertical-align: middle; margin-right: 5px;" />';
+				echo '<a href="#" onclick="return browserid_register();" title="Mozilla Persona" class="browserid">' . $html  . '</a>';
+
+				echo 
+				'<style>#user_email,[for=user_email],#reg_passmail{display:none;}';
+				echo '#wp-submit { position: absolute; left: -9999px !important; }</style>';
+			}
+		}
+
+		// Process registration - get the email address from the assertion and 
+		// process the rest of the form.
+		function Handle_registration($result) {
+			if (self::Is_browserid_only_auth()) {
+				$_POST['user_email'] = $result['email'];
+			}
+		}
+
+
+		// Now that the user is registered, log them in
+		function Register_user_register_action($user_id) {
+			if (self::Is_browserid_only_auth()) {
+				self::Login_by_id($user_id);
+			}
+		}
+
+		function Register_redirect_filter($redirect_to) {
+			if ($redirect_to) return $redirect_to;
+
+			if (self::Is_browserid_only_auth()) {
+				// The user successfully signed up using Persona, 
+				// send them to their profile page
+				return admin_url() . 'profile.php';
+			}
+
+			return '';
+		}
+
 
 		// bbPress integration
 		function bbPress_submit() {
@@ -562,7 +635,7 @@ if (!class_exists('M66BrowserID')) {
 				// Hide the login form. While this does not truely prevent users from 
 				// from logging in using the standard authentication mechanism, it 
 				// cleans up the login form a bit.
-				if (!empty($options['browserid_only_auth'])) {
+				if (self::Is_browserid_only_auth()) {
 					$html .= '<style>#user_login, [for=user_login], #user_pass, [for=user_pass], [name=log], [name=pwd] { display: none; }</style>'; 
 				}
 
@@ -938,6 +1011,47 @@ if (!function_exists('mozilla_persona')) {
 if (!function_exists('browserid_loginout')) {
 	function browserid_loginout() {
 		echo M66BrowserID::Get_loginout_html();
+	}
+}
+
+if (!function_exists('new_user_notification')) {
+	function wp_new_user_notification($user_id, $plaintext_pass = '') {
+		$user = get_userdata( $user_id );
+
+		$user_login = stripslashes($user->user_login);
+		$user_email = stripslashes($user->user_email);
+
+		// The blogname option is escaped with esc_html on the way into the database in sanitize_option
+		// we want to reverse this for the plain text arena of emails.
+		$blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+
+		$message  = sprintf(__('New user registration on your site %s:'), $blogname) . "\r\n\r\n";
+		$message .= sprintf(__('Username: %s'), $user_login) . "\r\n\r\n";
+		$message .= sprintf(__('E-mail: %s'), $user_email) . "\r\n";
+
+		@wp_mail(get_option('admin_email'), sprintf(__('[%s] New User Registration'), $blogname), $message);
+
+		if ( empty($plaintext_pass) )
+			return;
+
+		$message  = sprintf(__('Username: %s'), $user_login) . "\r\n";
+		$title = '';
+
+		// Get plugin options
+		$options = get_option('browserid_options');
+
+		// XXX Collapse this in to the Get_browserid_only_auth
+		if ((isset($options['browserid_only_auth']) && 
+					$options['browserid_only_auth'])) {
+			$message .= sprintf(__('%s uses Mozilla Persona to sign in and does not use passwords'), $blogname) . "\r\n";
+			$title .= sprintf(__('[%s] Your username'), $blogname);
+		} else {
+			$message .= sprintf(__('Password: %s'), $plaintext_pass) . "\r\n";
+			$title .= sprintf(__('[%s] Your username and password'), $blogname);
+		}
+		$message .= wp_login_url() . "\r\n";
+
+		wp_mail($user_email, $title, $message);
 	}
 }
 
