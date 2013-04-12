@@ -63,6 +63,7 @@ if (!class_exists('M66BrowserID')) {
 			add_action('init', array(&$this, 'Init'), 0);
 			add_action('set_auth_cookie', array(&$this, 'Set_auth_cookie'));
 			add_action('clear_auth_cookie', array(&$this, 'Clear_auth_cookie'));
+			add_filter('wp_authenticate_user', array(&$this, 'Check_username_password_auth_allowed_allowed'));
 			add_filter('login_message', array(&$this, 'Login_message'));
 			add_action('login_form', array(&$this, 'Login_form'));
 			add_action('widgets_init', create_function('', 'return register_widget("BrowserID_Widget");'));
@@ -447,6 +448,18 @@ if (!class_exists('M66BrowserID')) {
 			setcookie(c_bid_browserid_login_cookie, ' ', $expire, COOKIEPATH, COOKIE_DOMAIN);
 		}
 
+		// Check whether normal username/password authentication is allowed
+		function Check_username_password_auth_allowed_allowed($user, $password) {
+			$options = get_option('browserid_options');
+
+			if ((isset($options['browserid_only_auth']) && $options['browserid_only_auth'])) {
+				return new WP_error('invalid_login', 'Only BrowserID logins are allowed');
+			}
+
+			return $user;
+		}
+
+
 		// Filter login error message
 		function Login_message($message) {
 			if (isset($_REQUEST['browserid_error']))
@@ -494,8 +507,8 @@ if (!class_exists('M66BrowserID')) {
 				// Render link
 				echo '<a href="#" id="browserid_' . $post_id . '" onclick="return browserid_comment(' . $post_id . ');" title="Mozilla Persona" class="browserid">' . $html . '</a>';
 				echo self::What_is();
-        // If it is a Persona login, hide the submit button.
-        echo '<style>#respond input[type=submit] { position: absolute; left: -9999px !important; }</style>';
+				// If it is a Persona login, hide the submit button.
+				echo '<style>#respond input[type=submit] { position: absolute; left: -9999px !important; }</style>';
 
 				// Display error message
 				if (isset($_REQUEST['browserid_error'])) {
@@ -549,8 +562,9 @@ if (!class_exists('M66BrowserID')) {
 				// Hide the login form. While this does not truely prevent users from 
 				// from logging in using the standard authentication mechanism, it 
 				// cleans up the login form a bit.
-				if (!empty($options['browserid_only_auth']))
-					$html .= '<style>#user_login, [for=user_login], #user_pass, [for=user_pass], [name=log], [name=pwd] { display: none; }</style>';
+				if (!empty($options['browserid_only_auth'])) {
+					$html .= '<style>#user_login, [for=user_login], #user_pass, [for=user_pass], [name=log], [name=pwd] { display: none; }</style>'; 
+				}
 
 				return $html;
 			}
@@ -633,7 +647,7 @@ if (!class_exists('M66BrowserID')) {
 			add_settings_section('plugin_main', null, array(&$this, 'Options_main'), 'browserid');
 			add_settings_field('browserid_sitename', __('Site name:', c_bid_text_domain), array(&$this, 'Option_sitename'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_sitelogo', __('Site logo:', c_bid_text_domain), array(&$this, 'Option_sitelogo'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_only_auth', __('Hide non-Persona login form:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_login_html', __('Custom login HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_logout_html', __('Custom logout HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_auto_create_new_users', __('Automatically create new users with the email address as the username', c_bid_text_domain), array(&$this, 'Option_auto_create_new_users'), 'browserid', 'plugin_main');
@@ -772,7 +786,7 @@ if (!class_exists('M66BrowserID')) {
 			echo '<strong>' . __('Security risk!', c_bid_text_domain) . '</strong>';
 		}
 
-		// Debug option
+		// Only allow Persona logins
 		function Option_browserid_only_auth() {
 			$options = get_option('browserid_options');
 			$chk = (isset($options['browserid_only_auth']) && $options['browserid_only_auth'] ? " checked='checked'" : '');
