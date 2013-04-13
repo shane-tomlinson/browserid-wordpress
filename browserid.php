@@ -43,34 +43,40 @@ define('c_bid_option_response', 'bid_response');
 define('c_bid_browserid_login_cookie', 'bid_browserid_login_' . COOKIEHASH);
 
 // Define class
-if (!class_exists('M66BrowserID')) {
-	class M66BrowserID {
+if (!class_exists('MozillaBrowserID')) {
+	class MozillaBrowserID {
 		// Class variables
 		var $debug = null;
 
 		// Constructor
 		function __construct() {
-			// Get plugin options
-			$options = get_option('browserid_options');
-
 			// Debug mode
-			$this->debug = (isset($options['browserid_debug']) && $options['browserid_debug']);
+			$this->debug = self::Is_option_debug();
 
 			// Register de-activation
 			register_deactivation_hook(__FILE__, array(&$this, 'Deactivate'));
 
 			// Register actions & filters
 			add_action('init', array(&$this, 'Init'), 0);
+
+
+			// Authentication
 			add_action('set_auth_cookie', array(&$this, 'Set_auth_cookie'));
 			add_action('clear_auth_cookie', array(&$this, 'Clear_auth_cookie'));
 			add_filter('wp_authenticate_user', array(&$this, 'Check_username_password_auth_allowed_allowed'));
 			add_filter('login_message', array(&$this, 'Login_message'));
 			add_action('login_form', array(&$this, 'Login_form'));
 
-			add_action('register_form', array(&$this, 'Register_form'));
-			add_action('user_register', array(&$this, 'Register_user_register_action'));
-			add_filter('registration_redirect', array(&$this, 'Register_redirect_filter'));
 
+			// Registration
+			if (self::Is_option_browserid_only_auth()) {
+				add_action('register_form', array(&$this, 'Register_form'));
+				add_action('user_register', array(&$this, 'Register_user_register_action'));
+				add_filter('registration_redirect', array(&$this, 'Register_redirect_filter'));
+			}
+
+
+			// Widgets and admin menu
 			add_action('widgets_init', create_function('', 'return register_widget("BrowserID_Widget");'));
 			if (is_admin()) {
 				add_action('admin_menu', array(&$this, 'Admin_menu'));
@@ -80,13 +86,13 @@ if (!class_exists('M66BrowserID')) {
                         add_action('admin_bar_menu', array(&$this, 'Admin_toolbar'), 999);
 
 			// Comment integration
-			if (isset($options['browserid_comments']) && $options['browserid_comments']) {
+			if (self::Is_option_comments()) {
 				add_filter('comment_form_default_fields', array(&$this, 'Comment_form_fields'));
 				add_action('comment_form', array(&$this, 'Comment_form'));
 			}
 
 			// bbPress integration
-			if (isset($options['browserid_bbpress']) && $options['browserid_bbpress']) {
+			if (self::Is_option_bbpress()) {
 				add_action('bbp_allow_anonymous', create_function('', 'return !is_user_logged_in();'));
 				add_action('bbp_is_anonymous', create_function('', 'return !is_user_logged_in();'));
 				add_action('bbp_theme_before_topic_form_submit_button', array(&$this, 'bbPress_submit'));
@@ -148,16 +154,17 @@ if (!class_exists('M66BrowserID')) {
 			wp_enqueue_script('browserid_common');
 		}
 
-		// Get the currently logged in user, iff they authenticated using BrowserID
+		// Get the currently logged in user, iff they authenticated 
+		// using BrowserID
 		function Get_browserid_loggedin_user() {
-		  global $user_email;
-		  get_currentuserinfo();
+			global $user_email;
+			get_currentuserinfo();
 
-		  if ( isset( $_COOKIE[c_bid_browserid_login_cookie] ) ) {
-			return $user_email;
-		  }
+			if ( isset( $_COOKIE[c_bid_browserid_login_cookie] ) ) {
+				return $user_email;
+			}
 
-		  return null;
+			return null;
 		}
 
 		function Check_assertion() {
@@ -167,9 +174,6 @@ if (!class_exists('M66BrowserID')) {
 
 			// Verify received assertion
 			if (isset($_REQUEST['browserid_assertion'])) {
-				// Get options
-				$options = get_option('browserid_options');
-
 				// Get assertion/audience/remember me
 				$assertion = $_REQUEST['browserid_assertion'];
 				$audience = $_SERVER['HTTP_HOST'];
@@ -177,13 +181,10 @@ if (!class_exists('M66BrowserID')) {
 				$rememberme = (isset($_REQUEST['rememberme']) && $_REQUEST['rememberme'] == 'true');
 
 				// Get verification server URL
-				if (isset($options['browserid_vserver']) && $options['browserid_vserver'])
-					$vserver = $options['browserid_vserver'];
-				else
-					$vserver = 'https://verifier.login.persona.org/verify';
+				$vserver = self::Get_option_vserver();
 
 				// No SSL verify?
-				$noverify = (isset($options['browserid_noverify']) && $options['browserid_noverify']);
+				$noverify = self::Is_option_noverify();
 
 				// Build arguments
 				$args = array(
@@ -249,7 +250,7 @@ if (!class_exists('M66BrowserID')) {
 					else if ($result['status'] == 'okay' &&
 							$result['audience'] == $audience) {
 						// Check expiry time
-						$novalid = (isset($options['browserid_novalid']) && $options['browserid_novalid']);
+						$novalid = self::Is_option_novalid();
 						if ($novalid || time() < $result['expires'] / 1000)
 						{
 							// Succeeded
@@ -297,8 +298,7 @@ if (!class_exists('M66BrowserID')) {
 		// Determine if login or comment
 		function Is_comment() {
 			$options = get_option('browserid_options');
-			if ((isset($options['browserid_comments']) && $options['browserid_comments']) ||
-				(isset($options['browserid_bbpress']) && $options['browserid_bbpress']))
+			if (self::Is_option_comments() || self::Is_option_bbpress()) 
 				return (isset($_REQUEST['browserid_comment']) ? $_REQUEST['browserid_comment'] : null);
 			else
 				return null;
@@ -386,11 +386,13 @@ if (!class_exists('M66BrowserID')) {
 			return self::Login_by_userdata($userdata, $rememberme);
 		}
 
-		function Login_by_id($user_id) {
+		// Login user using id
+		function Login_by_id($user_id, $rememberme) {
 			$userdata = get_user_by('id', $user_id);
-			return self::Login_by_userdata($userdata, true);
+			return self::Login_by_userdata($userdata, $rememberme);
 		}
 
+		// Login user by userdata
 		function Login_by_userdata($userdata, $rememberme) {
 			global $user;
 			$user = null;
@@ -448,22 +450,25 @@ if (!class_exists('M66BrowserID')) {
 			$_POST['bbp_anonymous_website'] = $url;
 		}
 
-		// Set a cookie that keeps track whether the user signed in using BrowserID
+		// Set a cookie that keeps track whether the user signed in 
+		// using BrowserID
 		function Set_auth_cookie($auth_cookie, $expire, $expiration, $user_id, $scheme) {
-			// Persona should only manage Persona logins. If this is a BrowserID login, 
-			// keep track of it so that the user is not automatically logged out if 
-			// they log in via other means.
+			// Persona should only manage Persona logins. If this is 
+			// a Persona login, keep track of it so that the user is 
+			// not automatically logged out if they log in via other means.
 			if ($this->browserid_login) {
 				$secure = $scheme == "secure_auth";
 				setcookie(c_bid_browserid_login_cookie, 1, $expire, COOKIEPATH, COOKIE_DOMAIN, $secure, true);
 			}
 			else {
-				// If the user is not logged in via BrowserID, clear the cookie.
+				// If the user is not logged in via BrowserID, clear the 
+				// cookie.
 				self::Clear_auth_cookie();
 			}
 		}
 
-		// Clear the cookie that keeps track of whether hte user signed in using BrowserID
+		// Clear the cookie that keeps track of whether hte user 
+		// signed in using BrowserID
 		function Clear_auth_cookie() {
 			$expire = time() - YEAR_IN_SECONDS;
 			setcookie(c_bid_browserid_login_cookie, ' ', $expire, COOKIEPATH, COOKIE_DOMAIN);
@@ -471,7 +476,7 @@ if (!class_exists('M66BrowserID')) {
 
 		// Check whether normal username/password authentication is allowed
 		function Check_username_password_auth_allowed_allowed($user, $password) {
-			if (self::Is_browserid_only_auth()) {
+			if (self::Is_option_browserid_only_auth()) {
 				return new WP_error('invalid_login', 'Only BrowserID logins are allowed');
 			}
 
@@ -490,20 +495,12 @@ if (!class_exists('M66BrowserID')) {
 			echo '<p>' . self::Get_loginout_html(false) . '<br /><br /></p>';
 		}
 
-		// Does the site have browserid only authentication enabled.
-		function Is_browserid_only_auth() {
-			$options = get_option('browserid_options');
-
-			return ((isset($options['browserid_only_auth']) && 
-						$options['browserid_only_auth']));
-		}
-
 		// Add Persona button to registration form and remove the email form.
 		function Register_form() {
 			// Only enable registration via Persona if Persona is the only 
 			// authentication mechanism or else the user will not see the
 			// "check your email" screen.
-			if (self::Is_browserid_only_auth()) {
+			if (self::Is_option_browserid_only_auth()) {
 				echo '<input type="hidden" name="browserid_assertion" id="browserid_assertion" />';
 
 				// XXX collapse the link stuff into Get_login_html
@@ -519,7 +516,7 @@ if (!class_exists('M66BrowserID')) {
 		// Process registration - get the email address from the assertion and 
 		// process the rest of the form.
 		function Handle_registration($result) {
-			if (self::Is_browserid_only_auth()) {
+			if (self::Is_option_browserid_only_auth()) {
 				$_POST['user_email'] = $result['email'];
 			}
 		}
@@ -527,15 +524,15 @@ if (!class_exists('M66BrowserID')) {
 
 		// Now that the user is registered, log them in
 		function Register_user_register_action($user_id) {
-			if (self::Is_browserid_only_auth()) {
-				self::Login_by_id($user_id);
+			if (self::Is_option_browserid_only_auth()) {
+				self::Login_by_id($user_id, false);
 			}
 		}
 
 		function Register_redirect_filter($redirect_to) {
 			if ($redirect_to) return $redirect_to;
 
-			if (self::Is_browserid_only_auth()) {
+			if (self::Is_option_browserid_only_auth()) {
 				// The user successfully signed up using Persona, 
 				// send them to their profile page
 				return admin_url() . 'profile.php';
@@ -560,8 +557,7 @@ if (!class_exists('M66BrowserID')) {
 
 		// Get rid of the email field in the comment form
 		function Comment_form_fields($fields) {
-			$options = get_option('browserid_options');
-			if ((isset($options['browserid_comments']) && $options['browserid_comments'])) {
+			if (self::Is_option_comments()) {
 				unset($fields['email']);
 			}
 			return $fields;
@@ -635,7 +631,7 @@ if (!class_exists('M66BrowserID')) {
 				// Hide the login form. While this does not truely prevent users from 
 				// from logging in using the standard authentication mechanism, it 
 				// cleans up the login form a bit.
-				if (self::Is_browserid_only_auth()) {
+				if (self::Is_option_browserid_only_auth()) {
 					$html .= '<style>#user_login, [for=user_login], #user_pass, [for=user_pass], [name=log], [name=pwd] { display: none; }</style>'; 
 				}
 
@@ -783,6 +779,12 @@ if (!class_exists('M66BrowserID')) {
 			echo "<input id='browserid_auto_create_new_users' name='browserid_options[browserid_auto_create_new_users]' type='checkbox'" . $chk. "/>";
 		}
 
+		function Is_option_auto_create_new_users() {
+			$options = get_option('browserid_options');
+			return isset($options['browserid_auto_create_new_users']) && 
+						$options['browserid_auto_create_new_users'];
+		}
+
 		// New user redir URL option
 		function Option_newuser_redir() {
 			$options = get_option('browserid_options');
@@ -809,6 +811,14 @@ if (!class_exists('M66BrowserID')) {
 			echo '<strong>Beta!</strong>';
 		}
 
+		// Can a user leave a comment using BrowserID
+		function Is_option_comments() {
+			$options = get_option('browserid_options');
+
+			return isset($options['browserid_comments']) && 
+						$options['browserid_comments'];
+		}
+
 		// Enable bbPress integration
 		function Option_bbpress() {
 			$options = get_option('browserid_options');
@@ -816,6 +826,13 @@ if (!class_exists('M66BrowserID')) {
 			echo "<input id='browserid_bbpress' name='browserid_options[browserid_bbpress]' type='checkbox'" . $chk. "/>";
 			echo '<strong>Beta!</strong>';
 			echo '<br />' . __('Enables anonymous posting implicitly', c_bid_text_domain);
+		}
+
+		function Is_option_bbpress() {
+			$options = get_option('browserid_options');
+
+			return isset($options['browserid_bbpress']) && 
+						$options['browserid_bbpress'];
 		}
 
 		// Comment HTML option
@@ -835,12 +852,28 @@ if (!class_exists('M66BrowserID')) {
 			echo '<br />' . __('Default https://verifier.login.persona.org/verify', c_bid_text_domain);
 		}
 
+		function Get_option_vserver() {
+			$options = get_option('browserid_options');
+
+			if (isset($options['browserid_vserver']) && $options['browserid_vserver'])
+				$vserver = $options['browserid_vserver'];
+			else
+				$vserver = 'https://verifier.login.persona.org/verify';
+
+			return $vserver;
+		}
+
 		// No valid until option
 		function Option_novalid() {
 			$options = get_option('browserid_options');
 			$chk = (isset($options['browserid_novalid']) && $options['browserid_novalid'] ? " checked='checked'" : '');
 			echo "<input id='browserid_novalid' name='browserid_options[browserid_novalid]' type='checkbox'" . $chk. "/>";
 			echo '<strong>' . __('Security risk!', c_bid_text_domain) . '</strong>';
+		}
+
+		function Is_option_novalid() {
+			$options = get_option('browserid_options');
+			return isset($options['browserid_novalid']) && $options['browserid_novalid'];
 		}
 
 		// No SSL verify option
@@ -851,6 +884,11 @@ if (!class_exists('M66BrowserID')) {
 			echo '<strong>' . __('Security risk!', c_bid_text_domain) . '</strong>';
 		}
 
+		function Is_option_noverify() {
+			$options = get_option('browserid_options');
+			return isset($options['browserid_noverify']) && $options['browserid_noverify'];
+		}
+
 		// Debug option
 		function Option_debug() {
 			$options = get_option('browserid_options');
@@ -859,11 +897,24 @@ if (!class_exists('M66BrowserID')) {
 			echo '<strong>' . __('Security risk!', c_bid_text_domain) . '</strong>';
 		}
 
+		// Is the debug option set
+		function Is_option_debug() {
+			$options = get_option('browserid_options');
+			return ((isset($options['browserid_debug']) && $options['browserid_debug']));
+		}
+
 		// Only allow Persona logins
 		function Option_browserid_only_auth() {
 			$options = get_option('browserid_options');
 			$chk = (isset($options['browserid_only_auth']) && $options['browserid_only_auth'] ? " checked='checked'" : '');
 			echo "<input id='browserid_only_auth' name='browserid_options[browserid_only_auth]' type='checkbox'" . $chk. "/>";
+		}
+
+		// Does the site have browserid only authentication enabled.
+		function Is_option_browserid_only_auth() {
+			$options = get_option('browserid_options');
+
+			return isset($options['browserid_only_auth']) && $options['browserid_only_auth'];
 		}
 
 		// Render options page
@@ -961,7 +1012,7 @@ class BrowserID_Widget extends WP_Widget {
 		if (!empty($title))
 			echo $before_title . $title . $after_title;
 
-		echo "<ul><li class='only-child'>" . M66BrowserID::Get_loginout_html() . "</li></ul>";
+		echo "<ul><li class='only-child'>" . MozillaBrowserID::Get_loginout_html() . "</li></ul>";
 		echo $after_widget;
 	}
 
@@ -986,26 +1037,26 @@ class BrowserID_Widget extends WP_Widget {
 }
 
 // Check pre-requisites
-M66BrowserID::Check_prerequisites();
+MozillaBrowserID::Check_prerequisites();
 
 // Start plugin
 global $m66browserid;
 if (empty($m66browserid)) {
-	$m66browserid = new M66BrowserID();
+	$m66browserid = new MozillaBrowserID();
 	register_activation_hook(__FILE__, array(&$m66browserid, 'Activate'));
 }
 
 // Template tag "mozilla_persona"
 if (!function_exists('mozilla_persona')) {
 	function mozilla_persona() {
-		echo M66BrowserID::Get_loginout_html();
+		echo MozillaBrowserID::Get_loginout_html();
 	}
 }
 
 // Template tag "browserid_loginout"
 if (!function_exists('browserid_loginout')) {
 	function browserid_loginout() {
-		echo M66BrowserID::Get_loginout_html();
+		echo MozillaBrowserID::Get_loginout_html();
 	}
 }
 
