@@ -77,6 +77,7 @@ if (!class_exists('MozillaBrowserID')) {
 			if (self::Is_option_browserid_only_auth()) {
 				add_action('lost_password', array(&$this, 'Lost_password_form'));
 				add_filter('allow_password_reset', array(&$this, 'Allow_password_reset_filter'));
+				add_filter('show_password_fields', array(&$this, 'Show_password_fields_filter'));
 			}
 
 			// Widgets and admin menu
@@ -573,6 +574,11 @@ if (!class_exists('MozillaBrowserID')) {
 
 		// Disable reset password if in BrowserID only mode
 		function Allow_password_reset_filter() {
+			return !self::Is_option_browserid_only_auth();
+		}
+
+		// Disable change password form if in BrowserID only mode
+		function Show_password_fields_filter() {
 			return !self::Is_option_browserid_only_auth();
 		}
 
