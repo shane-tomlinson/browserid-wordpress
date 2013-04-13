@@ -50,9 +50,6 @@ if (!class_exists('MozillaBrowserID')) {
 
 		// Constructor
 		function __construct() {
-			// Debug mode
-			$this->debug = self::Is_option_debug();
-
 			// Register de-activation
 			register_deactivation_hook(__FILE__, array(&$this, 'Deactivate'));
 
@@ -88,8 +85,11 @@ if (!class_exists('MozillaBrowserID')) {
 				add_action('admin_menu', array(&$this, 'Admin_menu'));
 				add_action('admin_init', array(&$this, 'Admin_init'));
 			}
+
+			// top toolbar logout button override
+			add_action('admin_bar_menu', array(&$this, 'Admin_toolbar'), 999);
+
 			add_action('http_api_curl', array(&$this, 'http_api_curl'));
-                        add_action('admin_bar_menu', array(&$this, 'Admin_toolbar'), 999);
 
 			// Comment integration
 			if (self::Is_option_comments()) {
@@ -143,14 +143,11 @@ if (!class_exists('MozillaBrowserID')) {
 			// This one script takes care of all work.
 			wp_register_script('browserid_common', plugins_url('login.js', __FILE__), array('jquery', 'browserid'), '', true);
 
-			$redirect = (isset($_REQUEST['redirect_to']) ? $_REQUEST['redirect_to'] : null);
-			$browserid_error = (isset($_REQUEST['browserid_error']) ? $_REQUEST['browserid_error'] : null);
-			$browserid_failed = __('Verification failed', c_bid_text_domain);
 			$data_array = array(
 				'siteurl' => get_site_url(null, '/'),
-				'login_redirect' => $redirect,
-				'error' => $browserid_error,
-				'failed' => $browserid_failed,
+				'login_redirect' => self::Get_login_redirect_url(),
+				'error' => self::Get_error_message(),
+				'failed' => self::Get_verification_failed_message(),
 				'sitename' => self::Get_sitename(),
 				'sitelogo' => self::Get_sitelogo(),
 				'logout_redirect' => wp_logout_url(),
@@ -158,6 +155,47 @@ if (!class_exists('MozillaBrowserID')) {
 			);
 			wp_localize_script( 'browserid_common', 'browserid_common', $data_array );
 			wp_enqueue_script('browserid_common');
+		}
+
+		// Get the redirect URL from the request
+		function Get_request_redirect_url() {
+			return (isset($_REQUEST['redirect_to']) ? $_REQUEST['redirect_to'] : null);
+		}
+
+		// Get the login redirect URL
+		function Get_login_redirect_url($new_user = false) {
+			// first, if a redirect is specified in the request, use that.
+			// second, if it is a new user and a new user redirect url is 
+			// specified, go there.
+			// third, if if the global login redirect  is specified, use that.
+			// forth, use the admin URL.
+
+			$newuser_redirect_url = self::Get_option_newuser_redir();
+			$option_redirect_url = self::Get_option_login_redir();
+			$request_redirect_url = self::Get_request_redirect_url(); 
+
+			if(!empty($request_redirect_url)) {
+				$redirect_to = $request_redirect_url;
+			} else if($new_user && !empty($newsuer_redirect_url)) {
+				$redirect_to = $newuser_redirect_url;
+			} else if(!empty($option_redirect_url)) {
+				$redirect_to = $option_redirect_url;
+			} else {
+				$redirect_to = admin_url();
+			}
+
+			return $redirect_to;
+		}
+
+
+		// Get the error message
+		function Get_error_message() {
+			return (isset($_REQUEST['browserid_error']) ? $_REQUEST['browserid_error'] : null);
+		}
+
+		// Get the verification failed message
+		function Get_verification_failed_message() {
+			return __('Verification failed', c_bid_text_domain);
 		}
 
 		// Get the currently logged in user, iff they authenticated 
@@ -207,7 +245,7 @@ if (!class_exists('MozillaBrowserID')) {
 					'cookies' => array(),
 					'sslverify' => !$noverify
 				);
-				if ($this->debug)
+				if (self::Is_option_debug())
 					update_option(c_bid_option_request, $vserver . ' ' . print_r($args, true));
 
 				// Verify assertion
@@ -217,7 +255,7 @@ if (!class_exists('MozillaBrowserID')) {
 				if (is_wp_error($response)) {
 					// Debug info
 					$message = __($response->get_error_message());
-					if ($this->debug) {
+					if (self::Is_option_debug()) {
 						update_option(c_bid_option_response, $response);
 						header('Content-type: text/plain');
 						echo $message . PHP_EOL;
@@ -229,7 +267,7 @@ if (!class_exists('MozillaBrowserID')) {
 				}
 				else {
 					// Persist debug info
-					if ($this->debug) {
+					if (self::Is_option_debug()) {
 						$response['vserver'] = $vserver;
 						$response['audience'] = $audience;
 						$response['rememberme'] = $rememberme;
@@ -243,7 +281,7 @@ if (!class_exists('MozillaBrowserID')) {
 					if (empty($result) || empty($result['status'])) {
 						// No result or status
 						$message = __('Verification void', c_bid_text_domain);
-						if ($this->debug) {
+						if (self::Is_option_debug()) {
 							header('Content-type: text/plain');
 							echo $message . PHP_EOL;
 							echo $response['response']['message'] . PHP_EOL;
@@ -265,11 +303,11 @@ if (!class_exists('MozillaBrowserID')) {
 							else if (self::Is_registration())
 								self::Handle_registration($result);
 							else
-								self::Handle_login($result, $rememberme);
+								self::Handle_login($result, $rememberme, false);
 						}
 						else {
 							$message = __('Verification invalid', c_bid_text_domain);
-							if ($this->debug) {
+							if (self::Is_option_debug()) {
 								header('Content-type: text/plain');
 								echo $message . PHP_EOL;
 								echo 'time=' . time() . PHP_EOL;
@@ -285,7 +323,7 @@ if (!class_exists('MozillaBrowserID')) {
 						$message = __('Verification failed', c_bid_text_domain);
 						if (isset($result['reason']))
 							$message .= ': ' . __($result['reason'], c_bid_text_domain);
-						if ($this->debug) {
+						if (self::Is_option_debug()) {
 							header('Content-type: text/plain');
 							echo $message . PHP_EOL;
 							echo 'audience=' . $audience . PHP_EOL;
@@ -318,7 +356,7 @@ if (!class_exists('MozillaBrowserID')) {
 		// Generic error handling
 		function Handle_error($message) {
 			$post_id = self::Is_comment();
-			$redirect = isset($_REQUEST['redirect_to']) ? $_REQUEST['redirect_to'] : null;
+			$redirect = self::Get_request_redirect_url();
 			$url = ($post_id ? get_permalink($post_id) : wp_login_url($redirect));
 			$url .= (strpos($url, '?') === false ? '?' : '&') . 'browserid_error=' . urlencode($message);
 			if ($post_id)
@@ -328,20 +366,13 @@ if (!class_exists('MozillaBrowserID')) {
 		}
 
 		// Process login
-		function Handle_login($result, $rememberme) {
+		function Handle_login($result, $rememberme, $new_user) {
 			$options = get_option('browserid_options');
 			// Login
 			$user = self::Login_by_email($result['email'], $rememberme);
 			if ($user) {
 				// Beam me up, Scotty!
-				if (isset($result['redirect_to'])) 
-					$redirect_to = $result['redirect_to'];
-				else if (isset($options['browserid_login_redir']) && $options['browserid_login_redir'])
-					$redirect_to = $options['browserid_login_redir'];
-				else if (isset($_REQUEST['redirect_to']))
-					$redirect_to = $_REQUEST['redirect_to'];
-				else
-					$redirect_to = admin_url();
+				$redirect_to = self::Get_login_redirect_url($new_user);
 				$redirect_to = apply_filters('login_redirect', $redirect_to, '', $user);
 				wp_redirect($redirect_to);
 				exit();
@@ -354,7 +385,7 @@ if (!class_exists('MozillaBrowserID')) {
 					$message = __('You must already have an account to log in with Persona.');
 					self::Handle_error($message);
 					exit();
-				} else if( !isset($options['browserid_auto_create_new_users']) || !$options['browserid_auto_create_new_users']) {
+				} else if( !self::Is_option_auto_create_new_users() ) {
 					$message = __('You must already have an account to log in with Persona.');
 
 					self::Handle_error($message);
@@ -363,16 +394,11 @@ if (!class_exists('MozillaBrowserID')) {
 					$user_id = wp_create_user($result['email'], 'password', $result['email']);
 					
 					if ($user_id) {
-						if (isset($options['browserid_newuser_redir']) && $options['browserid_newuser_redir']) {
-							$result['redirect_to'] = $options['browserid_newuser_redir'];
-						} else {
-							$result['redirect_to'] = admin_url() . 'profile.php';
-						}
-						self::Handle_login($result, $rememberme);
+						self::Handle_login($result, $rememberme, true);
 					} else {				
 						$message = __('New user creation failed', c_bid_text_domain);
 						$message .= ' (' . $result['email'] . ')';
-						if ($this->debug) {
+						if (self::Is_option_debug()) {
 							header('Content-type: text/plain');
 							echo $message . PHP_EOL;
 							print_r($result);
@@ -819,6 +845,19 @@ if (!class_exists('MozillaBrowserID')) {
 			echo '<br />' . __('Default User Profile', c_bid_text_domain);
 		}
 
+		// Get the new user redir URL option
+		function Get_option_newuser_redir() {
+			$options = get_option('browserid_options');
+			if (isset($options['browserid_newuser_redir']) && $options['browserid_newuser_redir']) {
+				$redirect_to = $options['browserid_newuser_redir'];
+			} else {
+				$redirect_to = admin_url() . 'profile.php';
+			}
+
+			return $redirect_to;
+		}
+
+
 		// Login redir URL option
 		function Option_login_redir() {
 			$options = get_option('browserid_options');
@@ -826,6 +865,12 @@ if (!class_exists('MozillaBrowserID')) {
 				$options['browserid_login_redir'] = null;
 			echo "<input id='browserid_login_redir' name='browserid_options[browserid_login_redir]' type='text' size='100' value='{$options['browserid_login_redir']}' />";
 			echo '<br />' . __('Default WordPress dashboard', c_bid_text_domain);
+		}
+
+		// Get the login redir URL
+		function Get_option_login_redir() {
+			$options = get_option('browserid_options');
+			return isset($options['browserid_login_redir']) && $options['browserid_login_redir'];
 		}
 
 		// Enable comments integration
@@ -956,7 +1001,7 @@ if (!class_exists('MozillaBrowserID')) {
 				</form>
 			</div>
 <?php
-			if ($this->debug) {
+			if (self::Is_option_debug()) {
 				$options = get_option('browserid_options');
 				$request = get_option(c_bid_option_request);
 				$response = get_option(c_bid_option_response);
