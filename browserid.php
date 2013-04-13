@@ -313,7 +313,6 @@ if (!class_exists('MozillaBrowserID')) {
 		// Check result
 		function Check_verifier_response($response) {
 			$result = json_decode($response['body'], true);
-			$novalid = self::Is_option_novalid();
 
 			if (empty($result) || empty($result['status'])) {
 				// No result or status
@@ -325,12 +324,6 @@ if (!class_exists('MozillaBrowserID')) {
 				$message = __('Verification failed', c_bid_text_domain);
 				if (isset($result['reason']))
 					$message .= ': ' . __($result['reason'], c_bid_text_domain);
-			} 
-			// XXX The verifier should check the expiration already. This could 
-			// cause the assertion to be marked expired if the server has clock 
-			// skew.
-			else if (!$novalid && time() > $result['expires'] / 1000) {
-				$message = __('Assertion expired', c_bid_text_domain);
 			} 
 			else {
 				// Succeeded
@@ -783,7 +776,6 @@ if (!class_exists('MozillaBrowserID')) {
 			add_settings_field('browserid_bbpress', __('Enable bbPress integration:', c_bid_text_domain), array(&$this, 'Option_bbpress'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_comment_html', __('Custom comment HTML:', c_bid_text_domain), array(&$this, 'Option_comment_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_vserver', __('Verification server:', c_bid_text_domain), array(&$this, 'Option_vserver'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_novalid', __('Do not check valid until time:', c_bid_text_domain), array(&$this, 'Option_novalid'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_noverify', __('Do not verify SSL certificate:', c_bid_text_domain), array(&$this, 'Option_noverify'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_debug', __('Debug mode:', c_bid_text_domain), array(&$this, 'Option_debug'), 'browserid', 'plugin_main');
 		}
@@ -936,19 +928,6 @@ if (!class_exists('MozillaBrowserID')) {
 				$vserver = 'https://verifier.login.persona.org/verify';
 
 			return $vserver;
-		}
-
-		// No valid until option
-		function Option_novalid() {
-			$options = get_option('browserid_options');
-			$chk = (isset($options['browserid_novalid']) && $options['browserid_novalid'] ? " checked='checked'" : '');
-			echo "<input id='browserid_novalid' name='browserid_options[browserid_novalid]' type='checkbox'" . $chk. "/>";
-			echo '<strong>' . __('Security risk!', c_bid_text_domain) . '</strong>';
-		}
-
-		function Is_option_novalid() {
-			$options = get_option('browserid_options');
-			return isset($options['browserid_novalid']) && $options['browserid_novalid'];
 		}
 
 		// No SSL verify option
