@@ -76,6 +76,12 @@ if (!class_exists('MozillaBrowserID')) {
 			}
 
 
+			// Lost password
+			if (self::Is_option_browserid_only_auth()) {
+				add_action('lost_password', array(&$this, 'Lost_password_form'));
+				add_filter('allow_password_reset', array(&$this, 'Allow_password_reset_filter'));
+			}
+
 			// Widgets and admin menu
 			add_action('widgets_init', create_function('', 'return register_widget("BrowserID_Widget");'));
 			if (is_admin()) {
@@ -539,6 +545,25 @@ if (!class_exists('MozillaBrowserID')) {
 			}
 
 			return '';
+		}
+
+		// If only BrowserID logins are allowed, a reset password form should 
+		// not be shown.
+		function Lost_password_form() {
+			if (self::Is_option_browserid_only_auth()) {
+				// The blogname option is escaped with esc_html on the way into the database in sanitize_option
+				// we want to reverse this for the plain text arena of emails.
+				$blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+				login_header(__('Password reset disabled'), '<p 
+				class="message">' . sprintf(__('%s uses Mozilla Persona to sign in and does not use passwords. Password reset is disabled.'), $blogname) . "</p>");
+				login_footer('user_login');
+				exit();
+			}
+		}
+
+		// Disable reset password if in BrowserID only mode
+		function Allow_password_reset_filter() {
+			return !self::Is_option_browserid_only_auth();
 		}
 
 
