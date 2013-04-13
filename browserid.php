@@ -136,7 +136,10 @@ if (!class_exists('MozillaBrowserID')) {
 			load_plugin_textdomain(c_bid_text_domain, false, dirname(plugin_basename(__FILE__)));
 
 			// Check for assertion
-			self::Check_assertion();
+			$assertion = self::Get_assertion();
+			if (!empty($assertion)) {
+				self::Check_assertion($assertion);
+			}
 
 			// Enqueue BrowserID scripts
 			wp_register_script('browserid', 'https://login.persona.org/include.js', array(), '', true);
@@ -211,39 +214,24 @@ if (!class_exists('MozillaBrowserID')) {
 			return null;
 		}
 
-		function Check_assertion() {
-			// Workaround for Microsoft IIS bug
-			if (isset($_REQUEST['?browserid_assertion']))
-				$_REQUEST['browserid_assertion'] = $_REQUEST['?browserid_assertion'];
+		// Check if an assertion is received. If one has been, verify it and 
+		// log the user in. If not, continue.
+		function Check_assertion($assertion) {
+			// Verify assertion
+			$response = self::Post_assertion_to_verifier($assertion);
 
-			// Verify received assertion
-			if (isset($_REQUEST['browserid_assertion'])) {
-				// Verify assertion
-				$response = self::Post_assertion_to_verifier();
+			// Decode response. If the response is invalid, an error 
+			// message will be printed.
+			$result = self::Check_verifier_response($response);
 
-				$rememberme = self::Get_rememberme();
-
-				// Persist debug info
-				if (self::Is_option_debug()) {
-					$response['vserver'] = self::Get_option_vserver();
-					$response['audience'] = self::Get_audience();
-					$response['rememberme'] = self::Get_rememberme();
-					update_option(c_bid_option_response, $response);
-				}
-
-				// Decode response. If the response is invalid, an error 
-				// message will be printed.
-				$result = self::Check_verifier_response($response);
-
-				if ($result) {
-					// Succeeded
-					if (self::Is_comment())
-						self::Handle_comment($result);
-					else if (self::Is_registration())
-						self::Handle_registration($result);
-					else
-						self::Handle_login($result, $rememberme, false);
-				}
+			if ($result) {
+				// Succeeded
+				if (self::Is_comment())
+					self::Handle_comment($result);
+				else if (self::Is_registration())
+					self::Handle_registration($result);
+				else
+					self::Handle_login($result, false);
 			}
 		}
 
@@ -254,6 +242,10 @@ if (!class_exists('MozillaBrowserID')) {
 
 		// Get an assertion from that request
 		function Get_assertion() {
+			// Workaround for Microsoft IIS bug
+			if (isset($_REQUEST['?browserid_assertion']))
+				$_REQUEST['browserid_assertion'] = $_REQUEST['?browserid_assertion'];
+
 			return $_REQUEST['browserid_assertion'];
 		}
 
@@ -264,8 +256,7 @@ if (!class_exists('MozillaBrowserID')) {
 		// Post the assertion to the verifier. If the assertion does not 
 		// verify, an error message will be displayed and no more processing 
 		// will occur 
-		function Post_assertion_to_verifier() {
-			$assertion = self::Get_assertion();
+		function Post_assertion_to_verifier($assertion) {
 			$audience = self::Get_audience();
 
 			// Get verification server URL
@@ -307,16 +298,28 @@ if (!class_exists('MozillaBrowserID')) {
 				self::Handle_error($message, $message, $response);
 			}
 
+			// Persist debug info
+			if (self::Is_option_debug()) {
+				$response['vserver'] = self::Get_option_vserver();
+				$response['audience'] = self::Get_audience();
+				$response['rememberme'] = self::Get_rememberme();
+				update_option(c_bid_option_response, $response);
+			}
+
+
 			return $response;
 		}
 
-		// Check result
+		// Check result. If result is either invalid or indicates a bad 
+		// assertion, an error message will be printed and processing
+		// will stop. If verification succeeds, response will be returned.
 		function Check_verifier_response($response) {
 			$result = json_decode($response['body'], true);
 
 			if (empty($result) || empty($result['status'])) {
 				// No result or status
-				$message = __('Verification void', c_bid_text_domain);
+				$message = __('Verification response invalid', c_bid_text_domain);
+
 				$debug_message = $message . PHP_EOL . $response['response']['message'];
 			}
 			else if ($result['status'] != 'okay') {
@@ -324,18 +327,18 @@ if (!class_exists('MozillaBrowserID')) {
 				$message = __('Verification failed', c_bid_text_domain);
 				if (isset($result['reason']))
 					$message .= ': ' . __($result['reason'], c_bid_text_domain);
+
+				$debug_message = $message . PHP_EOL;
 			} 
 			else {
 				// Succeeded
 				return $result;
 			}
 
-			if (empty($debug_message)) {
-				$debug_message = $message . PHP_EOL;
-				$debug_message .= 'audience=' . self::Get_audience() . PHP_EOL;
-				$debug_message .= 'vserver=' . parse_url(self::Get_option_vserver(), PHP_URL_HOST) . PHP_EOL;
-				$debug_message .= 'time=' . time();
-			}
+			// Verification has failed, display erorr and stop processing.
+			$debug_message .= 'audience=' . self::Get_audience() . PHP_EOL;
+			$debug_message .= 'vserver=' . parse_url(self::Get_option_vserver(), PHP_URL_HOST) . PHP_EOL;
+			$debug_message .= 'time=' . time();
 
 			self::Handle_error($message, $debug_message, $result);
 		}
@@ -377,7 +380,9 @@ if (!class_exists('MozillaBrowserID')) {
 		}
 
 		// Process login
-		function Handle_login($result, $rememberme, $new_user) {
+		function Handle_login($result, $new_user) {
+			$rememberme = self::Get_rememberme();
+
 			$options = get_option('browserid_options');
 			// Login
 			$user = self::Login_by_email($result['email'], $rememberme);
@@ -389,9 +394,8 @@ if (!class_exists('MozillaBrowserID')) {
 				exit();
 			}
 			else {
-				// User not found? If auto-registration is 
-				// enabled, try to create a new user with the 
-				// email address as the username.
+				// User not found? If auto-registration is enabled, try to create a new user 
+				// with the email address as the username.
 				if ( !(get_option('users_can_register') && self::Is_option_auto_create_new_users() ) ) {
 					$message = __('You must already have an account to log in with Persona.');
 					self::Handle_error($message);
@@ -400,7 +404,7 @@ if (!class_exists('MozillaBrowserID')) {
 					$user_id = wp_create_user($result['email'], 'password', $result['email']);
 					
 					if ($user_id) {
-						self::Handle_login($result, $rememberme, true);
+						self::Handle_login($result, true);
 					} else {				
 						$message = __('New user creation failed', c_bid_text_domain);
 						$message .= ' (' . $result['email'] . ')';
