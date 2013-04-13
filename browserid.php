@@ -392,22 +392,8 @@ if (!class_exists('MozillaBrowserID')) {
 				exit();
 			}
 			else {
-				// User not found? If auto-registration is enabled, try to create a new user 
-				// with the email address as the username.
-				if ( !(get_option('users_can_register') && self::Is_option_auto_create_new_users() ) ) {
-					$message = __('You must already have an account to log in with Persona.');
-					self::Handle_error($message);
-				} else {
-					$user_id = wp_create_user($email, 'password', $email);
-					
-					if ($user_id) {
-						self::Handle_login($email, true);
-					} else {				
-						$message = __('New user creation failed', c_bid_text_domain);
-						$message .= ' (' . $email . ')';
-						self::Handle_error($message, $message);
-					}
-				}
+				$message = __('You must already have an account to log in with Persona.');
+				self::Handle_error($message);
 			}
 		}
 
@@ -768,7 +754,6 @@ if (!class_exists('MozillaBrowserID')) {
 			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_login_html', __('Custom login HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_logout_html', __('Custom logout HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_auto_create_new_users', __('Automatically create new users with the email address as the username', c_bid_text_domain), array(&$this, 'Option_auto_create_new_users'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_newuser_redir', __('New user redirection URL:', c_bid_text_domain), array(&$this, 'Option_newuser_redir'), 'browserid', 'plugin_main');
 
 			add_settings_field('browserid_login_redir', __('Login redirection URL:', c_bid_text_domain), array(&$this, 'Option_login_redir'), 'browserid', 'plugin_main');
@@ -817,20 +802,6 @@ if (!class_exists('MozillaBrowserID')) {
 			if (empty($options['browserid_logout_html']))
 				$options['browserid_logout_html'] = null;
 			echo "<input id='browserid_logout_html' name='browserid_options[browserid_logout_html]' type='text' size='100' value='{$options['browserid_logout_html']}' />";
-		}
-
-		// Should new users be created automatically with the 
-		// email address for the username.
-		function Option_auto_create_new_users() {
-			$options = get_option('browserid_options');
-			$chk = (isset($options['browserid_auto_create_new_users']) && $options['browserid_auto_create_new_users'] ? " checked='checked'" : '');
-			echo "<input id='browserid_auto_create_new_users' name='browserid_options[browserid_auto_create_new_users]' type='checkbox'" . $chk. "/>";
-		}
-
-		function Is_option_auto_create_new_users() {
-			$options = get_option('browserid_options');
-			return isset($options['browserid_auto_create_new_users']) && 
-						$options['browserid_auto_create_new_users'];
 		}
 
 		// New user redir URL option
