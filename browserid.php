@@ -257,13 +257,9 @@ if (!class_exists('MozillaBrowserID')) {
 					$message = __($response->get_error_message());
 					if (self::Is_option_debug()) {
 						update_option(c_bid_option_response, $response);
-						header('Content-type: text/plain');
-						echo $message . PHP_EOL;
-						print_r($response);
-						exit();
 					}
-					else
-						self::Handle_error($message);
+
+					self::Handle_error($message, $message, $response);
 				}
 				else {
 					// Persist debug info
@@ -281,15 +277,8 @@ if (!class_exists('MozillaBrowserID')) {
 					if (empty($result) || empty($result['status'])) {
 						// No result or status
 						$message = __('Verification void', c_bid_text_domain);
-						if (self::Is_option_debug()) {
-							header('Content-type: text/plain');
-							echo $message . PHP_EOL;
-							echo $response['response']['message'] . PHP_EOL;
-							print_r($response);
-							exit();
-						}
-						else
-							self::Handle_error($message);
+						$debug_message = $message . PHP_EOL . $response['response']['message'];
+						self::Handle_error($message, $debug_message, $result);
 					}
 					else if ($result['status'] == 'okay' &&
 							$result['audience'] == $audience) {
@@ -307,15 +296,8 @@ if (!class_exists('MozillaBrowserID')) {
 						}
 						else {
 							$message = __('Verification invalid', c_bid_text_domain);
-							if (self::Is_option_debug()) {
-								header('Content-type: text/plain');
-								echo $message . PHP_EOL;
-								echo 'time=' . time() . PHP_EOL;
-								print_r($result);
-								exit();
-							}
-							else
-								self::Handle_error($message);
+							$debug_message = $message . 'time=' . time();
+							self::Handle_error($message, $debug_message, $result);
 						}
 					}
 					else {
@@ -323,17 +305,13 @@ if (!class_exists('MozillaBrowserID')) {
 						$message = __('Verification failed', c_bid_text_domain);
 						if (isset($result['reason']))
 							$message .= ': ' . __($result['reason'], c_bid_text_domain);
-						if (self::Is_option_debug()) {
-							header('Content-type: text/plain');
-							echo $message . PHP_EOL;
-							echo 'audience=' . $audience . PHP_EOL;
-							echo 'vserver=' . parse_url($vserver, PHP_URL_HOST) . PHP_EOL;
-							echo 'time=' . time() . PHP_EOL;
-							print_r($result);
-							exit();
-						}
-						else
-							self::Handle_error($message);
+
+						$debug_message = $message . PHP_EOL;
+						$debug_message .= 'audience=' . $audience . PHP_EOL;
+						$debug_message .= 'vserver=' . parse_url($vserver, PHP_URL_HOST) . PHP_EOL;
+						$debug_message .= 'time=' . time();
+
+						self::Handle_error($message, $debug_message, $result);
 					}
 				}
 			}
@@ -354,14 +332,24 @@ if (!class_exists('MozillaBrowserID')) {
 		}
 
 		// Generic error handling
-		function Handle_error($message) {
-			$post_id = self::Is_comment();
-			$redirect = self::Get_request_redirect_url();
-			$url = ($post_id ? get_permalink($post_id) : wp_login_url($redirect));
-			$url .= (strpos($url, '?') === false ? '?' : '&') . 'browserid_error=' . urlencode($message);
-			if ($post_id)
-				$url .= '#browserid_' . $post_id;
-			wp_redirect($url);
+		function Handle_error($message, $debug_message, $result) {
+			if (self::Is_option_debug() && !empty($debug_message)) {
+				header('Content-type: text/plain');
+				echo $debug_message . PHP_EOL;
+
+				if (!empty($result)) {
+					print_r($result);
+				}
+			} else {
+				$post_id = self::Is_comment();
+				$redirect = self::Get_request_redirect_url();
+				$url = ($post_id ? get_permalink($post_id) : wp_login_url($redirect));
+				$url .= (strpos($url, '?') === false ? '?' : '&') . 'browserid_error=' . urlencode($message);
+				if ($post_id)
+					$url .= '#browserid_' . $post_id;
+				wp_redirect($url);
+			}
+
 			exit();
 		}
 
@@ -381,13 +369,8 @@ if (!class_exists('MozillaBrowserID')) {
 				// User not found? If auto-registration is 
 				// enabled, try to create a new user with the 
 				// email address as the username.
-				if ( !get_option('users_can_register') ) {
+				if ( !(get_option('users_can_register') && self::Is_option_auto_create_new_users() ) ) {
 					$message = __('You must already have an account to log in with Persona.');
-					self::Handle_error($message);
-					exit();
-				} else if( !self::Is_option_auto_create_new_users() ) {
-					$message = __('You must already have an account to log in with Persona.');
-
 					self::Handle_error($message);
 					exit();
 				} else {
@@ -398,15 +381,7 @@ if (!class_exists('MozillaBrowserID')) {
 					} else {				
 						$message = __('New user creation failed', c_bid_text_domain);
 						$message .= ' (' . $result['email'] . ')';
-						if (self::Is_option_debug()) {
-							header('Content-type: text/plain');
-							echo $message . PHP_EOL;
-							print_r($result);
-						}
-						else 
-							self::Handle_error($message);
-
-						exit();
+						self::Handle_error($message, $message, $result);
 					}
 				}
 			}
