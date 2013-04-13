@@ -167,21 +167,18 @@ if (!class_exists('MozillaBrowserID')) {
 		}
 
 		// Get the login redirect URL
-		function Get_login_redirect_url($new_user = false) {
+		function Get_login_redirect_url() {
 			// first, if a redirect is specified in the request, use that.
 			// second, if it is a new user and a new user redirect url is 
 			// specified, go there.
 			// third, if if the global login redirect  is specified, use that.
 			// forth, use the admin URL.
 
-			$newuser_redirect_url = self::Get_option_newuser_redir();
 			$option_redirect_url = self::Get_option_login_redir();
 			$request_redirect_url = self::Get_request_redirect_url(); 
 
 			if(!empty($request_redirect_url)) {
 				$redirect_to = $request_redirect_url;
-			} else if($new_user && !empty($newsuer_redirect_url)) {
-				$redirect_to = $newuser_redirect_url;
 			} else if(!empty($option_redirect_url)) {
 				$redirect_to = $option_redirect_url;
 			} else {
@@ -233,7 +230,7 @@ if (!class_exists('MozillaBrowserID')) {
 				else if (self::Is_registration())
 					self::Handle_registration($email);
 				else
-					self::Handle_login($email, false);
+					self::Handle_login($email);
 			}
 		}
 
@@ -382,12 +379,12 @@ if (!class_exists('MozillaBrowserID')) {
 		}
 
 		// Process login
-		function Handle_login($email, $new_user) {
+		function Handle_login($email) {
 			// Login
 			$user = self::Login_by_email($email, self::Get_rememberme());
 			if ($user) {
 				// Beam me up, Scotty!
-				$redirect_to = self::Get_login_redirect_url($new_user);
+				$redirect_to = self::Get_login_redirect_url();
 				$redirect_to = apply_filters('login_redirect', $redirect_to, '', $user);
 				wp_redirect($redirect_to);
 				exit();
@@ -760,7 +757,6 @@ if (!class_exists('MozillaBrowserID')) {
 			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_login_html', __('Custom login HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_logout_html', __('Custom logout HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_newuser_redir', __('New user redirection URL:', c_bid_text_domain), array(&$this, 'Option_newuser_redir'), 'browserid', 'plugin_main');
 
 			add_settings_field('browserid_login_redir', __('Login redirection URL:', c_bid_text_domain), array(&$this, 'Option_login_redir'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_comments', __('Enable for comments:', c_bid_text_domain), array(&$this, 'Option_comments'), 'browserid', 'plugin_main');
@@ -810,28 +806,6 @@ if (!class_exists('MozillaBrowserID')) {
 			echo "<input id='browserid_logout_html' name='browserid_options[browserid_logout_html]' type='text' size='100' value='{$options['browserid_logout_html']}' />";
 		}
 
-		// New user redir URL option
-		function Option_newuser_redir() {
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_newuser_redir']))
-				$options['browserid_newuser_redir'] = null;
-			echo "<input id='browserid_newuser_redir' name='browserid_options[browserid_newuser_redir]' type='text' size='100' value='{$options['browserid_newuser_redir']}' />";
-			echo '<br />' . __('Default User Profile', c_bid_text_domain);
-		}
-
-		// Get the new user redir URL option
-		function Get_option_newuser_redir() {
-			$options = get_option('browserid_options');
-			if (isset($options['browserid_newuser_redir']) && $options['browserid_newuser_redir']) {
-				$redirect_to = $options['browserid_newuser_redir'];
-			} else {
-				$redirect_to = admin_url() . 'profile.php';
-			}
-
-			return $redirect_to;
-		}
-
-
 		// Login redir URL option
 		function Option_login_redir() {
 			$options = get_option('browserid_options');
@@ -844,7 +818,7 @@ if (!class_exists('MozillaBrowserID')) {
 		// Get the login redir URL
 		function Get_option_login_redir() {
 			$options = get_option('browserid_options');
-			return isset($options['browserid_login_redir']) && $options['browserid_login_redir'];
+			return isset($options['browserid_login_redir']) ? $options['browserid_login_redir'] : null;
 		}
 
 		// Enable comments integration
