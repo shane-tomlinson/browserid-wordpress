@@ -225,13 +225,14 @@ if (!class_exists('MozillaBrowserID')) {
 			$result = self::Check_verifier_response($response);
 
 			if ($result) {
+				$email = $result['email'];
 				// Succeeded
 				if (self::Is_comment())
-					self::Handle_comment($result);
+					self::Handle_comment($email);
 				else if (self::Is_registration())
-					self::Handle_registration($result);
+					self::Handle_registration($email);
 				else
-					self::Handle_login($result, false);
+					self::Handle_login($email, false);
 			}
 		}
 
@@ -380,12 +381,9 @@ if (!class_exists('MozillaBrowserID')) {
 		}
 
 		// Process login
-		function Handle_login($result, $new_user) {
-			$rememberme = self::Get_rememberme();
-
-			$options = get_option('browserid_options');
+		function Handle_login($email, $new_user) {
 			// Login
-			$user = self::Login_by_email($result['email'], $rememberme);
+			$user = self::Login_by_email($email, self::Get_rememberme());
 			if ($user) {
 				// Beam me up, Scotty!
 				$redirect_to = self::Get_login_redirect_url($new_user);
@@ -399,16 +397,15 @@ if (!class_exists('MozillaBrowserID')) {
 				if ( !(get_option('users_can_register') && self::Is_option_auto_create_new_users() ) ) {
 					$message = __('You must already have an account to log in with Persona.');
 					self::Handle_error($message);
-					exit();
 				} else {
-					$user_id = wp_create_user($result['email'], 'password', $result['email']);
+					$user_id = wp_create_user($email, 'password', $email);
 					
 					if ($user_id) {
-						self::Handle_login($result, true);
+						self::Handle_login($email, true);
 					} else {				
 						$message = __('New user creation failed', c_bid_text_domain);
-						$message .= ' (' . $result['email'] . ')';
-						self::Handle_error($message, $message, $result);
+						$message .= ' (' . $email . ')';
+						self::Handle_error($message, $message);
 					}
 				}
 			}
@@ -442,9 +439,8 @@ if (!class_exists('MozillaBrowserID')) {
 		}
 
 		// Process comment
-		function Handle_comment($result) {
+		function Handle_comment($email) {
 			// Initialize
-			$email = $result['email'];
 			$author = $_REQUEST['author'];
 			$url = $_REQUEST['url'];
 
@@ -549,9 +545,9 @@ if (!class_exists('MozillaBrowserID')) {
 
 		// Process registration - get the email address from the assertion and 
 		// process the rest of the form.
-		function Handle_registration($result) {
+		function Handle_registration($email) {
 			if (self::Is_option_browserid_only_auth()) {
-				$_POST['user_email'] = $result['email'];
+				$_POST['user_email'] = $email;
 			}
 		}
 
