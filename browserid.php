@@ -218,103 +218,133 @@ if (!class_exists('MozillaBrowserID')) {
 
 			// Verify received assertion
 			if (isset($_REQUEST['browserid_assertion'])) {
-				// Get assertion/audience/remember me
-				$assertion = $_REQUEST['browserid_assertion'];
-				$audience = $_SERVER['HTTP_HOST'];
-
-				$rememberme = (isset($_REQUEST['rememberme']) && $_REQUEST['rememberme'] == 'true');
-
-				// Get verification server URL
-				$vserver = self::Get_option_vserver();
-
-				// No SSL verify?
-				$noverify = self::Is_option_noverify();
-
-				// Build arguments
-				$args = array(
-					'method' => 'POST',
-					'timeout' => 30,
-					'redirection' => 0,
-					'httpversion' => '1.0',
-					'blocking' => true,
-					'headers' => array(),
-					'body' => array(
-						'assertion' => $assertion,
-						'audience' => $audience
-					),
-					'cookies' => array(),
-					'sslverify' => !$noverify
-				);
-				if (self::Is_option_debug())
-					update_option(c_bid_option_request, $vserver . ' ' . print_r($args, true));
-
 				// Verify assertion
-				$response = wp_remote_post($vserver, $args);
+				$response = self::Post_assertion_to_verifier();
 
-				// Check result
-				if (is_wp_error($response)) {
-					// Debug info
-					$message = __($response->get_error_message());
-					if (self::Is_option_debug()) {
-						update_option(c_bid_option_response, $response);
-					}
+				$rememberme = self::Get_rememberme();
 
-					self::Handle_error($message, $message, $response);
+				// Persist debug info
+				if (self::Is_option_debug()) {
+					$response['vserver'] = self::Get_option_vserver();
+					$response['audience'] = self::Get_audience();
+					$response['rememberme'] = self::Get_rememberme();
+					update_option(c_bid_option_response, $response);
 				}
-				else {
-					// Persist debug info
-					if (self::Is_option_debug()) {
-						$response['vserver'] = $vserver;
-						$response['audience'] = $audience;
-						$response['rememberme'] = $rememberme;
-						update_option(c_bid_option_response, $response);
-					}
 
-					// Decode response
-					$result = json_decode($response['body'], true);
+				// Decode response. If the response is invalid, an error 
+				// message will be printed.
+				$result = self::Check_verifier_response($response);
 
-					// Check result
-					if (empty($result) || empty($result['status'])) {
-						// No result or status
-						$message = __('Verification void', c_bid_text_domain);
-						$debug_message = $message . PHP_EOL . $response['response']['message'];
-						self::Handle_error($message, $debug_message, $result);
-					}
-					else if ($result['status'] == 'okay' &&
-							$result['audience'] == $audience) {
-						// Check expiry time
-						$novalid = self::Is_option_novalid();
-						if ($novalid || time() < $result['expires'] / 1000)
-						{
-							// Succeeded
-							if (self::Is_comment())
-								self::Handle_comment($result);
-							else if (self::Is_registration())
-								self::Handle_registration($result);
-							else
-								self::Handle_login($result, $rememberme, false);
-						}
-						else {
-							$message = __('Verification invalid', c_bid_text_domain);
-							$debug_message = $message . 'time=' . time();
-							self::Handle_error($message, $debug_message, $result);
-						}
-					}
-					else {
-						// Failed
-						$message = __('Verification failed', c_bid_text_domain);
-						if (isset($result['reason']))
-							$message .= ': ' . __($result['reason'], c_bid_text_domain);
-
-						$debug_message = $message . PHP_EOL;
-						$debug_message .= 'audience=' . $audience . PHP_EOL;
-						$debug_message .= 'vserver=' . parse_url($vserver, PHP_URL_HOST) . PHP_EOL;
-						$debug_message .= 'time=' . time();
-
-						self::Handle_error($message, $debug_message, $result);
-					}
+				if ($result) {
+					// Succeeded
+					if (self::Is_comment())
+						self::Handle_comment($result);
+					else if (self::Is_registration())
+						self::Handle_registration($result);
+					else
+						self::Handle_login($result, $rememberme, false);
 				}
 			}
+		}
+
+		// Get the audience
+		function Get_audience() {
+			return $_SERVER['HTTP_HOST'];
+		}
+
+		// Get an assertion from that request
+		function Get_assertion() {
+			return $_REQUEST['browserid_assertion'];
+		}
+
+		function Get_rememberme() {
+			return (isset($_REQUEST['rememberme']) && $_REQUEST['rememberme'] == 'true');
+		}
+
+		// Post the assertion to the verifier. If the assertion does not 
+		// verify, an error message will be displayed and no more processing 
+		// will occur 
+		function Post_assertion_to_verifier() {
+			$assertion = self::Get_assertion();
+			$audience = self::Get_audience();
+
+			// Get verification server URL
+			$vserver = self::Get_option_vserver();
+
+			// No SSL verify?
+			$noverify = self::Is_option_noverify();
+
+			// Build arguments
+			$args = array(
+				'method' => 'POST',
+				'timeout' => 30,
+				'redirection' => 0,
+				'httpversion' => '1.0',
+				'blocking' => true,
+				'headers' => array(),
+				'body' => array(
+					'assertion' => $assertion,
+					'audience' => $audience
+				),
+				'cookies' => array(),
+				'sslverify' => !$noverify
+			);
+
+			if (self::Is_option_debug())
+				update_option(c_bid_option_request, $vserver . ' ' . print_r($args, true));
+
+			// Verify assertion
+			$response = wp_remote_post($vserver, $args);
+
+			// If error, print the error message and exit.
+			if (is_wp_error($response)) {
+				// Debug info
+				$message = __($response->get_error_message());
+				if (self::Is_option_debug()) {
+					update_option(c_bid_option_response, $response);
+				}
+
+				self::Handle_error($message, $message, $response);
+			}
+
+			return $response;
+		}
+
+		// Check result
+		function Check_verifier_response($response) {
+			$result = json_decode($response['body'], true);
+			$novalid = self::Is_option_novalid();
+
+			if (empty($result) || empty($result['status'])) {
+				// No result or status
+				$message = __('Verification void', c_bid_text_domain);
+				$debug_message = $message . PHP_EOL . $response['response']['message'];
+			}
+			else if ($result['status'] != 'okay') {
+				// Bad status
+				$message = __('Verification failed', c_bid_text_domain);
+				if (isset($result['reason']))
+					$message .= ': ' . __($result['reason'], c_bid_text_domain);
+			} 
+			// XXX The verifier should check the expiration already. This could 
+			// cause the assertion to be marked expired if the server has clock 
+			// skew.
+			else if (!$novalid && time() > $result['expires'] / 1000) {
+				$message = __('Assertion expired', c_bid_text_domain);
+			} 
+			else {
+				// Succeeded
+				return $result;
+			}
+
+			if (empty($debug_message)) {
+				$debug_message = $message . PHP_EOL;
+				$debug_message .= 'audience=' . self::Get_audience() . PHP_EOL;
+				$debug_message .= 'vserver=' . parse_url(self::Get_option_vserver(), PHP_URL_HOST) . PHP_EOL;
+				$debug_message .= 'time=' . time();
+			}
+
+			self::Handle_error($message, $debug_message, $result);
 		}
 
 		// Determine if login or comment
