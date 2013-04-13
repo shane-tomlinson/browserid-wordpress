@@ -521,8 +521,7 @@ if (!class_exists('MozillaBrowserID')) {
 				$html = '<img src="' . self::Get_image_url() . '" style="border: none; vertical-align: middle; margin-right: 5px;" />';
 				echo '<a href="#" onclick="return browserid_register();" title="Mozilla Persona" class="browserid">' . $html  . '</a>';
 
-				echo 
-				'<style>#user_email,[for=user_email],#reg_passmail{display:none;}';
+				echo '<style>#user_email,[for=user_email],#reg_passmail{display:none;}';
 				echo '#wp-submit { position: absolute; left: -9999px !important; }</style>';
 			}
 		}
@@ -670,7 +669,8 @@ if (!class_exists('MozillaBrowserID')) {
 				// from logging in using the standard authentication mechanism, it 
 				// cleans up the login form a bit.
 				if (self::Is_option_browserid_only_auth()) {
-					$html .= '<style>#user_login, [for=user_login], #user_pass, [for=user_pass], [name=log], [name=pwd] { display: none; }</style>'; 
+					$html .= '<style>#user_login, [for=user_login], #user_pass, [for=user_pass], [name=log], [name=pwd] { display: none; }';
+          $html .= '#wp-submit { position: absolute; left: -9999px !important; }</style>';
 				}
 
 				return $html;
