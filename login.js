@@ -74,7 +74,7 @@
   }
 
   // If there was an error, log the user out.
-  if (browserid_common.error) {
+  if (browserid_common.error || jQuery("#login_error").length) {
     ignoreLogout = true;
 
     navigator.id.logout();
