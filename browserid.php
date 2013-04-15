@@ -56,6 +56,9 @@ if (!class_exists('MozillaBrowserID')) {
 			// Register actions & filters
 			add_action('init', array(&$this, 'Init'), 0);
 
+			// Action link in the plugins page
+			add_filter('plugin_action_links', array(&$this, 'Plugin_action_links_filter'), 10, 2);
+
 
 			// Authentication
 			add_action('set_auth_cookie', array(&$this, 'Set_auth_cookie_action'));
@@ -128,6 +131,29 @@ if (!class_exists('MozillaBrowserID')) {
 		function Deactivate() {
 			// TODO: delete options
 		}
+
+		// Add a "Settings" link to the plugin list page.
+		function Plugin_action_links_filter($links, $file) {
+			static $this_plugin;
+
+			if (!$this_plugin) {
+				$this_plugin = plugin_basename(__FILE__);
+			}
+
+			if ($file == $this_plugin) {
+				// The "page" query string value must be equal to the slug
+				// of the Settings admin page we defined earlier, which in
+				// this case equals "myplugin-settings".
+				$settings_link = '<a href="' 
+					. get_bloginfo('wpurl') 
+					. '/wp-admin/admin.php?page=' . __FILE__ . '">' 
+					. __('Settings') . '</a>';
+				array_unshift($links, $settings_link);
+			}
+
+			return $links;
+		}
+
 
 		// Initialization
 		function Init() {
@@ -246,7 +272,8 @@ if (!class_exists('MozillaBrowserID')) {
 			if (isset($_REQUEST['?browserid_assertion']))
 				$_REQUEST['browserid_assertion'] = $_REQUEST['?browserid_assertion'];
 
-			return $_REQUEST['browserid_assertion'];
+			return isset($_REQUEST['browserid_assertion']) ? 
+					$_REQUEST['browserid_assertion'] : null;
 		}
 
 		function Get_rememberme() {
