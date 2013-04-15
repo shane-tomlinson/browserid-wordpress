@@ -12,7 +12,7 @@ Original Author URI: http://blog.bokhorst.biz/about/
 */
 
 /*
-	Copyright (c) 2011, 2012, 2013 Marcel Bokhorst
+	Copyright (c) 2011, 2012, 2013 Shane Tomlinson, Marcel Bokhorst
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -69,7 +69,8 @@ if (!class_exists('MozillaBrowserID')) {
 			if (self::Is_option_browserid_only_auth()) {
 				add_action('register_form', array(&$this, 'Register_form_action'));
 				add_action('user_register', array(&$this, 'Register_user_register_action'));
-				add_filter('registration_redirect', array(&$this, 'Register_redirect_filter'));
+				add_filter('registration_errors', array(&$this, 'Registration_errors_filter'));
+				add_filter('registration_redirect', array(&$this, 'Registration_redirect_filter'));
 			}
 
 
@@ -530,6 +531,10 @@ if (!class_exists('MozillaBrowserID')) {
 		// process the rest of the form.
 		function Handle_registration($email) {
 			if (self::Is_option_browserid_only_auth()) {
+				// Keep track of whether the user is registering with 
+				// BrowserID. Non BrowserID registrations are disabled in 
+				// BrowserID only auth.
+				$this->user_registering_with_browserid = true;
 				$_POST['user_email'] = $email;
 			}
 		}
@@ -542,7 +547,21 @@ if (!class_exists('MozillaBrowserID')) {
 			}
 		}
 
-		function Register_redirect_filter($redirect_to) {
+		// Check if traditional registration has been disabled.
+		function Registration_errors_filter($errors) {
+			if (self::Is_option_browserid_only_auth() && 
+					!$this->user_registering_with_browserid) { 
+				$blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+				$errors->add('invalid_registration', 
+						sprintf(__('<strong>ERROR</strong>:  '
+						. '%s uses Mozilla Persona for registration. '
+						. 'Please register using Persona.'), $blogname));
+			}
+
+			return $errors;
+		}
+
+		function Registration_redirect_filter($redirect_to) {
 			if ($redirect_to) return $redirect_to;
 
 			if (self::Is_option_browserid_only_auth()) {
@@ -826,7 +845,6 @@ if (!class_exists('MozillaBrowserID')) {
 			$options = get_option('browserid_options');
 			$chk = (isset($options['browserid_comments']) && $options['browserid_comments'] ? " checked='checked'" : '');
 			echo "<input id='browserid_comments' name='browserid_options[browserid_comments]' type='checkbox'" . $chk. "/>";
-			echo '<strong>Beta!</strong>';
 		}
 
 		// Can a user leave a comment using BrowserID
