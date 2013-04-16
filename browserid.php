@@ -442,6 +442,21 @@ if (!class_exists('MozillaBrowserID')) {
 
 			if ($userdata) {
 				$user = new WP_User($userdata->ID);
+
+				// Check if user/blog is marked as spam. Copied out of user.php
+				if ( is_multisite() ) {
+					// Is user marked as spam?
+					if ( 1 == $user->spam)
+						return new WP_Error('invalid_username', __('<strong>ERROR</strong>: Your account has been marked as a spammer.'));
+
+					// Is a user's blog marked as spam?
+					if ( !is_super_admin( $user->ID ) && isset($user->primary_blog) ) {
+						$details = get_blog_details( $user->primary_blog );
+						if ( is_object( $details ) && $details->spam == 1 )
+							return new WP_Error('blog_suspended', __('Site Suspended.'));
+					}
+				}
+
 				$this->browserid_login = true;
 				wp_set_current_user($userdata->ID, $userdata->user_login);
 				wp_set_auth_cookie($userdata->ID, $rememberme);
@@ -570,7 +585,7 @@ if (!class_exists('MozillaBrowserID')) {
 		// Now that the user is registered, log them in
 		function Register_user_register_action($user_id) {
 			if (self::Is_option_browserid_only_auth()) {
-				self::Login_by_id($user_id, false);
+				return self::Login_by_id($user_id, false);
 			}
 		}
 
@@ -1110,7 +1125,7 @@ if (!function_exists('browserid_loginout')) {
 	}
 }
 
-if (!function_exists('new_user_notification')) {
+if (!function_exists('wp_new_user_notification')) {
 	function wp_new_user_notification($user_id, $plaintext_pass = '') {
 		$user = get_userdata( $user_id );
 
