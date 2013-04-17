@@ -386,7 +386,7 @@ if (!class_exists('MozillaBrowserID')) {
 		}
 
 		// Generic error handling
-		function Handle_error($message, $debug_message, $result) {
+		function Handle_error($message, $debug_message = '', $result = '') {
 			if (self::Is_option_debug() && !empty($debug_message)) {
 				header('Content-type: text/plain');
 				echo $debug_message . PHP_EOL;
