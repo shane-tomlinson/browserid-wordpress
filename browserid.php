@@ -4,7 +4,7 @@ Plugin Name: Mozilla Persona
 Plugin URI: http://wordpress.org/extend/plugins/browserid/
 Plugin Repo: https://github.com/shane-tomlinson/browserid-wordpress
 Description: Mozilla Persona, the safest & easiest way to sign in
-Version: 0.40
+Version: 0.41
 Author: Shane Tomlinson
 Author URI: https://shanetomlinson.com
 Original Author: Marcel Bokhorst
@@ -61,7 +61,8 @@ if (!class_exists('MozillaBrowserID')) {
 
 
 			// Authentication
-			add_action('set_auth_cookie', array(&$this, 'Set_auth_cookie_action'));
+			add_action('set_auth_cookie', array(&$this, 
+					'Set_auth_cookie_action'), 10, 5);
 			add_action('clear_auth_cookie', array(&$this, 'Clear_auth_cookie_action'));
 			add_filter('wp_authenticate_user', array(&$this, 'Wp_authenticate_user_filter'));
 			add_filter('login_message', array(&$this, 'Login_message_filter'));
@@ -532,7 +533,7 @@ if (!class_exists('MozillaBrowserID')) {
 		}
 
 		// Check whether normal username/password authentication is allowed
-		function Wp_authenticate_user_filter($user, $password) {
+		function Wp_authenticate_user_filter($user) {
 			if (self::Is_option_browserid_only_auth()) {
 				return new WP_error('invalid_login', 'Only BrowserID logins are allowed');
 			}
