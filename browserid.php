@@ -997,7 +997,7 @@ if (!class_exists('MozillaBrowserID')) {
 					echo '<p><strong>Assertion valid until</strong>: ' . $result['expires'] . ' > ' . date('c', $result['expires'] / 1000) . '</p>';
 				}
 
-				echo '<p><strong>PHP audience</strong>: ' . $_SERVER['HTTP_HOST'] . '</p>';
+				echo '<p><strong>PHP audience</strong>: ' . htmlentities($_SERVER['HTTP_HOST']) . '</p>';
 				echo '<script type="text/javascript">';
 				echo 'document.write("<p><strong>JS audience</strong>: " + window.location.hostname + "</p>");';
 				echo '</script>';
