@@ -290,9 +290,6 @@ if (!class_exists('MozillaBrowserID')) {
 			// Get verification server URL
 			$vserver = self::Get_option_vserver();
 
-			// No SSL verify?
-			$noverify = self::Is_option_noverify();
-
 			// Build arguments
 			$args = array(
 				'method' => 'POST',
@@ -306,7 +303,7 @@ if (!class_exists('MozillaBrowserID')) {
 					'audience' => $audience
 				),
 				'cookies' => array(),
-				'sslverify' => !$noverify
+				'sslverify' => true
 			);
 
 			if (self::Is_option_debug())
@@ -825,7 +822,6 @@ if (!class_exists('MozillaBrowserID')) {
 			add_settings_field('browserid_bbpress', __('Enable bbPress integration:', c_bid_text_domain), array(&$this, 'Option_bbpress'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_comment_html', __('Custom comment HTML:', c_bid_text_domain), array(&$this, 'Option_comment_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_vserver', __('Verification server:', c_bid_text_domain), array(&$this, 'Option_vserver'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_noverify', __('Do not verify SSL certificate:', c_bid_text_domain), array(&$this, 'Option_noverify'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_debug', __('Debug mode:', c_bid_text_domain), array(&$this, 'Option_debug'), 'browserid', 'plugin_main');
 		}
 
@@ -940,19 +936,6 @@ if (!class_exists('MozillaBrowserID')) {
 				$vserver = 'https://verifier.login.persona.org/verify';
 
 			return $vserver;
-		}
-
-		// No SSL verify option
-		function Option_noverify() {
-			$options = get_option('browserid_options');
-			$chk = (isset($options['browserid_noverify']) && $options['browserid_noverify'] ? " checked='checked'" : '');
-			echo "<input id='browserid_noverify' name='browserid_options[browserid_noverify]' type='checkbox'" . $chk. "/>";
-			echo '<strong>' . __('Security risk!', c_bid_text_domain) . '</strong>';
-		}
-
-		function Is_option_noverify() {
-			$options = get_option('browserid_options');
-			return isset($options['browserid_noverify']) && $options['browserid_noverify'];
 		}
 
 		// Debug option
