@@ -3,7 +3,8 @@
 (function() {
   "use strict";
 
-  var loginType;
+  var loginType,
+      forceSubmit;
 
   // Keep track of whether the onlogout callback should be ignored. Ignoring
   // the onlogout callback prevents the user from being redirected to the
@@ -13,12 +14,16 @@
 
   window.browserid_login = function() {
     ignoreLogout = false;
-    return authenticate("login");
+    return startAuthentication("login");
   };
 
   window.browserid_register = function() {
     ignoreLogout = false;
-    return authenticate("register");
+    // Save the form state to localStorage. This allows a new user to close
+    // this tab while they are verifying and still have the registration
+    // complete once the address is verified.
+    saveRegistrationState();
+    return startAuthentication("register");
   };
 
   window.browserid_comment = function() {
@@ -26,9 +31,9 @@
     // Save the form state to localStorage. This allows a new user to close
     // this tab while they are verifying and still have the comment form
     // submitted once the address is verified.
-    saveState();
+    saveCommentState();
 
-    return authenticate("comment");
+    return startAuthentication("comment");
   };
 
   window.browserid_logout = function() {
@@ -45,12 +50,12 @@
 
     // load the state into the form to reduce flicker. The form data may not be
     // needed, but load it anyways.
-    var state = loadState();
+    var state = loadCommentState();
 
     // If there is no state, the other window has already submitted the comment.
     // navigator.id.logout has already been called and no assertion will be
     // generated. Wait for the signal from the other window which causes a refresh.
-    if (!state) return refreshWhenSubmitComplete();
+    if (!state) return refreshWhenCommentSubmitComplete();
 
     // If the comment form is submitted in the original window, the user will
     // be sitting at the top of the page. Instead, go to the submit form.
@@ -63,6 +68,37 @@
     // newly inserted comment.
     loginType = "comment";
   }
+  else if (document.location.hash === "#register_verification") {
+    ignoreLogout = true;
+
+    // load the state into the form to reduce flicker. The form data may not be
+    // needed, but load it anyways.
+    var state = loadRegistrationState();
+
+    // If there is no state, the other window has already submitted the registration.
+    // Wait for the signal from the other window which causes a refresh.
+    if (!state) return refreshWhenRegistrationSubmitComplete();
+
+    // login type is definitely registration, in onlogin, the registration form will
+    // be submitted if the original window has not already done it. If the
+    // original window has already submitted the registration, this window will wait
+    // until the registration is submitted and then refresh the page and go to the
+    // profile page.
+    loginType = "register";
+
+    // If this is the post Persona verification page AND we got the state
+    // before the potential other page, forceSubmit. loadRegistrationState
+    // removes the registration state from localStorage and when onlogin is
+    // called, it will abort otherwise.
+    forceSubmit = true;
+  }
+  else if ((document.location.href === browserid_common.registration_redirect) &&
+           (sessionStorage.getItem("completing_registration"))) {
+    // If the user lands on the registration_redirect page AND they just came
+    // from the Registration page, inform other pages that registration has
+    // completed so they can redirect.
+    localStorage.setItem("registration_complete", "true");
+  }
 
   // If the user just completed comment submission, save the hash to
   // localStorage so the other window can refresh to the new comment.
@@ -73,6 +109,8 @@
     localStorage.setItem("comment_hash", document.location.hash);
   }
 
+
+
   // If there was an error, log the user out.
   if (browserid_common.error || jQuery("#login_error").length) {
     ignoreLogout = true;
@@ -80,18 +118,22 @@
     navigator.id.logout();
   }
 
+
+
+  var LoginHandlers = {
+    login: submitLoginForm,
+    register: submitRegistrationForm,
+    comment: submitCommentForm
+  };
+
   navigator.id.watch({
     loggedInUser: browserid_common.logged_in_user || null,
     onlogin: function(assertion) {
       loginType = getLoginType(loginType);
-      if (loginType === "login") {
-        submitLoginForm(assertion);
-      }
-	  else if (loginType === "register") {
-        submitRegistrationForm(assertion);
-	  }
-      else if (loginType === "comment") {
-        submitCommentForm(assertion);
+
+      var handler = LoginHandlers[loginType];
+      if (handler) {
+        handler(assertion);
       }
     },
     onlogout: function() {
@@ -110,10 +152,11 @@
   });
 
   function getLoginType(loginType) {
-	return loginType || "login";
+    return loginType || "login";
   }
 
-  function authenticate(type) {
+
+  function startAuthentication(type) {
     loginType = type;
 
     var opts = {
@@ -121,16 +164,19 @@
       siteLogo: browserid_common.sitelogo || ""
     };
 
+   /**
+    * If the user is signing in to comment or signing up as a new member
+    * and must verify, redirect with a special hash. The form will be
+    * submitted by the first page to receive an onlogin.
+    *
+    * This behavior is necessary because we are unsure whether the user
+    * will complete verification in the original window or in a new window.
+    */
     if (loginType === "comment") {
-      // If the user is signing in for a comment and must verify, redirect to
-      // with a special hash. The form will be submitted by the first page to
-      // receive an onlogin. Hopefully it will be the verification page, but we
-      // do not know.
-      var returnTo = document.location.href
-                      .replace(/http(s)?:\/\//, "")
-                      .replace(document.location.host, "")
-                      .replace(/#.*$/, "#comment_verification");
-      opts.returnTo = returnTo;
+      opts.returnTo = getReturnToUrl("#comment_verification");
+    }
+    else if (loginType === "register") {
+      opts.returnTo = getReturnToUrl("#register_verification");
     }
 
     navigator.id.request(opts);
@@ -138,13 +184,21 @@
     return false;
   }
 
+
+
+
+
+
+  /**
+   * LOGIN CODE
+   */
   function submitLoginForm(assertion) {
     var rememberme = document.getElementById("rememberme");
     if (rememberme !== null)
       rememberme = rememberme.checked;
 
-	// Since login can happen on any page, create a form and submit it manually
-	// ignoring the normal sign in form.
+    // Since login can happen on any page, create a form
+    // and submit it manually ignoring the normal sign in form.
     var form = document.createElement("form");
     form.setAttribute("style", "display: none;");
     form.method = "POST";
@@ -164,21 +218,22 @@
     form.submit();
   }
 
-  function submitRegistrationForm(assertion) {
-	jQuery("#browserid_assertion").val(assertion);
-	jQuery("#browserid_assertion").val(assertion);
 
-    jQuery("#wp-submit").click();
-  }
+
+
+
+
+
+  /**
+   * COMMENT CODE
+   */
 
   function submitCommentForm(assertion) {
     // If this is a new user that is verifying their email address in a new
     // window, both the original window and this window will be trying to
     // submit the comment form. The first one wins. The other one reloads.
-    var state = loadState();
-    if (!state) return refreshWhenSubmitComplete();
-
-    localStorage.removeItem("comment_state");
+    var state = loadCommentState();
+    if (!state) return refreshWhenCommentSubmitComplete();
 
     var form = jQuery("#commentform");
 
@@ -208,6 +263,121 @@
     jQuery("#submit").click();
   }
 
+  function saveCommentState() {
+    var state = {
+      author: jQuery("#author").val(),
+      url: jQuery("#url").val(),
+      comment: jQuery("#comment").val(),
+      comment_parent: jQuery("#comment_parent").val()
+    };
+
+    localStorage.setItem("comment_state", JSON.stringify(state));
+  }
+
+  function loadCommentState() {
+    var state = localStorage.getItem("comment_state");
+
+    if (state) {
+      state = JSON.parse(state);
+      jQuery("#author").val(state.author);
+      jQuery("#url").val(state.url);
+      jQuery("#comment").val(state.comment);
+      jQuery("#comment_parent").val(state.comment_parent);
+      localStorage.removeItem("comment_state");
+    }
+
+    return state;
+  }
+
+  function refreshWhenCommentSubmitComplete() {
+    // wait until the other window has completed the comment submit. When it
+    // completes, it will store the hash of the comment that this window should
+    // show.
+    var hash = localStorage.getItem("comment_hash");
+    if (hash) {
+      localStorage.removeItem("comment_hash");
+      document.location.hash = hash;
+      document.location.reload(true);
+    }
+    else {
+      setTimeout(refreshWhenCommentSubmitComplete, 100);
+    }
+  }
+
+
+
+
+
+
+  /**
+   * REGISTRATION CODE
+   */
+
+  function submitRegistrationForm(assertion) {
+    // If this is a new user that is verifying their email address in a new
+    // window, both the original window and this window will be trying to
+    // submit the comment form. The first one wins. The other one reloads.
+    var state = loadRegistrationState();
+    if (!(state || forceSubmit)) return refreshWhenRegistrationSubmitComplete();
+
+    // Save an item on sessionStorage that says we are completing registration.
+    // When the page lands on the registration_complete redirect, it will check
+    // sessionStorage, and if completing_registration is set, it will notify
+    // any other windows that registration has completed by setting a bit in
+    // localStorage.
+    sessionStorage.setItem("completing_registration", true);
+    jQuery("#browserid_assertion").val(assertion);
+    jQuery("#wp-submit").click();
+  }
+
+  function saveRegistrationState() {
+    var state = {
+      user_login: jQuery("#user_login").val()
+    };
+
+    localStorage.setItem("registration_state", JSON.stringify(state));
+  }
+
+  function loadRegistrationState() {
+    var state = localStorage.getItem("registration_state");
+
+    if (state) {
+      state = JSON.parse(state);
+      jQuery("#user_login").val(state.user_login);
+      localStorage.removeItem("registration_state");
+    }
+
+    return state;
+  }
+
+  function refreshWhenRegistrationSubmitComplete() {
+    // wait until the other window has completed the registration submit. When it
+    // completes, it will store a bit in localStorage when registration has
+    // completed.
+    var complete = localStorage.getItem("registration_complete");
+    if (complete) {
+      localStorage.removeItem("registration_complete");
+      document.location = browserid_common.registration_redirect;
+    }
+    else {
+      setTimeout(refreshWhenRegistrationSubmitComplete, 100);
+    }
+  }
+
+
+
+
+
+  /**
+   * HELPER CODE
+   */
+  function getReturnToUrl(hash) {
+    return document.location.href
+               .replace(/http(s)?:\/\//, "")
+               .replace(document.location.host, "")
+               .replace(/#.*$/, '') + hash;
+  }
+
   function appendFormHiddenFields(form, fields) {
     form = jQuery(form);
 
@@ -220,44 +390,7 @@
     }
   }
 
-  function saveState() {
-    var state = {
-      author: jQuery("#author").val(),
-      url: jQuery("#url").val(),
-      comment: jQuery("#comment").val(),
-      comment_parent: jQuery("#comment_parent").val()
-    };
 
-    localStorage.setItem("comment_state", JSON.stringify(state));
-  }
 
-  function loadState() {
-    var state = localStorage.getItem("comment_state");
-
-    if (state) {
-      state = JSON.parse(state);
-      jQuery("#author").val(state.author);
-      jQuery("#url").val(state.url);
-      jQuery("#comment").val(state.comment);
-      jQuery("#comment_parent").val(state.comment_parent);
-    }
-
-    return state;
-  }
-
-  function refreshWhenSubmitComplete() {
-    // wait until the other window has completed the comment submit. When it
-    // completes, it will store the hash of the comment that this window should
-    // show.
-    var hash = localStorage.getItem("comment_hash");
-    if (hash) {
-      localStorage.removeItem("comment_hash");
-      document.location.hash = hash;
-      document.location.reload(true);
-    }
-    else {
-      setTimeout(refreshWhenSubmitComplete, 100);
-    }
-  }
 
 }());

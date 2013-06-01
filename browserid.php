@@ -114,6 +114,8 @@ if (!class_exists('MozillaBrowserID')) {
 			// Shortcode
 			add_shortcode('browserid_loginout', array(&$this, 'Shortcode_loginout'));
 			add_shortcode('mozilla_persona', array(&$this, 'Shortcode_loginout'));
+
+            $this->user_registering_with_browserid = false;
 		}
 
 		// Handle plugin activation
@@ -178,6 +180,7 @@ if (!class_exists('MozillaBrowserID')) {
 			$data_array = array(
 				'siteurl' => get_site_url(null, '/'),
 				'login_redirect' => self::Get_login_redirect_url(),
+                'registration_redirect' => self::Get_registration_redirect_url(),
 				'error' => self::Get_error_message(),
 				'failed' => self::Get_verification_failed_message(),
 				'sitename' => self::Get_sitename(),
@@ -216,6 +219,10 @@ if (!class_exists('MozillaBrowserID')) {
 			return $redirect_to;
 		}
 
+        // Get the registration redirect URL
+        function Get_registration_redirect_url() {
+            return admin_url() . 'profile.php';
+        }
 
 		// Get the error message
 		function Get_error_message() {
@@ -607,7 +614,7 @@ if (!class_exists('MozillaBrowserID')) {
 			if (self::Is_option_browserid_only_auth()) {
 				// The user successfully signed up using Persona, 
 				// send them to their profile page
-				return admin_url() . 'profile.php';
+                return self::Get_registration_redirect_url();
 			}
 
 			return '';
