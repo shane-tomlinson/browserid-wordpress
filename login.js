@@ -3,8 +3,11 @@
 (function() {
   "use strict";
 
-  var loginType,
-      forceSubmit;
+  // what login type is being handled?
+  var loginType;
+
+  // When onlogin is invoked and there is no login state, should submit be forced?
+  var forceSubmit;
 
   // Keep track of whether the onlogout callback should be ignored. Ignoring
   // the onlogout callback prevents the user from being redirected to the
@@ -12,41 +15,48 @@
   var ignoreLogout = false;
 
 
-  window.browserid_login = function() {
-    ignoreLogout = false;
-    return startAuthentication("login");
-  };
+  jQuery(".persona_login").click(function(event) {
+    event.preventDefault();
 
-  window.browserid_register = function() {
+    ignoreLogout = false;
+    requestAuthentication("login");
+  });
+
+  jQuery(".persona_register").click(function(event) {
+    event.preventDefault();
+
     ignoreLogout = false;
     // Save the form state to localStorage. This allows a new user to close
     // this tab while they are verifying and still have the registration
     // complete once the address is verified.
     saveRegistrationState();
-    return startAuthentication("register");
-  };
+    requestAuthentication("register");
+  });
 
-  window.browserid_comment = function() {
+  jQuery(".persona_submit_comment").click(function(event) {
+    event.preventDefault();
+
     ignoreLogout = true;
     // Save the form state to localStorage. This allows a new user to close
     // this tab while they are verifying and still have the comment form
     // submitted once the address is verified.
     saveCommentState();
+    requestAuthentication("comment");
+  });
 
-    return startAuthentication("comment");
-  };
+  jQuery(".persona_logout").click(function(event) {
+    event.preventDefault();
 
-  window.browserid_logout = function() {
     ignoreLogout = false;
     navigator.id.logout();
+  });
 
-    return false;
-  };
-
-  // If this is a comment verification, ignore the logout messages until
-  // the user explicitly requests a login.
-  if (document.location.hash === "#comment_verification") {
+  if (document.location.hash === "#submit_comment") {
+    // During comment submission, ignore the logout messages until
+    // the user explicitly requests a login.
     ignoreLogout = true;
+
+    showWaitingScreen();
 
     // load the state into the form to reduce flicker. The form data may not be
     // needed, but load it anyways.
@@ -54,58 +64,58 @@
 
     // If there is no state, the other window has already submitted the comment.
     // navigator.id.logout has already been called and no assertion will be
-    // generated. Wait for the signal from the other window which causes a refresh.
+    // generated. wait for the signal from the other window and refresh the page
+    // to view the newly inserted comment.
     if (!state) return refreshWhenCommentSubmitComplete();
 
     // If the comment form is submitted in the original window, the user will
     // be sitting at the top of the page. Instead, go to the submit form.
     document.location.hash = "respond";
 
-    // login type is definitely comment, in onlogin, the comment form will
-    // be submitted if the original window has not already done it. If the
-    // original window has already submitted the comment, this window will wait
-    // until the comment is submitted and then refresh the page and go to the
-    // newly inserted comment.
     loginType = "comment";
+
+    // If this is the post Persona verification page AND we got the state
+    // before the other page, forceSubmit. loadCommentState removes the
+    // comment state from localStorage which normally causes onlogin to
+    // abort all action.
+    forceSubmit = true;
   }
-  else if (document.location.hash === "#register_verification") {
+  else if (document.location.hash === "#submit_registration") {
     ignoreLogout = true;
+
+    showWaitingScreen();
 
     // load the state into the form to reduce flicker. The form data may not be
     // needed, but load it anyways.
     var state = loadRegistrationState();
 
     // If there is no state, the other window has already submitted the registration.
-    // Wait for the signal from the other window which causes a refresh.
+    // Wait for the signal from the other window which causes a refresh. When
+    // the signal comes, refresh to the profile page.
     if (!state) return refreshWhenRegistrationSubmitComplete();
 
-    // login type is definitely registration, in onlogin, the registration form will
-    // be submitted if the original window has not already done it. If the
-    // original window has already submitted the registration, this window will wait
-    // until the registration is submitted and then refresh the page and go to the
-    // profile page.
     loginType = "register";
 
     // If this is the post Persona verification page AND we got the state
-    // before the potential other page, forceSubmit. loadRegistrationState
-    // removes the registration state from localStorage and when onlogin is
-    // called, it will abort otherwise.
+    // before the other page, forceSubmit. loadRegistrationState removes the
+    // comment state from localStorage which normally causes onlogin to
+    // abort all action.
     forceSubmit = true;
   }
   else if ((document.location.href === browserid_common.registration_redirect) &&
-           (sessionStorage.getItem("completing_registration"))) {
+           (sessionStorage.getItem("submitting_registration"))) {
     // If the user lands on the registration_redirect page AND they just came
     // from the Registration page, inform other pages that registration has
     // completed so they can redirect.
     localStorage.setItem("registration_complete", "true");
   }
-
-  // If the user just completed comment submission, save the hash to
-  // localStorage so the other window can refresh to the new comment.
-  if (sessionStorage.getItem("save_comment_hash")) {
+  else if (sessionStorage.getItem("submitting_comment")) {
     ignoreLogout = true;
 
-    sessionStorage.removeItem("save_comment_hash");
+    // If the user just completed comment submission, save the hash to
+    // localStorage so the other window can refresh to the new comment.
+    // We are just assuming the comment submission was successful.
+    sessionStorage.removeItem("submitting_comment");
     localStorage.setItem("comment_hash", document.location.hash);
   }
 
@@ -120,7 +130,7 @@
 
 
 
-  var LoginHandlers = {
+  var loginHandlers = {
     login: submitLoginForm,
     register: submitRegistrationForm,
     comment: submitCommentForm
@@ -131,7 +141,7 @@
     onlogin: function(assertion) {
       loginType = getLoginType(loginType);
 
-      var handler = LoginHandlers[loginType];
+      var handler = loginHandlers[loginType];
       if (handler) {
         handler(assertion);
       }
@@ -156,7 +166,7 @@
   }
 
 
-  function startAuthentication(type) {
+  function requestAuthentication(type) {
     loginType = type;
 
     var opts = {
@@ -173,15 +183,13 @@
     * will complete verification in the original window or in a new window.
     */
     if (loginType === "comment") {
-      opts.returnTo = getReturnToUrl("#comment_verification");
+      opts.returnTo = getReturnToUrl("#submit_comment");
     }
     else if (loginType === "register") {
-      opts.returnTo = getReturnToUrl("#register_verification");
+      opts.returnTo = getReturnToUrl("#submit_registration");
     }
 
     navigator.id.request(opts);
-
-    return false;
   }
 
 
@@ -233,7 +241,7 @@
     // window, both the original window and this window will be trying to
     // submit the comment form. The first one wins. The other one reloads.
     var state = loadCommentState();
-    if (!state) return refreshWhenCommentSubmitComplete();
+    if (!(state || forceSubmit)) return refreshWhenCommentSubmitComplete();
 
     var form = jQuery("#commentform");
 
@@ -250,7 +258,7 @@
     // Save the hash so the other window can redirect to the proper comment
     // when everything has completed.
     localStorage.removeItem("comment_hash");
-    sessionStorage.setItem("save_comment_hash", true);
+    sessionStorage.setItem("submitting_comment", "true");
 
     // If the user is submitting a comment and is not logged in,
     // log them out of Persona. This will prevent the plugin from
@@ -322,10 +330,10 @@
 
     // Save an item on sessionStorage that says we are completing registration.
     // When the page lands on the registration_complete redirect, it will check
-    // sessionStorage, and if completing_registration is set, it will notify
+    // sessionStorage, and if submitting_registration is set, it will notify
     // any other windows that registration has completed by setting a bit in
     // localStorage.
-    sessionStorage.setItem("completing_registration", true);
+    sessionStorage.setItem("submitting_registration", "true");
     jQuery("#browserid_assertion").val(assertion);
     jQuery("#wp-submit").click();
   }
@@ -390,7 +398,10 @@
     }
   }
 
-
+  function showWaitingScreen() {
+    var waitingScreen = jQuery("<div class='persona_submit'></div>");
+    jQuery("body").append(waitingScreen);
+  }
 
 
 }());

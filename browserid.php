@@ -4,7 +4,7 @@ Plugin Name: Mozilla Persona
 Plugin URI: http://wordpress.org/extend/plugins/browserid/
 Plugin Repo: https://github.com/shane-tomlinson/browserid-wordpress
 Description: Mozilla Persona, the safest & easiest way to sign in
-Version: 0.43
+Version: 0.44
 Author: Shane Tomlinson
 Author URI: https://shanetomlinson.com
 Original Author: Marcel Bokhorst
@@ -566,12 +566,56 @@ if (!class_exists('MozillaBrowserID')) {
 				echo '<input type="hidden" name="browserid_assertion" id="browserid_assertion" />';
 
 				// XXX collapse the link stuff into Get_login_html
-				$html = '<img src="' . self::Get_image_url() . '" style="border: none; vertical-align: middle; margin-right: 5px;" />';
-				echo '<a href="#" onclick="return browserid_register();" title="Mozilla Persona" class="browserid">' . $html  . '</a>';
-
-				echo '<style>#user_email,[for=user_email],#reg_passmail{display:none;}';
-				echo '#wp-submit { position: absolute; left: -9999px !important; }</style>';
+				$html = '<img src="' . self::Get_image_url() . '" class="persona_logo" />';
+				echo '<a href="#" title="Mozilla Persona" class="persona_register">' . $html  . '</a>';
+				echo self::What_is();
+				self::Print_Registration_Css();
 			}
+		}
+
+		// Print CSS that is common to all forms
+		function Get_Common_Css() {
+			$html =  '.persona_whatis {';
+			$html .= '	font-size: smaller;';
+			$html .= '}';
+			$html .= '.persona_error {';
+			$html .= '	color: red;';
+			$html .= '	font-weight: bold;';
+			$html .= '	margin: 10px;';
+			$html .= '	vertical-align: top;';
+			$html .= '}';
+			$html .= '.persona_logo {';
+			$html .= '	border: none;';
+			$html .= '	vertical-align: middle;';
+			$html .= '	margin-right: 5px;';
+			$html .= '}';
+			$html .= '.persona_submit { ';
+			$html .= '	position: absolute;';
+			$html .= '	position: fixed;';
+			$html .= '	z-index: 999;';
+			$html .= '	top: 0;';
+			$html .= '	bottom: 0;';
+			$html .= '	left: 0;';
+			$html .= '	right: 0;';
+			$html .= '	background-color: #fff;';
+			$html .= '	background-color: rgba(255,255,255,0.7);';
+			$html .= '	color: #333';
+			$html .= '}';
+			return $html;
+		}
+
+		// Print CSS used by the plugin
+		function Print_Registration_Css() {
+			echo '<style>';
+			echo	'#user_email,[for=user_email],#reg_passmail {';
+			echo	'	display:none;';
+			echo	'}';
+			echo	'#wp-submit { ';
+			echo	'	position: absolute;';
+			echo	'	left: -9999px !important;';
+			echo	'}';
+			echo self::Get_Common_Css();
+			echo '</style>';
 		}
 
 		// Process registration - get the email address from the assertion and 
@@ -672,23 +716,35 @@ if (!class_exists('MozillaBrowserID')) {
 				// Get link content
 				$options = get_option('browserid_options');
 				if (empty($options['browserid_comment_html']))
-					$html = '<img src="' . self::Get_image_url() . '" style="border: none; vertical-align: middle; margin-right: 5px;" />';
+					$html = '<img src="' . self::Get_image_url() . '" class="persona_logo" />';
 				else
 					$html = $options['browserid_comment_html'];
 
 				// Render link
-				echo '<a href="#" id="browserid_' . $post_id . '" onclick="return browserid_comment(' . $post_id . ');" title="Mozilla Persona" class="browserid">' . $html . '</a>';
+				echo '<a href="#" title="Mozilla Persona" class="persona_submit_comment">' . $html . '</a>';
 				echo self::What_is();
-				// If it is a Persona login, hide the submit button.
-				echo '<style>#respond input[type=submit] { position: absolute; left: -9999px !important; }</style>';
+
+				self::Print_Comment_Css();
 
 				// Display error message
 				if (isset($_REQUEST['browserid_error'])) {
-					echo '<span style="color: red; font-weight: bold; margin: 10px; vertical-align: top;">';
+					echo '<span class="persona_error">';
 					echo htmlspecialchars(stripslashes($_REQUEST['browserid_error']), ENT_QUOTES, get_bloginfo('charset'));
 					echo '</span>';
 				}
 			}
+		}
+
+		// Print Comment CSS
+		function Print_Comment_Css() {
+			// If it is a Persona login, hide the submit button.
+			echo '<style>';
+			echo	'#respond input[type=submit] {';
+			echo	'	position: absolute;';
+			echo	'	left: -9999px !important;';
+			echo	'}';
+			echo  self::Get_Common_Css();
+			echo '</style>';
 		}
 
 		// Shortcode "mozilla_persona"
@@ -714,30 +770,42 @@ if (!class_exists('MozillaBrowserID')) {
 
 			if ($check_login && is_user_logged_in()) {
 				$html = self::Get_logout_text();
+				$html .= '<style>';
+				$html .= self::Get_Common_Css();
+				$html .= '</style>';
 
 				// Simple link
 				if (empty($html))
 					return '';
 				else
-					return '<a href="#" onclick="return browserid_logout()">' . $html . '</a>';
+					return '<a href="#" class="persona_logout">' . $html . '</a>';
 			}
 			else {
 				// User not logged in
 				if (empty($options['browserid_login_html']))
-					$html = '<img src="' . self::Get_image_url() . '" style="border: 0;" />';
+					$html = '<img src="' . self::Get_image_url() . '" class="persona_logo" />';
 				else
 					$html = $options['browserid_login_html'];
 				// Button
-				$html = '<a href="#" onclick="return browserid_login();"  title="Mozilla Persona" class="browserid">' . $html . '</a>';
-				$html .= '<br />' . self::What_is();
+				$html = '<a href="#" title="Mozilla Persona" class="persona_login">' . $html . '</a>';
+				$html .= self::What_is();
 
 				// Hide the login form. While this does not truely prevent users from 
 				// from logging in using the standard authentication mechanism, it 
 				// cleans up the login form a bit.
+				$html .= '<style>';
 				if (self::Is_option_browserid_only_auth()) {
-					$html .= '<style>#user_login, [for=user_login], #user_pass, [for=user_pass], [name=log], [name=pwd] { display: none; }';
-          $html .= '#wp-submit { position: absolute; left: -9999px !important; }</style>';
+					$html .= '#user_login, [for=user_login], #user_pass, ';
+					$html .= '[for=user_pass], [name=log], [name=pwd] { ';
+					$html .= '	display: none;';
+					$html .= '}';
+				    $html .= '#wp-submit {';
+					$html .= '	position: absolute;';
+					$html .= '	left: -9999px !important;';
+					$html .= '}';
 				}
+				$html .= self::Get_Common_Css();
+				$html .= '</style>';
 
 				return $html;
 			}
@@ -758,7 +826,8 @@ if (!class_exists('MozillaBrowserID')) {
 		}
 
 		function What_is() {
-			return '<a href="https://login.persona.org/" target="_blank" style="font-size: smaller;">' . __('What is Persona?', c_bid_text_domain) . '</a>';
+			return '<p><a href="https://login.persona.org/" target="_blank" class="persona_whatis">' . __('What is Persona?', 
+			c_bid_text_domain) . '</a></p>';
 		}
 
 		// Get (customized) site name
@@ -796,7 +865,7 @@ if (!class_exists('MozillaBrowserID')) {
 					'parent' => 'user-actions',
 					'href' => '#',
 					'meta' => array(
-						'onclick' => 'return browserid_logout()'
+						'class' => 'persona_logout'
 					)
 				));
 			}
