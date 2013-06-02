@@ -908,11 +908,9 @@ if (!class_exists('MozillaBrowserID')) {
 
 		// Site name option
 		function Option_sitename() {
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_sitename']))
-				$options['browserid_sitename'] = null;
-			echo "<input id='browserid_sitename' name='browserid_options[browserid_sitename]' type='text' size='100' value='{$options['browserid_sitename']}' />";
-			echo '<br />' . __('Default the WordPress site name', c_bid_text_domain);
+			$sitename = self::Get_sitename();
+
+			echo "<input id='browserid_sitename' name='browserid_options[browserid_sitename]' type='text' size='100' value='{$sitename}' />";
 		}
 
 		// Site logo option
@@ -996,10 +994,8 @@ if (!class_exists('MozillaBrowserID')) {
 
 		// Verification server option
 		function Option_vserver() {
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_vserver']))
-				$options['browserid_vserver'] = null;
-			echo "<input id='browserid_vserver' name='browserid_options[browserid_vserver]' type='text' size='100' value='{$options['browserid_vserver']}' />";
+			$vserver = self::Get_option_vserver();
+			echo "<input id='browserid_vserver' name='browserid_options[browserid_vserver]' type='text' size='100' value='{$vserver}' />";
 			echo '<br />' . __('Default https://verifier.login.persona.org/verify', c_bid_text_domain);
 		}
 
