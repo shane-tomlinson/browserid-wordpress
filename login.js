@@ -14,6 +14,11 @@
   // logout page.
   var ignoreLogout = false;
 
+  // Disable the registration form submit until after an assertion has been
+  // returned. This allows users to press "enter" in the username field and
+  // have the Persona disalog displayed
+  var enableRegistrationSubmit = false;
+
 
   jQuery(".persona_login").click(function(event) {
     event.preventDefault();
@@ -49,6 +54,25 @@
 
     ignoreLogout = false;
     navigator.id.logout();
+  });
+
+  jQuery("#registerform").submit(function(event) {
+    // form submission is disabled so the user can press enter in the username
+    // field and see the Persona dialog. After an assertion has been generated,
+    // submission is re-enabled and data should be sent to the server.
+    if (enableRegistrationSubmit) return;
+
+    event.preventDefault();
+
+    // If the username has no length, abort
+    if (jQuery("#user_login").val().length === 0) return;
+
+    ignoreLogout = false;
+    // Save the form state to localStorage. This allows a new user to close
+    // this tab while they are verifying and still have the registration
+    // complete once the address is verified.
+    saveRegistrationState();
+    requestAuthentication("register");
   });
 
   if (document.location.hash === "#submit_comment") {
@@ -335,6 +359,9 @@
     // localStorage.
     sessionStorage.setItem("submitting_registration", "true");
     jQuery("#browserid_assertion").val(assertion);
+
+    // Allow the form submission to send data to the server.
+    enableRegistrationSubmit = true;
     jQuery("#wp-submit").click();
   }
 
