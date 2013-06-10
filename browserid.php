@@ -489,9 +489,6 @@ if (!class_exists('MozillaBrowserID')) {
 					$json = json_decode($response['body']);
 					if (empty($author)) 
 						$author = $json->entry[0]->displayName;
-
-					if (empty($url)) 
-						$url = $json->entry[0]->profileUrl;
 				}
 			}
 
