@@ -481,6 +481,10 @@ if (!class_exists('MozillaBrowserID')) {
 			if ($userdata) {
 				$author = $userdata->display_name;
 				$url = $userdata->user_url;
+        
+        // User has an account but is not logged in? Sign them in!
+        // fixes issue #20
+        self::Login_by_userdata($userdata, false);
 			}
 			else if (empty($author) || empty($url)) {
 				// Check Gravatar profile
