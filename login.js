@@ -19,6 +19,10 @@
   // have the Persona disalog displayed
   var enableRegistrationSubmit = false;
 
+  // If the user is trying to submit the form before they have received
+  // a Persona assertion, prevent the form from being submitted. This takes
+  // effect if the user types "enter" into one of the commentor info fields.
+  var enableCommentSubmit = browserid_common.logged_in_user || false;
 
   jQuery(".persona_login").click(function(event) {
     event.preventDefault();
@@ -38,15 +42,21 @@
     requestAuthentication("register");
   });
 
+  jQuery("#commentform").submit(function(event) {
+    // If the user is trying to submit the form before they have received
+    // a Persona assertion, prevent the form from being submitted and instead
+    // open the Persona dialog. This takes effect if the user types "enter"
+    // into one of the commentor info fields.
+    if (!enableCommentSubmit) {
+      event.preventDefault();
+      verifyUserSubmitComment();
+    }
+  });
+
   jQuery(".persona_submit_comment").click(function(event) {
     event.preventDefault();
 
-    ignoreLogout = true;
-    // Save the form state to localStorage. This allows a new user to close
-    // this tab while they are verifying and still have the comment form
-    // submitted once the address is verified.
-    saveCommentState();
-    requestAuthentication("comment");
+    verifyUserSubmitComment();
   });
 
   jQuery(".persona_logout").click(function(event) {
@@ -260,6 +270,19 @@
    * COMMENT CODE
    */
 
+  function verifyUserSubmitComment() {
+    var comment = jQuery("#comment").val();
+    // only submit comment form if there is a comment.
+    if (comment && comment.trim().length) {
+      ignoreLogout = true;
+      // Save the form state to localStorage. This allows a new user to close
+      // this tab while they are verifying and still have the comment form
+      // submitted once the address is verified.
+      saveCommentState();
+      requestAuthentication("comment");
+    }
+  }
+
   function submitCommentForm(assertion) {
     // If this is a new user that is verifying their email address in a new
     // window, both the original window and this window will be trying to
@@ -291,6 +314,9 @@
       ignoreLogout = true;
       navigator.id.logout();
     }
+
+    // Allow the form submission to send data to the server.
+    enableCommentSubmit = true;
 
     jQuery("#submit").click();
   }
