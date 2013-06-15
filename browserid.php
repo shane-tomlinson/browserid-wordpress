@@ -568,8 +568,7 @@ if (!class_exists('MozillaBrowserID')) {
 
 				// XXX collapse the link stuff into Get_login_html
 				$html = '<img src="' . self::Get_image_url() . '" class="persona_logo" />';
-				echo '<a href="#" title="Mozilla Persona" class="persona_register">' . $html  . '</a>';
-				echo self::What_is();
+                self::Print_Persona_Button_Html("persona_register", $html);
 				self::Print_Registration_Css();
 			}
 		}
@@ -721,10 +720,7 @@ if (!class_exists('MozillaBrowserID')) {
 				else
 					$html = $options['browserid_comment_html'];
 
-				// Render link
-				echo '<a href="#" title="Mozilla Persona" class="persona_submit_comment">' . $html . '</a>';
-				echo self::What_is();
-
+                self::Print_Persona_Button_Html("persona_submit_comment", $html);
 				self::Print_Comment_Css();
 
 				// Display error message
@@ -735,6 +731,16 @@ if (!class_exists('MozillaBrowserID')) {
 				}
 			}
 		}
+
+        // Get the Persona Button HTML
+        function Get_Persona_Button_Html($classname, $html) {
+            return '<a href="#" title="Mozilla Persona" class="' . $classname . '">' . $html . '</a>' . self::What_is();
+        }
+
+        // Print a Persona button
+        function Print_Persona_Button_Html($classname, $html) {
+            echo self::Get_Persona_Button_Html($classname, $html);
+        }
 
 		// Print Comment CSS
 		function Print_Comment_Css() {
@@ -788,8 +794,7 @@ if (!class_exists('MozillaBrowserID')) {
 				else
 					$html = $options['browserid_login_html'];
 				// Button
-				$html = '<a href="#" title="Mozilla Persona" class="persona_login">' . $html . '</a>';
-				$html .= self::What_is();
+                $html = self::Get_Persona_Button_Html("persona_login", $html);
 
 				// Hide the login form. While this does not truely prevent users from 
 				// from logging in using the standard authentication mechanism, it 
