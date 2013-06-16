@@ -1148,13 +1148,14 @@ class BrowserID_Widget extends WP_Widget {
 
 	// Widget contents
 	function widget($args, $instance) {
+		global $m66browserid;
 		extract($args);
 		$title = apply_filters('widget_title', $instance['title']);
 		echo $before_widget;
 		if (!empty($title))
 			echo $before_title . $title . $after_title;
 
-		echo "<ul><li class='only-child'>" . MozillaBrowserID::Get_loginout_html() . "</li></ul>";
+		echo "<ul><li class='only-child'>" . $m66browserid->Get_loginout_html() . "</li></ul>";
 		echo $after_widget;
 	}
 
@@ -1191,14 +1192,16 @@ if (empty($m66browserid)) {
 // Template tag "mozilla_persona"
 if (!function_exists('mozilla_persona')) {
 	function mozilla_persona() {
-		echo MozillaBrowserID::Get_loginout_html();
+		global $m66browserid;
+		echo $m66browserid->Get_loginout_html();
 	}
 }
 
 // Template tag "browserid_loginout"
 if (!function_exists('browserid_loginout')) {
 	function browserid_loginout() {
-		echo MozillaBrowserID::Get_loginout_html();
+		global $m66browserid;
+		echo $m66browserid->Get_loginout_html();
 	}
 }
 
