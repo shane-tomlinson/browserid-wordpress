@@ -83,6 +83,7 @@ if (!class_exists('MozillaBrowserID')) {
 				add_action('lost_password', array(&$this, 'Lost_password_action'));
 				add_filter('allow_password_reset', array(&$this, 'Allow_password_reset_filter'));
 				add_filter('show_password_fields', array(&$this, 'Show_password_fields_filter'));
+				add_action('wp_dashboard_setup', array(&$this, 'Wp_dashboard_setup_action'));
 			}
 
 			// Widgets and admin menu
@@ -156,7 +157,6 @@ if (!class_exists('MozillaBrowserID')) {
 
 			return $links;
 		}
-
 
 		// Initialization
 		function Init() {
@@ -540,6 +540,16 @@ if (!class_exists('MozillaBrowserID')) {
 			}
 
 			return $user;
+		}
+
+		function Wp_dashboard_setup_action() {
+			// Persona-only auth is enabled, get rid of the auto-generated 
+			// password warning.
+			echo '<style>';
+			echo	'.default-password-nag {';
+			echo	'	display:none;';
+			echo	'}';
+			echo '</style>';
 		}
 
 		// Filter login error message
