@@ -49,17 +49,21 @@
     // into one of the commentor info fields.
     if (!enableCommentSubmit) {
       event.preventDefault();
-      verifyUserSubmitComment();
+
+      verifyUserForComment();
     }
   });
 
   jQuery(".persona_submit_comment").click(function(event) {
     event.preventDefault();
 
-    verifyUserSubmitComment();
+    verifyUserForComment();
   });
 
-  jQuery(".persona_logout").click(function(event) {
+  // the persona_logout button in the admin toolbar is added after this script
+  // is run. Attach a live event (yuck) so that the user is still able to log
+  // out.
+  jQuery(".persona_logout").live("click", function(event) {
     event.preventDefault();
 
     ignoreLogout = false;
@@ -270,7 +274,7 @@
    * COMMENT CODE
    */
 
-  function verifyUserSubmitComment() {
+  function verifyUserForComment() {
     var comment = jQuery("#comment").val();
     // only submit comment form if there is a comment.
     if (comment && comment.trim().length) {
