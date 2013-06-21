@@ -38,10 +38,11 @@
   background: -o-linear-gradient(top, #3788b9, #21669f);
   background: -webkit-linear-gradient(top, #3788b9, #21669f);
   background: linear-gradient(top, #3788b9, #21669f);
-  color: #fff;
+  color: #fff !important;
 }
 
-.persona-button:active, .persona-button:focus{
+.persona-button:active, .persona-button:focus {
+  color: #fff !important;
   top: 1px;
   -moz-box-shadow:   none;
   -ms-box-shadow:   none;
@@ -240,10 +241,15 @@
   background: linear-gradient(-45deg, #e84a21, #f7ad27); /* flipped for updated spec */
 }
 
-.persona__whatis,
-#respond .persona__whatis {
-	font-size: .8em;
-  margin: 0;
+.persona__whatis {
+	font-size: 11px !important;
+  margin: 5px 0 0 0 !important;
+  line-height: 1 !important;
+}
+
+.persona__whatis_link {
+  margin: 0 !important;
+  color: #757575 !important;
 }
 
 .persona__error {

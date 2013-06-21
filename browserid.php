@@ -776,12 +776,13 @@ if (!class_exists('MozillaPersona')) {
 		}
 
 		function What_is() {
-			$html = '<p class="persona__whatis"><a href="%s" target="_blank">'
+			$html = '<p class="persona__whatis"><a href="%s" class="%s" target="_blank">'
 				.	'%s'
 				.	'</a></p>';
 
 			$html = sprintf($html, 
 						"https://login.persona.org",
+						"persona__whatis_link",
 						__('What is Persona?', c_bid_text_domain) 
 						);
 
