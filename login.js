@@ -31,35 +31,6 @@
     requestAuthentication("login");
   });
 
-  jQuery(".js-persona__register").click(function(event) {
-    event.preventDefault();
-
-    ignoreLogout = false;
-    // Save the form state to localStorage. This allows a new user to close
-    // this tab while they are verifying and still have the registration
-    // complete once the address is verified.
-    saveRegistrationState();
-    requestAuthentication("register");
-  });
-
-  jQuery("#commentform").submit(function(event) {
-    // If the user is trying to submit the form before they have received
-    // a Persona assertion, prevent the form from being submitted and instead
-    // open the Persona dialog. This takes effect if the user types "enter"
-    // into one of the commentor info fields.
-    if (!enableCommentSubmit) {
-      event.preventDefault();
-
-      verifyUserForComment();
-    }
-  });
-
-  jQuery(".js-persona__submit-comment").click(function(event) {
-    event.preventDefault();
-
-    verifyUserForComment();
-  });
-
   // the js-persona__logout button in the admin toolbar is added after this
   // script is run. Attach a live event (yuck) so that the user is still
   // able to log out.
@@ -70,27 +41,60 @@
     navigator.id.logout();
   });
 
-  jQuery("#registerform").submit(function(event) {
-    // form submission is disabled so the user can press enter in the username
-    // field and see the Persona dialog. After an assertion has been generated,
-    // submission is re-enabled and data should be sent to the server.
-    if (enableRegistrationSubmit) return;
+  if (browserid_common.comments) {
+    jQuery("body").addClass("persona--comments");
 
-    event.preventDefault();
+    jQuery(".js-persona__submit-comment").click(function(event) {
+      event.preventDefault();
 
-    // If the username has no length, abort
-    if (jQuery("#user_login").val().length === 0) return;
+      verifyUserForComment();
+    });
 
-    ignoreLogout = false;
-    // Save the form state to localStorage. This allows a new user to close
-    // this tab while they are verifying and still have the registration
-    // complete once the address is verified.
-    saveRegistrationState();
-    requestAuthentication("register");
-  });
+    jQuery("#commentform").submit(function(event) {
+      // If the user is trying to submit the form before they have received
+      // a Persona assertion, prevent the form from being submitted and instead
+      // open the Persona dialog. This takes effect if the user types "enter"
+      // into one of the commentor info fields.
+      if (!enableCommentSubmit) {
+        event.preventDefault();
+
+        verifyUserForComment();
+      }
+    });
+  }
 
   if (browserid_common.persona_only_auth) {
     jQuery("body").addClass("persona--persona-only-auth");
+
+    jQuery(".js-persona__register").click(function(event) {
+      event.preventDefault();
+
+      ignoreLogout = false;
+      // Save the form state to localStorage. This allows a new user to close
+      // this tab while they are verifying and still have the registration
+      // complete once the address is verified.
+      saveRegistrationState();
+      requestAuthentication("register");
+    });
+
+    jQuery("#registerform").submit(function(event) {
+      // form submission is disabled so the user can press enter in the username
+      // field and see the Persona dialog. After an assertion has been generated,
+      // submission is re-enabled and data should be sent to the server.
+      if (enableRegistrationSubmit) return;
+
+      event.preventDefault();
+
+      // If the username has no length, abort
+      if (jQuery("#user_login").val().length === 0) return;
+
+      ignoreLogout = false;
+      // Save the form state to localStorage. This allows a new user to close
+      // this tab while they are verifying and still have the registration
+      // complete once the address is verified.
+      saveRegistrationState();
+      requestAuthentication("register");
+    });
   }
 
   if (document.location.hash === "#submit_comment") {

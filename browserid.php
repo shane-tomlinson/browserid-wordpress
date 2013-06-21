@@ -201,7 +201,8 @@ if (!class_exists('MozillaBrowserID')) {
 				'sitelogo' => self::Get_sitelogo(),
 				'logout_redirect' => wp_logout_url(),
 				'logged_in_user' => self::Get_browserid_loggedin_user(),
-				'persona_only_auth' =>self::Is_option_browserid_only_auth()
+				'persona_only_auth' => self::Is_option_browserid_only_auth(),
+				'comments' => self::Is_option_comments()
 			);
 			wp_localize_script( 'browserid_common', 'browserid_common', 
 					$data_array );
@@ -764,7 +765,7 @@ if (!class_exists('MozillaBrowserID')) {
 		}
 
 		function What_is() {
-			$html = '<p><a href="%s" target="_blank" class="persona__whatis">'
+			$html = '<p class="persona__whatis"><a href="%s" target="_blank">'
 				.	'%s'
 				.	'</a></p>';
 
