@@ -41,6 +41,8 @@ define('c_bid_option_version', 'bid_version');
 define('c_bid_option_request', 'bid_request');
 define('c_bid_option_response', 'bid_response');
 define('c_bid_browserid_login_cookie', 'bid_browserid_login_' . COOKIEHASH);
+define('c_bid_verifier', 'https://verifier.login.persona.org/verify');
+
 
 // Define class
 if (!class_exists('MozillaBrowserID')) {
@@ -55,10 +57,6 @@ if (!class_exists('MozillaBrowserID')) {
 
 			// Register actions & filters
 			add_action('init', array(&$this, 'Init'), 0);
-
-			// Action link in the plugins page
-			add_filter('plugin_action_links', array(&$this, 'Plugin_action_links_filter'), 10, 2);
-
 
 			// Authentication
 			add_action('set_auth_cookie', array(&$this, 
@@ -89,6 +87,9 @@ if (!class_exists('MozillaBrowserID')) {
 			// Widgets and admin menu
 			add_action('widgets_init', create_function('', 'return register_widget("BrowserID_Widget");'));
 			if (is_admin()) {
+				// Action link in the plugins page
+				add_filter('plugin_action_links', array(&$this, 'Plugin_action_links_filter'), 10, 2);
+
 				add_action('admin_menu', array(&$this, 'Admin_menu_action'));
 				add_action('admin_init', array(&$this, 'Admin_init_action'));
 			}
@@ -123,13 +124,20 @@ if (!class_exists('MozillaBrowserID')) {
 		// Handle plugin activation
 		function Activate() {
 			global $wpdb;
-			$version = get_option(c_bid_option_version);
-			if ($version < 2) {
-				$options = get_option('browserid_options');
-				$options['browserid_logout_html'] = __('Logout', c_bid_text_domain);
-				update_option('browserid_options', $options);
-			}
-			update_option(c_bid_option_version, 2);
+			$options = get_option('browserid_options');
+			if (empty($options['browserid_login_html']))
+				$options['browserid_login_html'] = 
+					__('Sign in with your email', c_bid_text_domain);
+
+			if (empty($options['browserid_logout_html']))
+				$options['browserid_logout_html'] = 
+					__('Logout', c_bid_text_domain);
+
+			if (empty($options['browserid_comment_html']))
+				$options['browserid_comment_html'] = 
+					__('Comment', c_bid_text_domain);
+
+			update_option('browserid_options', $options);
 		}
 
 		// Handle plugin deactivation
@@ -166,6 +174,7 @@ if (!class_exists('MozillaBrowserID')) {
 			if (!empty($assertion)) {
 				return self::Check_assertion($assertion);
 			}
+
 
 			// I18n
 			load_plugin_textdomain(c_bid_text_domain, false, 
@@ -962,7 +971,8 @@ if (!class_exists('MozillaBrowserID')) {
 			$options['browserid_vserver'] = self::Get_option_vserver();
 
 			self::Print_option_text_input($options, 'browserid_vserver');
-			echo '<br />' . __('Default https://verifier.login.persona.org/verify', c_bid_text_domain);
+			echo '<br />' . __('Default', c_bid_text_domain) 
+					. ' ' . c_bid_verifier;
 		}
 
 		function Get_option_vserver() {
@@ -971,7 +981,7 @@ if (!class_exists('MozillaBrowserID')) {
 			if (isset($options['browserid_vserver']) && $options['browserid_vserver'])
 				$vserver = $options['browserid_vserver'];
 			else
-				$vserver = 'https://verifier.login.persona.org/verify';
+				$vserver = c_bid_verifier;
 
 			return $vserver;
 		}
@@ -1124,13 +1134,13 @@ class BrowserID_Widget extends WP_Widget {
 	}
 }
 
-// Check pre-requisites
-MozillaBrowserID::Check_prerequisites();
-
 // Start plugin
 global $m66browserid;
 if (empty($m66browserid)) {
 	$m66browserid = new MozillaBrowserID();
+	// Check pre-requisites
+	$m66browserid->Check_prerequisites();
+
 	register_activation_hook(__FILE__, array(&$m66browserid, 'Activate'));
 }
 
