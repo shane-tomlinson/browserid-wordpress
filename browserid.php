@@ -41,12 +41,14 @@ define('c_bid_option_version', 'bid_version');
 define('c_bid_option_request', 'bid_request');
 define('c_bid_option_response', 'bid_response');
 define('c_bid_browserid_login_cookie', 'bid_browserid_login_' . COOKIEHASH);
+
+
 define('c_bid_verifier', 'https://verifier.login.persona.org/verify');
 
 
 // Define class
-if (!class_exists('MozillaBrowserID')) {
-	class MozillaBrowserID {
+if (!class_exists('MozillaPersona')) {
+	class MozillaPersona {
 		// Class variables
 		var $debug = null;
 
@@ -1103,14 +1105,14 @@ class BrowserID_Widget extends WP_Widget {
 
 	// Widget contents
 	function widget($args, $instance) {
-		global $m66browserid;
+		global $persona_plugin;
 		extract($args);
 		$title = apply_filters('widget_title', $instance['title']);
 		echo $before_widget;
 		if (!empty($title))
 			echo $before_title . $title . $after_title;
 
-		echo "<ul><li class='only-child'>" . $m66browserid->Get_loginout_html() . "</li></ul>";
+		echo "<ul><li class='only-child'>" . $persona_plugin->Get_loginout_html() . "</li></ul>";
 		echo $after_widget;
 	}
 
@@ -1135,28 +1137,28 @@ class BrowserID_Widget extends WP_Widget {
 }
 
 // Start plugin
-global $m66browserid;
-if (empty($m66browserid)) {
-	$m66browserid = new MozillaBrowserID();
+global $persona_plugin;
+if (empty($persona_plugin)) {
+	$persona_plugin = new MozillaPersona();
 	// Check pre-requisites
-	$m66browserid->Check_prerequisites();
+	$persona_plugin->Check_prerequisites();
 
-	register_activation_hook(__FILE__, array(&$m66browserid, 'Activate'));
+	register_activation_hook(__FILE__, array(&$persona_plugin, 'Activate'));
 }
 
 // Template tag "mozilla_persona"
 if (!function_exists('mozilla_persona')) {
 	function mozilla_persona() {
-		global $m66browserid;
-		echo $m66browserid->Get_loginout_html();
+		global $persona_plugin;
+		echo $persona_plugin->Get_loginout_html();
 	}
 }
 
 // Template tag "browserid_loginout"
 if (!function_exists('browserid_loginout')) {
 	function browserid_loginout() {
-		global $m66browserid;
-		echo $m66browserid->Get_loginout_html();
+		global $persona_plugin;
+		echo $persona_plugin->Get_loginout_html();
 	}
 }
 
