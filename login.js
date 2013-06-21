@@ -47,10 +47,20 @@
     jQuery(".js-persona__submit-comment").click(function(event) {
       event.preventDefault();
 
+      if (jQuery(event.target).hasClass("disabled")) return;
+
       verifyUserForComment();
     });
 
+    enableSubmitWhenValid("#comment", ".js-persona__submit-comment");
+
     jQuery("#commentform").submit(function(event) {
+      // Make sure there is a comment before submitting
+      if (jQuery("#comment").hasClass("disabled")) {
+        event.preventDefault();
+        return;
+      }
+
       // If the user is trying to submit the form before they have received
       // a Persona assertion, prevent the form from being submitted and instead
       // open the Persona dialog. This takes effect if the user types "enter"
@@ -66,8 +76,13 @@
   if (browserid_common.persona_only_auth) {
     jQuery("body").addClass("persona--persona-only-auth");
 
+    // Make sure there is a username before submitting
+    enableSubmitWhenValid("#user_login", ".js-persona__register");
+
     jQuery(".js-persona__register").click(function(event) {
       event.preventDefault();
+
+      if (jQuery(event.target).hasClass("disabled")) return;
 
       ignoreLogout = false;
       // Save the form state to localStorage. This allows a new user to close
@@ -467,6 +482,24 @@
     var waitingScreen = jQuery("<div class='persona_submit'></div>");
     jQuery("body").append(waitingScreen);
   }
+
+  function enableSubmitWhenValid(textField, submitButton) {
+    jQuery(submitButton).addClass("disabled");
+    jQuery(textField).keyup(validate);
+    jQuery(textField).change(validate);
+
+    function validate() {
+      var val = jQuery(textField).val();
+      // only submit val form if there is a val.
+      if (val && val.trim().length) {
+        jQuery(submitButton).removeClass("disabled");
+      }
+      else {
+        jQuery(submitButton).addClass("disabled");
+      }
+    }
+  }
+
 
 
 }());

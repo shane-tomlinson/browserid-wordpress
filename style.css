@@ -50,6 +50,18 @@
   box-shadow:     none;
 }
 
+.persona-button.disabled, .persona-button.disabled:hover,
+.persona-button.disabled:active, .persona-button.disabled:focus{
+  background: #297dc3;
+  background: -moz-linear-gradient(top, #43a6e2, #287cc2);
+  background: -ms-linear-gradient(top, #43a6e2, #287cc2);
+  background: -o-linear-gradient(top, #43a6e2, #287cc2);
+  background: -webkit-linear-gradient(top, #43a6e2, #287cc2);
+  background: linear-gradient(top, #43a6e2, #287cc2);
+  opacity: 0.5;
+  top: 0;
+}
+
 .persona-button__text {
   display: inline-block;
   padding: 5px 10px 5px 40px;
@@ -256,9 +268,9 @@
  *
  * Hide the user email address in persona only auth.
  */
-.persona--persona-only-auth .user_email,
-.persona--persona-only-auth [for=user_email],
-.persona--persona-only-auth #reg_passmail {
+.persona--persona-only-auth.login-action-register .user_email,
+.persona--persona-only-auth.login-action-register [for=user_email],
+.persona--persona-only-auth.login-action-register #reg_passmail {
   display:none;
 }
 
@@ -280,12 +292,12 @@
  * users from from logging in using the standard
  * authentication mechanism, it cleans up the login form a bit.
  */
-.persona--persona-only-auth #user_login,
-.persona--persona-only-auth [for=user_login],
-.persona--persona-only-auth #user_pass,
-.persona--persona-only-auth [for=user_pass],
-.persona--persona-only-auth [name=log],
-.persona--persona-only-auth [name=pwd] {
+.persona--persona-only-auth.login-action-login #user_login,
+.persona--persona-only-auth.login-action-login [for=user_login],
+.persona--persona-only-auth.login-action-login #user_pass,
+.persona--persona-only-auth.login-action-login [for=user_pass],
+.persona--persona-only-auth.login-action-login [name=log],
+.persona--persona-only-auth.login-action-login [name=pwd] {
   display: none;
 }
 
