@@ -117,6 +117,7 @@ if (!class_exists('MozillaBrowserID')) {
 			add_shortcode('browserid_loginout', array(&$this, 'Shortcode_loginout'));
 			add_shortcode('mozilla_persona', array(&$this, 'Shortcode_loginout'));
 
+
             $this->user_registering_with_browserid = false;
 		}
 
@@ -161,27 +162,40 @@ if (!class_exists('MozillaBrowserID')) {
 
 		// Initialization
 		function Init() {
-			global $user_email;
-			get_currentuserinfo();
-
-			// I18n
-			load_plugin_textdomain(c_bid_text_domain, false, dirname(plugin_basename(__FILE__)));
-
 			// Check for assertion
 			$assertion = self::Get_assertion();
 			if (!empty($assertion)) {
-				self::Check_assertion($assertion);
+				return self::Check_assertion($assertion);
 			}
 
+			// I18n
+			load_plugin_textdomain(c_bid_text_domain, false, 
+					dirname(plugin_basename(__FILE__)));
+
+			self::Add_external_dependencies();
+		}
+
+		// Add external dependencies - both JS & CSS
+		function Add_external_dependencies() {
+			// Add the Persona button styles.
+			wp_register_style('persona-style', 
+					plugins_url('style.css', __FILE__));
+			wp_enqueue_style('persona-style');
+
 			// Enqueue BrowserID scripts
-			wp_register_script('browserid', 'https://login.persona.org/include.js', array(), '', true);
+			wp_register_script('browserid', 
+					'https://login.persona.org/include.js', array(), '', true);
+
 			// This one script takes care of all work.
-			wp_register_script('browserid_common', plugins_url('login.js', __FILE__), array('jquery', 'browserid'), '', true);
+			wp_register_script('browserid_common', 
+					plugins_url('login.js', __FILE__), 
+					array('jquery', 'browserid'), '', true);
 
 			$data_array = array(
 				'siteurl' => get_site_url(null, '/'),
 				'login_redirect' => self::Get_login_redirect_url(),
-                'registration_redirect' => self::Get_registration_redirect_url(),
+                'registration_redirect' 
+						=> self::Get_registration_redirect_url(),
 				'error' => self::Get_error_message(),
 				'failed' => self::Get_verification_failed_message(),
 				'sitename' => self::Get_sitename(),
@@ -189,9 +203,11 @@ if (!class_exists('MozillaBrowserID')) {
 				'logout_redirect' => wp_logout_url(),
 				'logged_in_user' => self::Get_browserid_loggedin_user()
 			);
-			wp_localize_script( 'browserid_common', 'browserid_common', $data_array );
+			wp_localize_script( 'browserid_common', 'browserid_common', 
+					$data_array );
 			wp_enqueue_script('browserid_common');
 		}
+
 
 		// Get the redirect URL from the request
 		function Get_request_redirect_url() {
@@ -573,42 +589,11 @@ if (!class_exists('MozillaBrowserID')) {
 			if (self::Is_option_browserid_only_auth()) {
 				echo '<input type="hidden" name="browserid_assertion" id="browserid_assertion" />';
 
-				// XXX collapse the link stuff into Get_login_html
-				$html = '<img src="' . self::Get_image_url() . '" class="persona_logo" />';
-                self::Print_Persona_Button_Html("persona_register", $html);
+				$html = __('Register', c_bid_text_domain) ;
+
+                self::Print_Persona_Button_Html("js-persona__register", $html);
 				self::Print_Registration_Css();
 			}
-		}
-
-		// Print CSS that is common to all forms
-		function Get_Common_Css() {
-			$html =  '.persona_whatis {';
-			$html .= '	font-size: smaller;';
-			$html .= '}';
-			$html .= '.persona_error {';
-			$html .= '	color: red;';
-			$html .= '	font-weight: bold;';
-			$html .= '	margin: 10px;';
-			$html .= '	vertical-align: top;';
-			$html .= '}';
-			$html .= '.persona_logo {';
-			$html .= '	border: none;';
-			$html .= '	vertical-align: middle;';
-			$html .= '	margin-right: 5px;';
-			$html .= '}';
-			$html .= '.persona_submit { ';
-			$html .= '	position: absolute;';
-			$html .= '	position: fixed;';
-			$html .= '	z-index: 999;';
-			$html .= '	top: 0;';
-			$html .= '	bottom: 0;';
-			$html .= '	left: 0;';
-			$html .= '	right: 0;';
-			$html .= '	background-color: #fff;';
-			$html .= '	background-color: rgba(255,255,255,0.7);';
-			$html .= '	color: #333';
-			$html .= '}';
-			return $html;
 		}
 
 		// Print CSS used by the plugin
@@ -621,7 +606,6 @@ if (!class_exists('MozillaBrowserID')) {
 			echo	'	position: absolute;';
 			echo	'	left: -9999px !important;';
 			echo	'}';
-			echo self::Get_Common_Css();
 			echo '</style>';
 		}
 
@@ -731,16 +715,16 @@ if (!class_exists('MozillaBrowserID')) {
 				// Get link content
 				$options = get_option('browserid_options');
 				if (empty($options['browserid_comment_html']))
-					$html = '<img src="' . self::Get_image_url() . '" class="persona_logo" />';
+					$html = 'Comment';
 				else
 					$html = $options['browserid_comment_html'];
 
-                self::Print_Persona_Button_Html("persona_submit_comment", $html);
+                self::Print_Persona_Button_Html("js-persona__submit-comment", $html);
 				self::Print_Comment_Css();
 
 				// Display error message
 				if (isset($_REQUEST['browserid_error'])) {
-					echo '<span class="persona_error">';
+					echo '<span class="persona__error">';
 					echo htmlspecialchars(stripslashes($_REQUEST['browserid_error']), ENT_QUOTES, get_bloginfo('charset'));
 					echo '</span>';
 				}
@@ -749,7 +733,20 @@ if (!class_exists('MozillaBrowserID')) {
 
         // Get the Persona Button HTML
         function Get_Persona_Button_Html($classname, $html) {
-            return '<a href="#" title="Mozilla Persona" class="' . $classname . '">' . $html . '</a>' . self::What_is();
+            $button_html = ''
+					. '<a href="#" title="%s" class="%s %s">'
+					.	'<span class="%s">%s</span>'
+					. '</a> %s';
+
+			$button_html = sprintf($button_html,
+				"Mozilla Persona",
+				"persona-button",
+				$classname,
+				"persona-button__text",
+				$html,
+				self::What_is());
+
+			return $button_html;
         }
 
         // Print a Persona button
@@ -765,7 +762,6 @@ if (!class_exists('MozillaBrowserID')) {
 			echo	'	position: absolute;';
 			echo	'	left: -9999px !important;';
 			echo	'}';
-			echo  self::Get_Common_Css();
 			echo '</style>';
 		}
 
@@ -792,28 +788,25 @@ if (!class_exists('MozillaBrowserID')) {
 
 			if ($check_login && is_user_logged_in()) {
 				$html = self::Get_logout_text();
-				$html .= '<style>';
-				$html .= self::Get_Common_Css();
-				$html .= '</style>';
 
 				// Simple link
 				if (empty($html))
 					return '';
 				else
-					return '<a href="#" class="persona_logout">' . $html . '</a>';
+					return '<a href="#" class="js-persona__logout">' . $html . '</a>';
 			}
 			else {
 				// User not logged in
 				if (empty($options['browserid_login_html']))
-					$html = '<img src="' . self::Get_image_url() . '" class="persona_logo" />';
+					$html = __('Sign in with your email', c_bid_text_domain) ;
 				else
 					$html = $options['browserid_login_html'];
 				// Button
-                $html = self::Get_Persona_Button_Html("persona_login", $html);
+                $html = self::Get_Persona_Button_Html("js-persona__login", $html);
 
-				// Hide the login form. While this does not truely prevent users from 
-				// from logging in using the standard authentication mechanism, it 
-				// cleans up the login form a bit.
+				// Hide the login form. While this does not truely prevent 
+				// users from from logging in using the standard 
+				// authentication mechanism, it cleans up the login form a bit.
 				$html .= '<style>';
 				if (self::Is_option_browserid_only_auth()) {
 					$html .= '#user_login, [for=user_login], #user_pass, ';
@@ -825,30 +818,23 @@ if (!class_exists('MozillaBrowserID')) {
 					$html .= '	left: -9999px !important;';
 					$html .= '}';
 				}
-				$html .= self::Get_Common_Css();
 				$html .= '</style>';
 
 				return $html;
 			}
 		}
 
-		// Get localized image URL
-		function Get_image_url() {
-			$image_url = plugins_url('browserid-en_US.png', __FILE__);
-			$locale = get_bloginfo('language');
-			$locale = str_replace('-', '_', $locale);
-			if (!empty($locale)) {
-				$image = 'browserid-' . $locale . '.png';
-				$image_file = dirname(__FILE__) . '/' . $image;
-				if (file_exists($image_file))
-					$image_url = plugins_url($image, __FILE__);
-			}
-			return $image_url;
-		}
-
 		function What_is() {
-			return '<p><a href="https://login.persona.org/" target="_blank" class="persona_whatis">' . __('What is Persona?', 
-			c_bid_text_domain) . '</a></p>';
+			$html = '<p><a href="%s" target="_blank" class="persona__whatis">'
+				.	'%s'
+				.	'</a></p>';
+
+			$html = sprintf($html, 
+						"https://login.persona.org",
+						__('What is Persona?', c_bid_text_domain) 
+						);
+
+			return $html;
 		}
 
 		// Get (customized) site name
@@ -886,7 +872,7 @@ if (!class_exists('MozillaBrowserID')) {
 					'parent' => 'user-actions',
 					'href' => '#',
 					'meta' => array(
-						'class' => 'persona_logout'
+						'class' => 'js-persona__logout'
 					)
 				));
 			}
@@ -1245,5 +1231,4 @@ if (!function_exists('wp_new_user_notification')) {
 		wp_mail($user_email, $title, $message);
 	}
 }
-
 ?>

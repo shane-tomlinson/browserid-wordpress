@@ -24,14 +24,14 @@
   // effect if the user types "enter" into one of the commentor info fields.
   var enableCommentSubmit = browserid_common.logged_in_user || false;
 
-  jQuery(".persona_login").click(function(event) {
+  jQuery(".js-persona__login").click(function(event) {
     event.preventDefault();
 
     ignoreLogout = false;
     requestAuthentication("login");
   });
 
-  jQuery(".persona_register").click(function(event) {
+  jQuery(".js-persona__register").click(function(event) {
     event.preventDefault();
 
     ignoreLogout = false;
@@ -54,16 +54,16 @@
     }
   });
 
-  jQuery(".persona_submit_comment").click(function(event) {
+  jQuery(".js-persona__submit-comment").click(function(event) {
     event.preventDefault();
 
     verifyUserForComment();
   });
 
-  // the persona_logout button in the admin toolbar is added after this script
-  // is run. Attach a live event (yuck) so that the user is still able to log
-  // out.
-  jQuery(".persona_logout").live("click", function(event) {
+  // the js-persona__logout button in the admin toolbar is added after this
+  // script is run. Attach a live event (yuck) so that the user is still
+  // able to log out.
+  jQuery(".js-persona__logout").live("click", function(event) {
     event.preventDefault();
 
     ignoreLogout = false;
