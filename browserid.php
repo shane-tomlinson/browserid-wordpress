@@ -573,6 +573,8 @@ if (!class_exists('MozillaPersona')) {
 
 		// Filter login error message
 		function Login_message_filter($message) {
+			// XXX this is almost an exact duplicate of the code in comment 
+			// action.
 			if (isset($_REQUEST['browserid_error']))
 				$message .= '<div id="login_error"><strong>' . htmlentities(stripslashes($_REQUEST['browserid_error'])) . '</strong></div>';
 			return $message;
@@ -593,7 +595,7 @@ if (!class_exists('MozillaPersona')) {
 
 				$html = __('Register', c_bid_text_domain) ;
 
-				self::Print_Persona_Button_Html("js-persona__register", $html);
+				self::Print_persona_button_html("js-persona__register", $html);
 			}
 		}
 
@@ -667,8 +669,10 @@ if (!class_exists('MozillaPersona')) {
 			return !self::Is_option_browserid_only_auth();
 		}
 
-		// In Disable Non-Persona auth mode, remove the "Lost your password?" 
-		// link from the login page.
+		// In Disable Non-Persona auth mode, Hide the "Lost your password?" 
+		// link from the login page by not giving it any text. If the user 
+		// still lands on the reset password page, a nice error screen is
+		// shown saying "no way, Jose."
 		function Gettext_lost_password_filter($text) {
 			if ($text == 'Lost your password?') {
 				$text = '';
@@ -699,23 +703,24 @@ if (!class_exists('MozillaPersona')) {
 
 		// Add BrowserID to comment form
 		function Comment_form_action($post_id) {
-			if (!is_user_logged_in()) {
-				// Get link content
-				$options = get_option('browserid_options');
-				$html = $options['browserid_comment_html'];
-
-                self::Print_Persona_Button_Html("js-persona__submit-comment", $html);
-				// Display error message
-				if (isset($_REQUEST['browserid_error'])) {
-					echo '<span class="persona__error">';
-					echo htmlspecialchars(stripslashes($_REQUEST['browserid_error']), ENT_QUOTES, get_bloginfo('charset'));
-					echo '</span>';
-				}
+			// Display error message
+			if (isset($_REQUEST['browserid_error'])) {
+				self::Print_persona_error($_REQUEST['browserid_error']);
 			}
 		}
 
+		// Print a persona error.
+		function Print_persona_error($error) {
+			$error = htmlspecialchars(stripslashes($error), 
+							ENT_QUOTES, get_bloginfo('charset'));
+
+			$html = sprintf('<span class="persona__error">%s</span>', $error);
+
+			echo $html;
+		}
+
         // Get the Persona Button HTML
-        function Get_Persona_Button_Html($classname, $html) {
+        function Get_persona_button_html($classname, $html) {
             $button_html = ''
 					. '<a href="#" title="%s" class="%s %s">'
 					.	'<span class="%s">%s</span>'
@@ -733,8 +738,8 @@ if (!class_exists('MozillaPersona')) {
         }
 
         // Print a Persona button
-        function Print_Persona_Button_Html($classname, $html) {
-            echo self::Get_Persona_Button_Html($classname, $html);
+        function Print_persona_button_html($classname, $html) {
+            echo self::Get_persona_button_html($classname, $html);
         }
 
 		// Shortcode "mozilla_persona"
@@ -769,16 +774,14 @@ if (!class_exists('MozillaPersona')) {
 				// User not logged in
 				$html = $options['browserid_login_html'];
 				// Button
-                $html = self::Get_Persona_Button_Html("js-persona__login", $html);
+                $html = self::Get_persona_button_html("js-persona__login", $html);
 
 				return $html;
 			}
 		}
 
 		function What_is() {
-			$html = '<p class="persona__whatis"><a href="%s" class="%s" target="_blank">'
-				.	'%s'
-				.	'</a></p>';
+			$html = '<p class="persona__whatis"><a href="%s" class="%s" target="_blank">%s</a></p>';
 
 			$html = sprintf($html, 
 						"https://login.persona.org",

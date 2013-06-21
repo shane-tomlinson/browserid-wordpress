@@ -242,7 +242,7 @@
 }
 
 .persona__whatis {
-	font-size: 11px !important;
+	font-size: 10px !important;
   margin: 5px 0 0 0 !important;
   line-height: 1 !important;
 }
@@ -305,14 +305,5 @@
 .persona--persona-only-auth.login-action-login [name=log],
 .persona--persona-only-auth.login-action-login [name=pwd] {
   display: none;
-}
-
-/**
- * Comment form.
- *
- */
-.persona--comments #respond input[type=submit] {
-	position: absolute;
-	left: -9999px !important;
 }
 
