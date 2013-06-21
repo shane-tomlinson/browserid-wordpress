@@ -253,12 +253,22 @@
 }
 
 .persona__error {
-	color: red;
 	font-weight: bold;
+  text-align: left;
+  background-color: #ffbbbb;
+	color: red;
+  padding: 10px;
+  border: 2px solid red;
+}
+
+.persona__error-login {
 	margin: 10px;
 	vertical-align: top;
 }
 
+.persona__error-comment {
+  display: inline-block;
+}
 
 /**
  * Admin screen.

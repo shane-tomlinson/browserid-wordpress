@@ -573,10 +573,8 @@ if (!class_exists('MozillaPersona')) {
 
 		// Filter login error message
 		function Login_message_filter($message) {
-			// XXX this is almost an exact duplicate of the code in comment 
-			// action.
 			if (isset($_REQUEST['browserid_error']))
-				$message .= '<div id="login_error"><strong>' . htmlentities(stripslashes($_REQUEST['browserid_error'])) . '</strong></div>';
+				$message = $this->Get_persona_error_html($_REQUEST['browserid_error'], 'persona__error-login');
 			return $message;
 		}
 
@@ -705,19 +703,24 @@ if (!class_exists('MozillaPersona')) {
 		function Comment_form_action($post_id) {
 			// Display error message
 			if (isset($_REQUEST['browserid_error'])) {
-				self::Print_persona_error($_REQUEST['browserid_error']);
+				self::Print_persona_error($_REQUEST['browserid_error'], 'persona__error-comment');
 			}
 		}
 
 		// Print a persona error.
-		function Print_persona_error($error) {
+		function Print_persona_error($error, $classname = '') {
+			echo $this->Get_persona_error_html($error, $classname);
+		}
+
+		// Get html for a Persona error
+		function Get_persona_error_html($error, $classname = '') {
 			$error = htmlspecialchars(stripslashes($error), 
 							ENT_QUOTES, get_bloginfo('charset'));
 
-			$html = sprintf('<span class="persona__error">%s</span>', $error);
-
-			echo $html;
+			$html = sprintf('<div class="persona__error %s">%s</div>', $classname, $error);
+			return $html;
 		}
+
 
         // Get the Persona Button HTML
         function Get_persona_button_html($classname, $html) {
