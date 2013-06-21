@@ -690,10 +690,7 @@ if (!class_exists('MozillaBrowserID')) {
 			if (!is_user_logged_in()) {
 				// Get link content
 				$options = get_option('browserid_options');
-				if (empty($options['browserid_comment_html']))
-					$html = 'Comment';
-				else
-					$html = $options['browserid_comment_html'];
+				$html = $options['browserid_comment_html'];
 
                 self::Print_Persona_Button_Html("js-persona__submit-comment", $html);
 				// Display error message
@@ -736,10 +733,8 @@ if (!class_exists('MozillaBrowserID')) {
 		// Git spiffy logout text for Persona
 		function Get_logout_text() {
 			// User logged in
-			if (empty($options['browserid_logout_html']))
-				$html = __('Logout');
-			else
-				$html = $options['browserid_logout_html'];
+			$options = get_option('browserid_options');
+			$html = $options['browserid_logout_html'];
 
 			return $html;
 		}
@@ -760,10 +755,7 @@ if (!class_exists('MozillaBrowserID')) {
 			}
 			else {
 				// User not logged in
-				if (empty($options['browserid_login_html']))
-					$html = __('Sign in with your email', c_bid_text_domain) ;
-				else
-					$html = $options['browserid_login_html'];
+				$html = $options['browserid_login_html'];
 				// Button
                 $html = self::Get_Persona_Button_Html("js-persona__login", $html);
 
@@ -844,13 +836,13 @@ if (!class_exists('MozillaBrowserID')) {
 			add_settings_field('browserid_sitename', __('Site name:', c_bid_text_domain), array(&$this, 'Option_sitename'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_sitelogo', __('Site logo:', c_bid_text_domain), array(&$this, 'Option_sitelogo'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_login_html', __('Custom login HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_logout_html', __('Custom logout HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_login_html', __('Login button HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_logout_html', __('Logout button HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
 
 			add_settings_field('browserid_login_redir', __('Login redirection URL:', c_bid_text_domain), array(&$this, 'Option_login_redir'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_comments', __('Enable for comments:', c_bid_text_domain), array(&$this, 'Option_comments'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_bbpress', __('Enable bbPress integration:', c_bid_text_domain), array(&$this, 'Option_bbpress'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_comment_html', __('Custom comment HTML:', c_bid_text_domain), array(&$this, 'Option_comment_html'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_comment_html', __('Comment button HTML:', c_bid_text_domain), array(&$this, 'Option_comment_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_vserver', __('Verification server:', c_bid_text_domain), array(&$this, 'Option_vserver'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_debug', __('Debug mode:', c_bid_text_domain), array(&$this, 'Option_debug'), 'browserid', 'plugin_main');
 		}
@@ -860,11 +852,23 @@ if (!class_exists('MozillaBrowserID')) {
 			// Empty
 		}
 
+		// Print a text input for a plugin option
+		function Print_option_text_input($options, $id) {
+			echo sprintf("<input id='%s' name='browserid_options[%s]' 
+			type='text' size='50' value='%s' />",
+				$id,
+				$id,
+				$options[$id]);
+		}
+
+
 		// Site name option
 		function Option_sitename() {
-			$sitename = self::Get_sitename();
+			$options = get_option('browserid_options');
+			if (empty($options['browserid_sitename']))
+				$options['browserid_sitename'] = self::Get_sitename();
 
-			echo "<input id='browserid_sitename' name='browserid_options[browserid_sitename]' type='text' size='100' value='{$sitename}' />";
+			self::Print_option_text_input($options, 'browserid_sitename');
 		}
 
 		// Site logo option
@@ -872,7 +876,8 @@ if (!class_exists('MozillaBrowserID')) {
 			$options = get_option('browserid_options');
 			if (empty($options['browserid_sitelogo']))
 				$options['browserid_sitelogo'] = null;
-			echo "<input id='browserid_sitelogo' name='browserid_options[browserid_sitelogo]' type='text' size='100' value='{$options['browserid_sitelogo']}' />";
+
+			self::Print_option_text_input($options, 'browserid_sitelogo');
 			echo '<br />' . __('Absolute path, works only with SSL', c_bid_text_domain);
 		}
 
@@ -880,16 +885,18 @@ if (!class_exists('MozillaBrowserID')) {
 		function Option_login_html() {
 			$options = get_option('browserid_options');
 			if (empty($options['browserid_login_html']))
-				$options['browserid_login_html'] = null;
-			echo "<input id='browserid_login_html' name='browserid_options[browserid_login_html]' type='text' size='100' value='{$options['browserid_login_html']}' />";
+				$options['browserid_login_html'] = 
+					__('Sign in with your email', c_bid_text_domain);
+
+			self::Print_option_text_input($options, 'browserid_login_html');
 		}
 
 		// Logout HTML option
 		function Option_logout_html() {
 			$options = get_option('browserid_options');
 			if (empty($options['browserid_logout_html']))
-				$options['browserid_logout_html'] = null;
-			echo "<input id='browserid_logout_html' name='browserid_options[browserid_logout_html]' type='text' size='100' value='{$options['browserid_logout_html']}' />";
+				$options['browserid_logout_html'] = __('Logout', c_bid_text_domain);
+			self::Print_option_text_input($options, 'browserid_logout_html');
 		}
 
 		// Login redir URL option
@@ -897,7 +904,7 @@ if (!class_exists('MozillaBrowserID')) {
 			$options = get_option('browserid_options');
 			if (empty($options['browserid_login_redir']))
 				$options['browserid_login_redir'] = null;
-			echo "<input id='browserid_login_redir' name='browserid_options[browserid_login_redir]' type='text' size='100' value='{$options['browserid_login_redir']}' />";
+			self::Print_option_text_input($options, 'browserid_login_redir');
 			echo '<br />' . __('Default WordPress dashboard', c_bid_text_domain);
 		}
 
@@ -942,14 +949,18 @@ if (!class_exists('MozillaBrowserID')) {
 		function Option_comment_html() {
 			$options = get_option('browserid_options');
 			if (empty($options['browserid_comment_html']))
-				$options['browserid_comment_html'] = null;
-			echo "<input id='browserid_comment_html' name='browserid_options[browserid_comment_html]' type='text' size='100' value='{$options['browserid_comment_html']}' />";
+				$options['browserid_comment_html'] = 
+					$html = __('Comment', c_bid_text_domain);
+
+			self::Print_option_text_input($options, 'browserid_comment_html');
 		}
 
 		// Verification server option
 		function Option_vserver() {
-			$vserver = self::Get_option_vserver();
-			echo "<input id='browserid_vserver' name='browserid_options[browserid_vserver]' type='text' size='100' value='{$vserver}' />";
+			$options = get_option('browserid_options');
+			$options['browserid_vserver'] = self::Get_option_vserver();
+
+			self::Print_option_text_input($options, 'browserid_vserver');
 			echo '<br />' . __('Default https://verifier.login.persona.org/verify', c_bid_text_domain);
 		}
 
