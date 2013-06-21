@@ -282,3 +282,61 @@
 }
 */
 
+
+/**
+ * Admin screen.
+ *
+ * Do not display the ugly password nag in persona only auth
+ */
+.persona--persona-only-auth .default-password-nag {
+  display: none;
+}
+
+/**
+ * Registration screen.
+ *
+ * Hide the user email address in persona only auth.
+ */
+.persona--persona-only-auth .user_email,
+.persona--persona-only-auth [for=user_email],
+.persona--persona-only-auth #reg_passmail {
+  display:none;
+}
+
+/**
+ * Login/Registration screens.
+ *
+ * Push the submit button off the screen, but allow it to be
+ *     programatically clickable.
+ */
+.persona--persona-only-auth #wp-submit {
+	position: absolute;
+  left: -9999px !important;
+}
+
+/**
+ * Login screen
+ *
+ * Hide the login form. While this does not truely prevent
+ * users from from logging in using the standard
+ * authentication mechanism, it cleans up the login form a bit.
+ */
+.persona--persona-only-auth #user_login,
+.persona--persona-only-auth [for=user_login],
+.persona--persona-only-auth #user_pass,
+.persona--persona-only-auth [for=user_pass],
+.persona--persona-only-auth [name=log],
+.persona--persona-only-auth [name=pwd] {
+  display: none;
+}
+
+/**
+ * Comment form.
+ *
+ */
+	/*
+#respond input[type=submit] {
+	position: absolute;
+	left: -9999px !important;
+}*/
+

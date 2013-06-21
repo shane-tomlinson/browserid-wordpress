@@ -91,7 +91,6 @@ if (!class_exists('MozillaBrowserID')) {
 			if (is_admin()) {
 				add_action('admin_menu', array(&$this, 'Admin_menu_action'));
 				add_action('admin_init', array(&$this, 'Admin_init_action'));
-				add_action('wp_dashboard_setup', array(&$this, 'Wp_dashboard_setup_action'));
 			}
 
 			// top toolbar logout button override
@@ -201,7 +200,8 @@ if (!class_exists('MozillaBrowserID')) {
 				'sitename' => self::Get_sitename(),
 				'sitelogo' => self::Get_sitelogo(),
 				'logout_redirect' => wp_logout_url(),
-				'logged_in_user' => self::Get_browserid_loggedin_user()
+				'logged_in_user' => self::Get_browserid_loggedin_user(),
+				'persona_only_auth' =>self::Is_option_browserid_only_auth()
 			);
 			wp_localize_script( 'browserid_common', 'browserid_common', 
 					$data_array );
@@ -559,16 +559,6 @@ if (!class_exists('MozillaBrowserID')) {
 			return $user;
 		}
 
-		function Wp_dashboard_setup_action() {
-			// Persona-only auth is enabled, get rid of the auto-generated 
-			// password warning.
-			echo '<style>';
-			echo	'.default-password-nag {';
-			echo	'	display:none;';
-			echo	'}';
-			echo '</style>';
-		}
-
 		// Filter login error message
 		function Login_message_filter($message) {
 			if (isset($_REQUEST['browserid_error']))
@@ -591,22 +581,8 @@ if (!class_exists('MozillaBrowserID')) {
 
 				$html = __('Register', c_bid_text_domain) ;
 
-                self::Print_Persona_Button_Html("js-persona__register", $html);
-				self::Print_Registration_Css();
+				self::Print_Persona_Button_Html("js-persona__register", $html);
 			}
-		}
-
-		// Print CSS used by the plugin
-		function Print_Registration_Css() {
-			echo '<style>';
-			echo	'#user_email,[for=user_email],#reg_passmail {';
-			echo	'	display:none;';
-			echo	'}';
-			echo	'#wp-submit { ';
-			echo	'	position: absolute;';
-			echo	'	left: -9999px !important;';
-			echo	'}';
-			echo '</style>';
 		}
 
 		// Process registration - get the email address from the assertion and 
@@ -720,8 +696,6 @@ if (!class_exists('MozillaBrowserID')) {
 					$html = $options['browserid_comment_html'];
 
                 self::Print_Persona_Button_Html("js-persona__submit-comment", $html);
-				self::Print_Comment_Css();
-
 				// Display error message
 				if (isset($_REQUEST['browserid_error'])) {
 					echo '<span class="persona__error">';
@@ -753,17 +727,6 @@ if (!class_exists('MozillaBrowserID')) {
         function Print_Persona_Button_Html($classname, $html) {
             echo self::Get_Persona_Button_Html($classname, $html);
         }
-
-		// Print Comment CSS
-		function Print_Comment_Css() {
-			// If it is a Persona login, hide the submit button.
-			echo '<style>';
-			echo	'#respond input[type=submit] {';
-			echo	'	position: absolute;';
-			echo	'	left: -9999px !important;';
-			echo	'}';
-			echo '</style>';
-		}
 
 		// Shortcode "mozilla_persona"
 		function Shortcode_loginout() {
@@ -803,22 +766,6 @@ if (!class_exists('MozillaBrowserID')) {
 					$html = $options['browserid_login_html'];
 				// Button
                 $html = self::Get_Persona_Button_Html("js-persona__login", $html);
-
-				// Hide the login form. While this does not truely prevent 
-				// users from from logging in using the standard 
-				// authentication mechanism, it cleans up the login form a bit.
-				$html .= '<style>';
-				if (self::Is_option_browserid_only_auth()) {
-					$html .= '#user_login, [for=user_login], #user_pass, ';
-					$html .= '[for=user_pass], [name=log], [name=pwd] { ';
-					$html .= '	display: none;';
-					$html .= '}';
-				    $html .= '#wp-submit {';
-					$html .= '	position: absolute;';
-					$html .= '	left: -9999px !important;';
-					$html .= '}';
-				}
-				$html .= '</style>';
 
 				return $html;
 			}

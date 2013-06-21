@@ -89,6 +89,10 @@
     requestAuthentication("register");
   });
 
+  if (browserid_common.persona_only_auth) {
+    jQuery("body").addClass("persona--persona-only-auth");
+  }
+
   if (document.location.hash === "#submit_comment") {
     // During comment submission, ignore the logout messages until
     // the user explicitly requests a login.
