@@ -1,7 +1,7 @@
 
 /* Link body */
 .persona-button {
-  color: #fff;
+  color: #fff !important;
   display: inline-block;
   font-size: 12px;
   font-weight: bold;
