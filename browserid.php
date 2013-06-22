@@ -65,7 +65,6 @@ if (!class_exists('MozillaPersona')) {
 					'Set_auth_cookie_action'), 10, 5);
 			add_action('clear_auth_cookie', array(&$this, 'Clear_auth_cookie_action'));
 			add_filter('wp_authenticate_user', array(&$this, 'Wp_authenticate_user_filter'));
-			add_filter('login_message', array(&$this, 'Login_message_filter'));
 			add_action('login_form', array(&$this, 'Login_form_action'));
 
 
@@ -171,18 +170,25 @@ if (!class_exists('MozillaPersona')) {
 
 		// Initialization
 		function Init() {
+
 			// Check for assertion
 			$assertion = self::Get_assertion();
 			if (!empty($assertion)) {
 				return self::Check_assertion($assertion);
 			}
 
-
 			// I18n
 			load_plugin_textdomain(c_bid_text_domain, false, 
 					dirname(plugin_basename(__FILE__)));
 
 			self::Add_external_dependencies();
+
+			// On the login pages, if there is an error, surface it to be
+			// printed into the templates.
+			if (isset($_REQUEST['browserid_error'])) {
+				global $error;
+				$error = $_REQUEST['browserid_error'];
+			}
 		}
 
 		// Add external dependencies - both JS & CSS
@@ -569,13 +575,6 @@ if (!class_exists('MozillaPersona')) {
 			}
 
 			return $user;
-		}
-
-		// Filter login error message
-		function Login_message_filter($message) {
-			if (isset($_REQUEST['browserid_error']))
-				$message = $this->Get_persona_error_html($_REQUEST['browserid_error'], 'persona__error-login');
-			return $message;
 		}
 
 		// Add login button to login page
