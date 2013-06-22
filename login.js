@@ -121,10 +121,6 @@
     // to view the newly inserted comment.
     if (!state) return refreshWhenCommentSubmitComplete();
 
-    // If the comment form is submitted in the original window, the user will
-    // be sitting at the top of the page. Instead, go to the submit form.
-    document.location.hash = "respond";
-
     loginType = "comment";
 
     // If this is the post Persona verification page AND we got the state
@@ -471,7 +467,7 @@
   }
 
   function showWaitingScreen() {
-    var waitingScreen = $("<div class='persona_submit'></div>");
+    var waitingScreen = $("<div class='persona__submit'></div>");
     $("body").append(waitingScreen);
   }
 

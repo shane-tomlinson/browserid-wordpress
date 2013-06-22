@@ -253,12 +253,11 @@
 }
 
 .persona__error {
-	font-weight: bold;
-  text-align: left;
-  background-color: #ffbbbb;
-	color: red;
-  padding: 10px;
-  border: 2px solid red;
+  padding: 12px;
+  background-color: #ffebe8;
+  color: #333;
+  border: 1px solid #cc0000;
+  font-size: 12px;
 }
 
 .persona__error-login {
@@ -316,4 +315,21 @@
 .persona--persona-only-auth.login-action-login [name=pwd] {
   display: none;
 }
+
+/**
+ * Waiting screen
+ */
+.persona__submit {
+  position: absolute;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #fff;
+  background-color: rgba(255,255,255,.7);
+  z-index: 1000;
+}
+
+
 
