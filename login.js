@@ -467,7 +467,7 @@
   }
 
   function showWaitingScreen() {
-    var waitingScreen = $("<div class='persona__submit'></div>");
+    var waitingScreen = $("<div class='persona__submit'><div class='persona__submit_spinner'></div></div>");
     $("body").append(waitingScreen);
   }
 
