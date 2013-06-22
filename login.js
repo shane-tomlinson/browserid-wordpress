@@ -1,7 +1,9 @@
 /*jshint browser: true*/
-/*global browserid_common: true, jQuery: true*/
+/*global browserid_common: true, $: true*/
 (function() {
   "use strict";
+
+  var $ = jQuery;
 
   // what login type is being handled?
   var loginType;
@@ -24,70 +26,83 @@
   // effect if the user types "enter" into one of the commentor info fields.
   var enableCommentSubmit = browserid_common.logged_in_user || false;
 
-  jQuery(".persona_login").click(function(event) {
+  $(".js-persona__login").click(function(event) {
     event.preventDefault();
 
     ignoreLogout = false;
     requestAuthentication("login");
   });
 
-  jQuery(".persona_register").click(function(event) {
-    event.preventDefault();
-
-    ignoreLogout = false;
-    // Save the form state to localStorage. This allows a new user to close
-    // this tab while they are verifying and still have the registration
-    // complete once the address is verified.
-    saveRegistrationState();
-    requestAuthentication("register");
-  });
-
-  jQuery("#commentform").submit(function(event) {
-    // If the user is trying to submit the form before they have received
-    // a Persona assertion, prevent the form from being submitted and instead
-    // open the Persona dialog. This takes effect if the user types "enter"
-    // into one of the commentor info fields.
-    if (!enableCommentSubmit) {
-      event.preventDefault();
-
-      verifyUserForComment();
-    }
-  });
-
-  jQuery(".persona_submit_comment").click(function(event) {
-    event.preventDefault();
-
-    verifyUserForComment();
-  });
-
-  // the persona_logout button in the admin toolbar is added after this script
-  // is run. Attach a live event (yuck) so that the user is still able to log
-  // out.
-  jQuery(".persona_logout").live("click", function(event) {
+  // the js-persona__logout button in the admin toolbar is added after this
+  // script is run. Attach a live event (yuck) so that the user is still
+  // able to log out.
+  $(".js-persona__logout").live("click", function(event) {
     event.preventDefault();
 
     ignoreLogout = false;
     navigator.id.logout();
   });
 
-  jQuery("#registerform").submit(function(event) {
-    // form submission is disabled so the user can press enter in the username
-    // field and see the Persona dialog. After an assertion has been generated,
-    // submission is re-enabled and data should be sent to the server.
-    if (enableRegistrationSubmit) return;
+  if (browserid_common.comments) {
+    $("body").addClass("persona--comments");
 
-    event.preventDefault();
+    $("#commentform").submit(function(event) {
+      // Make sure there is a comment before submitting
+      if ($("#comment").hasClass("disabled")) {
+        event.preventDefault();
+        return;
+      }
 
-    // If the username has no length, abort
-    if (jQuery("#user_login").val().length === 0) return;
+      // If the user is trying to submit the form before they have received
+      // a Persona assertion, prevent the form from being submitted and instead
+      // open the Persona dialog. This takes effect if the user types "enter"
+      // into one of the commentor info fields.
+      if (!enableCommentSubmit) {
+        event.preventDefault();
 
-    ignoreLogout = false;
-    // Save the form state to localStorage. This allows a new user to close
-    // this tab while they are verifying and still have the registration
-    // complete once the address is verified.
-    saveRegistrationState();
-    requestAuthentication("register");
-  });
+        verifyUserForComment();
+      }
+    });
+  }
+
+  if (browserid_common.persona_only_auth) {
+    $("body").addClass("persona--persona-only-auth");
+
+    // Make sure there is a username before submitting
+    enableSubmitWhenValid("#user_login", ".js-persona__register");
+
+    $(".js-persona__register").click(function(event) {
+      event.preventDefault();
+
+      if ($(event.target).hasClass("disabled")) return;
+
+      ignoreLogout = false;
+      // Save the form state to localStorage. This allows a new user to close
+      // this tab while they are verifying and still have the registration
+      // complete once the address is verified.
+      saveRegistrationState();
+      requestAuthentication("register");
+    });
+
+    $("#registerform").submit(function(event) {
+      // form submission is disabled so the user can press enter in the username
+      // field and see the Persona dialog. After an assertion has been generated,
+      // submission is re-enabled and data should be sent to the server.
+      if (enableRegistrationSubmit) return;
+
+      event.preventDefault();
+
+      // If the username has no length, abort
+      if ($("#user_login").val().length === 0) return;
+
+      ignoreLogout = false;
+      // Save the form state to localStorage. This allows a new user to close
+      // this tab while they are verifying and still have the registration
+      // complete once the address is verified.
+      saveRegistrationState();
+      requestAuthentication("register");
+    });
+  }
 
   if (document.location.hash === "#submit_comment") {
     // During comment submission, ignore the logout messages until
@@ -105,10 +120,6 @@
     // generated. wait for the signal from the other window and refresh the page
     // to view the newly inserted comment.
     if (!state) return refreshWhenCommentSubmitComplete();
-
-    // If the comment form is submitted in the original window, the user will
-    // be sitting at the top of the page. Instead, go to the submit form.
-    document.location.hash = "respond";
 
     loginType = "comment";
 
@@ -160,7 +171,7 @@
 
 
   // If there was an error, log the user out.
-  if (browserid_common.error || jQuery("#login_error").length) {
+  if (browserid_common.error || $("#login_error").length) {
     ignoreLogout = true;
 
     navigator.id.logout();
@@ -260,7 +271,7 @@
 
     appendFormHiddenFields(form, fields);
 
-    jQuery("body").append(form);
+    $("body").append(form);
     form.submit();
   }
 
@@ -275,7 +286,7 @@
    */
 
   function verifyUserForComment() {
-    var comment = jQuery("#comment").val();
+    var comment = $("#comment").val();
     // only submit comment form if there is a comment.
     if (comment && comment.trim().length) {
       ignoreLogout = true;
@@ -294,12 +305,12 @@
     var state = loadCommentState();
     if (!(state || forceSubmit)) return refreshWhenCommentSubmitComplete();
 
-    var form = jQuery("#commentform");
+    var form = $("#commentform");
 
     // Get the post_id from the dom because the postID could in theory
     // change from the original if the submission is happening in a
     // new tab after email verification.
-    var post_id = jQuery("#comment_post_ID").val();
+    var post_id = $("#comment_post_ID").val();
 
     appendFormHiddenFields(form, {
       browserid_comment: post_id,
@@ -322,15 +333,15 @@
     // Allow the form submission to send data to the server.
     enableCommentSubmit = true;
 
-    jQuery("#submit").click();
+    $("#submit").click();
   }
 
   function saveCommentState() {
     var state = {
-      author: jQuery("#author").val(),
-      url: jQuery("#url").val(),
-      comment: jQuery("#comment").val(),
-      comment_parent: jQuery("#comment_parent").val()
+      author: $("#author").val(),
+      url: $("#url").val(),
+      comment: $("#comment").val(),
+      comment_parent: $("#comment_parent").val()
     };
 
     localStorage.setItem("comment_state", JSON.stringify(state));
@@ -341,10 +352,10 @@
 
     if (state) {
       state = JSON.parse(state);
-      jQuery("#author").val(state.author);
-      jQuery("#url").val(state.url);
-      jQuery("#comment").val(state.comment);
-      jQuery("#comment_parent").val(state.comment_parent);
+      $("#author").val(state.author);
+      $("#url").val(state.url);
+      $("#comment").val(state.comment);
+      $("#comment_parent").val(state.comment_parent);
       localStorage.removeItem("comment_state");
     }
 
@@ -388,16 +399,16 @@
     // any other windows that registration has completed by setting a bit in
     // localStorage.
     sessionStorage.setItem("submitting_registration", "true");
-    jQuery("#browserid_assertion").val(assertion);
+    $("#browserid_assertion").val(assertion);
 
     // Allow the form submission to send data to the server.
     enableRegistrationSubmit = true;
-    jQuery("#wp-submit").click();
+    $("#wp-submit").click();
   }
 
   function saveRegistrationState() {
     var state = {
-      user_login: jQuery("#user_login").val()
+      user_login: $("#user_login").val()
     };
 
     localStorage.setItem("registration_state", JSON.stringify(state));
@@ -408,7 +419,7 @@
 
     if (state) {
       state = JSON.parse(state);
-      jQuery("#user_login").val(state.user_login);
+      $("#user_login").val(state.user_login);
       localStorage.removeItem("registration_state");
     }
 
@@ -444,7 +455,7 @@
   }
 
   function appendFormHiddenFields(form, fields) {
-    form = jQuery(form);
+    form = $(form);
 
     for (var name in fields) {
       var field = document.createElement("input");
@@ -456,9 +467,27 @@
   }
 
   function showWaitingScreen() {
-    var waitingScreen = jQuery("<div class='persona_submit'></div>");
-    jQuery("body").append(waitingScreen);
+    var waitingScreen = $("<div class='persona__submit'><div class='persona__submit_spinner'></div></div>");
+    $("body").append(waitingScreen);
   }
+
+  function enableSubmitWhenValid(textField, submitButton) {
+    $(submitButton).addClass("disabled");
+    $(textField).keyup(validate);
+    $(textField).change(validate);
+
+    function validate() {
+      var val = $(textField).val();
+      // only submit val form if there is a val.
+      if (val && val.trim().length) {
+        $(submitButton).removeClass("disabled");
+      }
+      else {
+        $(submitButton).addClass("disabled");
+      }
+    }
+  }
+
 
 
 }());
