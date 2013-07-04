@@ -43,7 +43,8 @@ define('c_bid_option_response', 'bid_response');
 define('c_bid_browserid_login_cookie', 'bid_browserid_login_' . COOKIEHASH);
 
 
-define('c_bid_verifier', 'https://verifier.login.persona.org/verify');
+define('c_bid_source', 'https://login.persona.org');
+define('c_bid_verifier', 'https://verifier.login.persona.org');
 
 
 // Define class
@@ -134,10 +135,6 @@ if (!class_exists('MozillaPersona')) {
 				$options['browserid_logout_html'] = 
 					__('Logout', c_bid_text_domain);
 
-			if (empty($options['browserid_comment_html']))
-				$options['browserid_comment_html'] = 
-					__('Comment', c_bid_text_domain);
-
 			update_option('browserid_options', $options);
 		}
 
@@ -200,7 +197,7 @@ if (!class_exists('MozillaPersona')) {
 
 			// Enqueue BrowserID scripts
 			wp_register_script('browserid', 
-					'https://login.persona.org/include.js', array(), '', true);
+					self::Get_option_persona_source() . '/include.js', array(), '', true);
 
 			// This one script takes care of all work.
 			wp_register_script('browserid_common', 
@@ -862,7 +859,7 @@ if (!class_exists('MozillaPersona')) {
 			add_settings_field('browserid_login_redir', __('Login redirection URL:', c_bid_text_domain), array(&$this, 'Option_login_redir'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_comments', __('Enable for comments:', c_bid_text_domain), array(&$this, 'Option_comments'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_bbpress', __('Enable bbPress integration:', c_bid_text_domain), array(&$this, 'Option_bbpress'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_comment_html', __('Comment button HTML:', c_bid_text_domain), array(&$this, 'Option_comment_html'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_persona_source', __('Persona source:', c_bid_text_domain), array(&$this, 'Option_persona_source'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_vserver', __('Verification server:', c_bid_text_domain), array(&$this, 'Option_vserver'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_debug', __('Debug mode:', c_bid_text_domain), array(&$this, 'Option_debug'), 'browserid', 'plugin_main');
 		}
@@ -965,14 +962,25 @@ if (!class_exists('MozillaPersona')) {
 						$options['browserid_bbpress'];
 		}
 
-		// Comment HTML option
-		function Option_comment_html() {
+		// Persona shim source option
+		function Option_persona_source() {
 			$options = get_option('browserid_options');
-			if (empty($options['browserid_comment_html']))
-				$options['browserid_comment_html'] = 
-					$html = __('Comment', c_bid_text_domain);
+			$options['browserid_persona_source'] = self::Get_option_persona_source();
 
-			self::Print_option_text_input($options, 'browserid_comment_html');
+			self::Print_option_text_input($options, 'browserid_persona_source');
+			echo '<br />' . __('Default', c_bid_text_domain) 
+					. ' ' . c_bid_source;
+		}
+
+		function Get_option_persona_source() {
+			$options = get_option('browserid_options');
+
+			if (isset($options['browserid_persona_source']) && $options['browserid_persona_source'])
+				$persona_source = $options['browserid_persona_source'];
+			else
+				$persona_source = c_bid_source; 
+
+			return $persona_source;
 		}
 
 		// Verification server option
@@ -982,16 +990,19 @@ if (!class_exists('MozillaPersona')) {
 
 			self::Print_option_text_input($options, 'browserid_vserver');
 			echo '<br />' . __('Default', c_bid_text_domain) 
-					. ' ' . c_bid_verifier;
+					. ' ' . c_bid_verifier . '/verify';
 		}
 
 		function Get_option_vserver() {
 			$options = get_option('browserid_options');
+			$source = self::Get_option_persona_source();
 
 			if (isset($options['browserid_vserver']) && $options['browserid_vserver'])
 				$vserver = $options['browserid_vserver'];
+			else if ($source != c_bid_source) 
+				$vserver = $source . '/verify';
 			else
-				$vserver = c_bid_verifier;
+				$vserver = c_bid_verifier . '/verify';
 
 			return $vserver;
 		}
