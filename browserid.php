@@ -161,7 +161,7 @@ if (!class_exists('MozillaPersona')) {
 				$settings_link = '<a href="' 
 					. get_bloginfo('wpurl') 
 					. '/wp-admin/admin.php?page=' . __FILE__ . '">' 
-					. __('Settings') . '</a>';
+					. __('Settings', c_bid_text_domain) . '</a>';
 				array_unshift($links, $settings_link);
 			}
 
@@ -178,8 +178,8 @@ if (!class_exists('MozillaPersona')) {
 			}
 
 			// I18n
-			load_plugin_textdomain(c_bid_text_domain, false, 
-					dirname(plugin_basename(__FILE__)));
+			$l10npath = dirname(plugin_basename(__FILE__)) . '/languages/';
+			load_plugin_textdomain(c_bid_text_domain, false, $l10npath); 
 
 			self::Add_external_dependencies();
 
@@ -385,7 +385,8 @@ if (!class_exists('MozillaPersona')) {
 
 			if (empty($result) || empty($result['status'])) {
 				// No result or status
-				$message = __('Verification response invalid', c_bid_text_domain);
+				$message = __('Verification response invalid', 
+									c_bid_text_domain);
 
 				$debug_message = $message . PHP_EOL . $response['response']['message'];
 			}
@@ -458,7 +459,7 @@ if (!class_exists('MozillaPersona')) {
 				exit();
 			}
 			else {
-				$message = __('You must already have an account to log in with Persona.');
+				$message = __('You must already have an account to log in with Persona.', c_bid_text_domain);
 				self::Handle_error($message);
 			}
 		}
@@ -624,7 +625,8 @@ if (!class_exists('MozillaPersona')) {
 				$errors->add('invalid_registration', 
 						sprintf(__('<strong>ERROR</strong>:  '
 						. '%s uses Mozilla Persona for registration. '
-						. 'Please register using Persona.'), $blogname));
+						. 'Please register using Persona.', 
+						c_bid_text_domain), $blogname));
 			}
 
 			return $errors;
@@ -649,8 +651,8 @@ if (!class_exists('MozillaPersona')) {
 				// The blogname option is escaped with esc_html on the way into the database in sanitize_option
 				// we want to reverse this for the plain text arena of emails.
 				$blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
-				login_header(__('Password reset disabled'), '<p 
-				class="message">' . sprintf(__('%s uses Mozilla Persona to sign in and does not use passwords. Password reset is disabled.'), $blogname) . "</p>");
+				login_header(__('Password reset disabled', c_bid_text_domain), 
+					'<p class="message">' . sprintf(__('%s uses Mozilla Persona to sign in and does not use passwords. Password reset is disabled.', c_bid_text_domain), $blogname) . "</p>");
 				login_footer('user_login');
 				exit();
 			}
@@ -1197,7 +1199,7 @@ if (!function_exists('wp_new_user_notification')) {
 		// XXX Collapse this in to the Get_browserid_only_auth
 		if ((isset($options['browserid_only_auth']) && 
 					$options['browserid_only_auth'])) {
-			$message .= sprintf(__('%s uses Mozilla Persona to sign in and does not use passwords'), $blogname) . "\r\n";
+			$message .= sprintf(__('%s uses Mozilla Persona to sign in and does not use passwords', c_bid_text_domain), $blogname) . "\r\n";
 			$title .= sprintf(__('[%s] Your username'), $blogname);
 		} else {
 			$message .= sprintf(__('Password: %s'), $plaintext_pass) . "\r\n";
