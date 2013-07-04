@@ -6,7 +6,8 @@ Thanks for considering a contribution to the BrowserID-Wordpress plugin! This pr
 1. Fork the repo
 2. Clone the repo locally
 3. Copy the repo directory to your Wordpress installation's plugins directory
-4. Have fun!
+4. Activate the plugin through the Plugins menu in Wordpress
+5. Have fun!
 
 ## Testing &amp; Reporting Errors
 
@@ -33,5 +34,8 @@ Some error reports are more useful than others. Just saying "X doesn't work" is 
 7. Push to your fork and submit a pull request
 
 
+## Translations and I18n
+
+[browserid.pot](https://github.com/shane-tomlinson/browserid-wordpress/blob/master/browserid.pot) is a .POT file that contains off of the strings used in the plugin. Any of the [popular tools](http://codex.wordpress.org/Translating_WordPress#Translation_Tools) can be used to translate the strings contained in the .POT file into the language of your choice. Translated .mo files can be submitted using a pull request or by emailing them to me at [shane@shanetomlinson.com](mailto:shane@shanetomlinson.com)
 
 
