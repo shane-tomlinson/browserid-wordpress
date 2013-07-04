@@ -140,7 +140,8 @@ if (!class_exists('MozillaPersona')) {
 
 		// Handle plugin deactivation
 		function Deactivate() {
-			// TODO: delete options
+			if(get_option('browserid_options'))
+                delete_option('browserid_options');
 		}
 
 		// Add a "Settings" link to the plugin list page.
