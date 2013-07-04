@@ -876,7 +876,7 @@ if (!class_exists('MozillaPersona')) {
 			type='text' size='50' value='%s' />",
 				$id,
 				$id,
-				$options[$id]);
+				htmlspecialchars($options[$id], ENT_QUOTES));
 		}
 
 
