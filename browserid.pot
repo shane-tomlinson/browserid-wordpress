@@ -1,0 +1,183 @@
+# Copyright (C) 2013 
+# This file is distributed under the same license as the  package.
+msgid ""
+msgstr ""
+"Project-Id-Version:  \n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/browserid-wordpress\n"
+"POT-Creation-Date: 2013-07-04 11:02:57+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2013-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: browserid.php:131 browserid.php:909
+msgid "Sign in with your email"
+msgstr ""
+
+#: browserid.php:135 browserid.php:918
+msgid "Logout"
+msgstr ""
+
+#: browserid.php:139 browserid.php:973
+msgid "Comment"
+msgstr ""
+
+#: browserid.php:164
+msgid "Settings"
+msgstr ""
+
+#: browserid.php:269 browserid.php:395
+msgid "Verification failed"
+msgstr ""
+
+#: browserid.php:388
+msgid "Verification response invalid"
+msgstr ""
+
+#: browserid.php:462
+msgid "You must already have an account to log in with Persona."
+msgstr ""
+
+#: browserid.php:491
+msgid "<strong>ERROR</strong>: Your account has been marked as a spammer."
+msgstr ""
+
+#: browserid.php:497
+msgid "Site Suspended."
+msgstr ""
+
+#: browserid.php:594
+msgid "Register"
+msgstr ""
+
+#: browserid.php:654
+msgid "Password reset disabled"
+msgstr ""
+
+#: browserid.php:655
+msgid ""
+"%s uses Mozilla Persona to sign in and does not use passwords. Password "
+"reset is disabled."
+msgstr ""
+
+#: browserid.php:793
+msgid "What is Persona?"
+msgstr ""
+
+#: browserid.php:845 browserid.php:846 browserid.php:1031
+msgid "Mozilla Persona"
+msgstr ""
+
+#: browserid.php:845
+msgid "Administration"
+msgstr ""
+
+#: browserid.php:856
+msgid "Site name:"
+msgstr ""
+
+#: browserid.php:857
+msgid "Site logo:"
+msgstr ""
+
+#: browserid.php:858
+msgid "Disable non-Persona logins:"
+msgstr ""
+
+#: browserid.php:859
+msgid "Login button HTML:"
+msgstr ""
+
+#: browserid.php:860
+msgid "Logout button HTML:"
+msgstr ""
+
+#: browserid.php:862
+msgid "Login redirection URL:"
+msgstr ""
+
+#: browserid.php:863
+msgid "Enable for comments:"
+msgstr ""
+
+#: browserid.php:864
+msgid "Enable bbPress integration:"
+msgstr ""
+
+#: browserid.php:865
+msgid "Comment button HTML:"
+msgstr ""
+
+#: browserid.php:866
+msgid "Verification server:"
+msgstr ""
+
+#: browserid.php:867
+msgid "Debug mode:"
+msgstr ""
+
+#: browserid.php:901
+msgid "Absolute path, works only with SSL"
+msgstr ""
+
+#: browserid.php:928
+msgid "Default WordPress dashboard"
+msgstr ""
+
+#: browserid.php:958
+msgid "Enables anonymous posting implicitly"
+msgstr ""
+
+#: browserid.php:984
+msgid "Default"
+msgstr ""
+
+#: browserid.php:1004
+msgid "Security risk!"
+msgstr ""
+
+#: browserid.php:1036
+msgid "Save Changes"
+msgstr ""
+
+#: browserid.php:1109
+msgid "Mozilla Persona login button"
+msgstr ""
+
+#: browserid.php:1140
+msgid "Title:"
+msgstr ""
+
+#: browserid.php:1184
+msgid "New user registration on your site %s:"
+msgstr ""
+
+#: browserid.php:1185 browserid.php:1193
+msgid "Username: %s"
+msgstr ""
+
+#: browserid.php:1186
+msgid "E-mail: %s"
+msgstr ""
+
+#: browserid.php:1188
+msgid "[%s] New User Registration"
+msgstr ""
+
+#: browserid.php:1202
+msgid "%s uses Mozilla Persona to sign in and does not use passwords"
+msgstr ""
+
+#: browserid.php:1203
+msgid "[%s] Your username"
+msgstr ""
+
+#: browserid.php:1205
+msgid "Password: %s"
+msgstr ""
+
+#: browserid.php:1206
+msgid "[%s] Your username and password"
+msgstr ""
