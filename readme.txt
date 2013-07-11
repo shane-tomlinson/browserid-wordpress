@@ -48,23 +48,13 @@ Please report any issues on [GitHub](https://github.com/shane-tomlinson/browseri
 
 Try putting the following into this option:
 
-`<img src="https://login.persona.org/i/browserid_logo_sm.png" />`
+`<img src="https://login.persona.org/i/persona_sign_in_red.png" />`
 
-Now you will see the Mozilla Persona logo instead of the login button.
+Now you will see a red 'Sign in with Persona' button instead of the traditional CSS button.
 
 = Which server verifies the assertion? =
 
 The assertion is verified by the server at https://login.persona.org/verify.
-
-= I get 'SSL certificate problem, verify that the CA cert is OK' =
-
-Your hosting provider should take a look at the SSL certificates.
-You can check the option *Do not verify SSL certificate*, but please realize this isn't entirely safe.
-
-= I get 'Bad Gateway' =
-
-The login.persona.org service is still in testing phase.
-Trying again may help.
 
 = I get 'Login failed' =
 
@@ -133,6 +123,7 @@ Follow these steps to install the development version:
 * Bug Fix: site name can now contain ' and &
 * Bug Fix: no more static warnings in strict PHP mode
 * Bug Fix: remove plugin options from database when de-activated
+* Bug Fix: incorrect button link for example button link in the FAQ
 
 = 0.43 =
 * Continue with 0.41
