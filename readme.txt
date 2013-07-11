@@ -119,6 +119,21 @@ Follow these steps to install the development version:
 * Click *Choose file* and select the file you downloaded before
 * Click *Install*, then *Activate Plugin*
 
+= 0.44 =
+* Improvement: Commenting for new Persona users is simpler
+* Improvement: New member registration with new Persona users is simpler
+* Improvement: Separate CSS into its own file for maintainability
+* Improvement: Replace .png signin buttons with localizable CSS buttons
+* Improvement: Pre-fill input fields with default values in configuration screen
+* Improvement: Do not show the lost password link if "Disable non-Persona auth" is selected
+* Improvement: Do not show the "default password nag" if "Disable non-Persona auth" is selected
+* Improvement: Code Cleanup.
+* New feature: A .PO file with all strings has been created for localization
+* New Feature: Spanish translations. Thanks Guillermo Movia!
+* Bug Fix: site name can now contain ' and &
+* Bug Fix: no more static warnings in strict PHP mode
+* Bug Fix: remove plugin options from database when de-activated
+
 = 0.43 =
 * Continue with 0.41
 * Bug Fix: Fix the missing arguments errors
@@ -395,6 +410,7 @@ First public release
 
 == Acknowledgments ==
 [Marcel Bokhorst](http://blog.bokhorst.biz/) is the original author of this plugin. His awesome work has allowed me to continue.
+[Guillermo Movia](mailto://deimidis@mozilla-hispano.org) for Spanish translations.
 
 
 This plugin uses:

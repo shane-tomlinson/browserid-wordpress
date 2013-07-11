@@ -45,7 +45,7 @@ Please report any issues on the plugin's [issue tracker](https://github.com/shan
 
 ## Acknowledgments
 [Marcel Bokhorst](http://blog.bokhorst.biz/) is the original author of this plugin. His awesome work has allowed me to continue.
-
+[Guillermo Movia](mailto://deimidis@mozilla-hispano.org) for Spanish translations.
 
 This plugin uses:
 
