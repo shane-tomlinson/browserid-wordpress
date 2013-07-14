@@ -286,16 +286,12 @@
    */
 
   function verifyUserForComment() {
-    var comment = $("#comment").val();
-    // only submit comment form if there is a comment.
-    if (comment && comment.trim().length) {
-      ignoreLogout = true;
-      // Save the form state to localStorage. This allows a new user to close
-      // this tab while they are verifying and still have the comment form
-      // submitted once the address is verified.
-      saveCommentState();
-      requestAuthentication("comment");
-    }
+    ignoreLogout = true;
+    // Save the form state to localStorage. This allows a new user to close
+    // this tab while they are verifying and still have the comment form
+    // submitted once the address is verified.
+    saveCommentState();
+    requestAuthentication("comment");
   }
 
   function submitCommentForm(assertion) {
