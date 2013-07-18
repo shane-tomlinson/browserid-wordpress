@@ -105,6 +105,7 @@ if (!class_exists('MozillaPersona')) {
 			if (self::Is_option_comments()) {
 				add_filter('comment_form_default_fields', array(&$this, 'Comment_form_action_default_fields_filter'));
 				add_action('comment_form', array(&$this, 'Comment_form_action'));
+				add_filter('pre_comment_approved', array(&$this, 'Pre_comment_approved_filter'), 20, 2);
 			}
 
 			// bbPress integration
@@ -703,6 +704,18 @@ if (!class_exists('MozillaPersona')) {
 			// Display error message
 			if (isset($_REQUEST['browserid_error'])) {
 				self::Print_persona_error($_REQUEST['browserid_error'], 'persona__error-comment');
+			}
+		}
+
+		// If Persona-Only auth is enabled, comment must be submitted with an 
+		// assertion.
+		function Pre_comment_approved_filter($approved, $commentdata) {
+			$assertion = self::Get_assertion();
+			if (empty($assertion)) {
+				if ( defined('DOING_AJAX') )
+					die(__('Comment must be submitted using Persona'));
+
+				wp_die(__('Comment must be submitted using Persona'));
 			}
 		}
 
