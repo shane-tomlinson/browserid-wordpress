@@ -176,7 +176,7 @@ if (!class_exists('MozillaPersona')) {
 			}
 
 			// I18n
-			$l10npath = dirname(plugin_basename(__FILE__)) . '/../languages/';
+			$l10npath = dirname(plugin_basename(__FILE__)) . '/languages/';
 			load_plugin_textdomain(c_bid_text_domain, false, $l10npath); 
 
 			self::Add_external_dependencies();
