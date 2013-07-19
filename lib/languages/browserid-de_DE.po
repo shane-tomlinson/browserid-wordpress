@@ -5,6 +5,7 @@ msgstr ""
 "PO-Revision-Date: \n"
 "Last-Translator: Marcel Bokhorst\n"
 "Language-Team: \n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -74,4 +75,3 @@ msgstr "Was ist BrowserID?"
 
 msgid "Debug mode:"
 msgstr "Debug Modus:"
-
