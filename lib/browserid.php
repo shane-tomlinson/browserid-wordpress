@@ -1,17 +1,5 @@
 <?php
 /*
-Plugin Name: Mozilla Persona
-Plugin URI: http://wordpress.org/extend/plugins/browserid/
-Plugin Repo: https://github.com/shane-tomlinson/browserid-wordpress
-Description: Mozilla Persona, the safest & easiest way to sign in
-Version: 0.44
-Author: Shane Tomlinson
-Author URI: https://shanetomlinson.com
-Original Author: Marcel Bokhorst
-Original Author URI: http://blog.bokhorst.biz/about/
-*/
-
-/*
 	Copyright (c) 2011, 2012, 2013 Shane Tomlinson, Marcel Bokhorst
 
 	This program is free software; you can redistribute it and/or modify
