@@ -765,7 +765,7 @@ if (!class_exists('MozillaPersona')) {
 		function Get_logout_text() {
 			// User logged in
 			$options = get_option('browserid_options');
-			$html = $options['browserid_logout_html'];
+			$html = __($options['browserid_logout_html'], c_bid_text_domain);
 
 			return $html;
 		}
@@ -786,7 +786,7 @@ if (!class_exists('MozillaPersona')) {
 			}
 			else {
 				// User not logged in
-				$html = $options['browserid_login_html'];
+				$html = __($options['browserid_login_html'], c_bid_text_domain);
 				// Button
                 $html = self::Get_persona_button_html("js-persona__login", $html);
 
