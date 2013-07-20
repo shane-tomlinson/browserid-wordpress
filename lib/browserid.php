@@ -50,27 +50,45 @@ if (!class_exists('MozillaPersona')) {
 			add_action('init', array(&$this, 'Init'), 0);
 
 			// Authentication
-			add_action('set_auth_cookie', array(&$this, 
-					'Set_auth_cookie_action'), 10, 5);
-			add_action('clear_auth_cookie', array(&$this, 'Clear_auth_cookie_action'));
-			add_filter('wp_authenticate_user', array(&$this, 'Wp_authenticate_user_filter'));
-			add_action('login_form', array(&$this, 'Login_form_action'));
+			add_action('set_auth_cookie', 
+					array(&$this, 'Set_auth_cookie_action'), 10, 5);
+			add_action('clear_auth_cookie', 
+					array(&$this, 'Clear_auth_cookie_action'));
+
+			if (self::Is_option_browserid_only_auth()) {
+				add_filter('wp_authenticate_user', 
+						array(&$this, 'Disallow_non_persona_logins_filter'));
+			}
+
+			add_filter('check_password', 
+					array(&$this, 'Allow_fake_password_if_persona_login'));
+
+			add_action('login_form', 
+					array(&$this, 'Add_persona_to_login_form'));
 
 
 			// Registration
 			if (self::Is_option_browserid_only_auth()) {
-				add_action('register_form', array(&$this, 'Register_form_action'));
-				add_action('user_register', array(&$this, 'Register_user_register_action'));
-				add_filter('registration_errors', array(&$this, 'Registration_errors_filter'));
-				add_filter('registration_redirect', array(&$this, 'Registration_redirect_filter'));
+				add_action('register_form', 
+						array(&$this, 'Add_persona_to_registration_form'));
+				add_action('user_register', 
+						array(&$this, 'Sign_in_new_persona_user'));
+				add_filter('registration_errors', 
+						array(&$this, 'Disallow_non_persona_registration_filter'));
+				add_filter('registration_redirect', 
+						array(&$this, 'Registration_redirect_filter'));
 			}
 
 			// Lost password
 			if (self::Is_option_browserid_only_auth()) {
-				add_action('lost_password', array(&$this, 'Lost_password_action'));
-				add_filter('allow_password_reset', array(&$this, 'Allow_password_reset_filter'));
-				add_filter('show_password_fields', array(&$this, 'Show_password_fields_filter'));
-				add_filter('gettext', array(&$this, 'Gettext_lost_password_filter'));
+				add_action('lost_password', 
+						array(&$this, 'Disallow_lost_password'));
+				add_filter('allow_password_reset', 
+						array(&$this, 'Disallow_password_reset'));
+				add_filter('show_password_fields', 
+						array(&$this, 'Hide_password_fields'));
+				add_filter('gettext', 
+						array(&$this, 'Hide_lost_password_text'));
 			}
 
 			// Widgets and admin menu
@@ -81,6 +99,11 @@ if (!class_exists('MozillaPersona')) {
 
 				add_action('admin_menu', array(&$this, 'Admin_menu_action'));
 				add_action('admin_init', array(&$this, 'Admin_init_action'));
+
+				if (self::Is_option_browserid_only_auth()) {
+					add_action('admin_action_createuser', 
+							array(&$this, 'Admin_action_createuser'));
+				}
 			}
 
 			// top toolbar logout button override
@@ -156,6 +179,7 @@ if (!class_exists('MozillaPersona')) {
 
 		// Initialization
 		function Init() {
+			$this->browserid_login = false;
 
 			// Check for assertion
 			$assertion = self::Get_assertion();
@@ -468,26 +492,12 @@ if (!class_exists('MozillaPersona')) {
 			$user = null;
 
 			if ($userdata) {
-				$user = new WP_User($userdata->ID);
-
-				// Check if user/blog is marked as spam. Copied out of user.php
-				if ( is_multisite() ) {
-					// Is user marked as spam?
-					if ( 1 == $user->spam)
-						return new WP_Error('invalid_username', __('<strong>ERROR</strong>: Your account has been marked as a spammer.'));
-
-					// Is a user's blog marked as spam?
-					if ( !is_super_admin( $user->ID ) && isset($user->primary_blog) ) {
-						$details = get_blog_details( $user->primary_blog );
-						if ( is_object( $details ) && $details->spam == 1 )
-							return new WP_Error('blog_suspended', __('Site Suspended.'));
-					}
-				}
-
 				$this->browserid_login = true;
-				wp_set_current_user($userdata->ID, $userdata->user_login);
-				wp_set_auth_cookie($userdata->ID, $rememberme);
-				do_action('wp_login', $userdata->user_login);
+				$user = wp_signon(array(
+					'user_login' => $userdata->user_login,
+					'user_password' => 'fake_password',
+					'remember' => true
+				));
 			}
 			return $user;
 		}
@@ -548,29 +558,39 @@ if (!class_exists('MozillaPersona')) {
 			}
 		}
 
-		// Clear the cookie that keeps track of whether hte user 
+		// Clear the cookie that keeps track of whether the user 
 		// signed in using BrowserID
 		function Clear_auth_cookie_action() {
 			$expire = time() - YEAR_IN_SECONDS;
 			setcookie(c_bid_browserid_login_cookie, ' ', $expire, COOKIEPATH, COOKIE_DOMAIN);
 		}
 
-		// Check whether normal username/password authentication is allowed
-		function Wp_authenticate_user_filter($user) {
-			if (self::Is_option_browserid_only_auth()) {
-				return new WP_error('invalid_login', 'Only BrowserID logins are allowed');
+		function Disallow_non_persona_logins_filter($user) {
+			if (! $this->browserid_login) {
+				return new WP_error('invalid_login', 
+						'Only BrowserID logins are allowed');
 			}
-
 			return $user;
 		}
 
+
+		function Allow_fake_password_if_persona_login($check) {
+			// Passwords are handled by assertions in Persona authentication.
+			// If this is a Persona login, the password is always good. This 
+			// allows for the fake password to be passed to wp_login above.
+			if ($this->browserid_login) {
+				return true;
+			}
+			return $check;
+		}
+
 		// Add login button to login page
-		function Login_form_action() {
+		function Add_persona_to_login_form() {
 			echo '<p>' . self::Get_loginout_html(false) . '<br /><br /></p>';
 		}
 
 		// Add Persona button to registration form and remove the email form.
-		function Register_form_action() {
+		function Add_persona_to_registration_form() {
 			// Only enable registration via Persona if Persona is the only 
 			// authentication mechanism or else the user will not see the
 			// "check your email" screen.
@@ -597,17 +617,17 @@ if (!class_exists('MozillaPersona')) {
 
 
 		// Now that the user is registered, log them in
-		function Register_user_register_action($user_id) {
-			if (self::Is_option_browserid_only_auth()) {
+		function Sign_in_new_persona_user($user_id) {
+			if ($this->browserid_login) {
 				return self::Login_by_id($user_id, false);
 			}
 		}
 
 		// Check if traditional registration has been disabled.
-		function Registration_errors_filter($errors) {
-			if (self::Is_option_browserid_only_auth() && 
-					!$this->user_registering_with_browserid) { 
-				$blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+		function Disallow_non_persona_registration_filter($errors) {
+			if (! $this->user_registering_with_browserid) { 
+				$blogname = wp_specialchars_decode(
+									get_option('blogname'), ENT_QUOTES);
 				$errors->add('invalid_registration', 
 						sprintf(__('<strong>ERROR</strong>:  '
 						. '%s uses Mozilla Persona for registration. '
@@ -632,33 +652,31 @@ if (!class_exists('MozillaPersona')) {
 
 		// If only BrowserID logins are allowed, a reset password form should 
 		// not be shown.
-		function Lost_password_action() {
-			if (self::Is_option_browserid_only_auth()) {
-				// The blogname option is escaped with esc_html on the way into the database in sanitize_option
-				// we want to reverse this for the plain text arena of emails.
-				$blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
-				login_header(__('Password reset disabled', c_bid_text_domain), 
-					'<p class="message">' . sprintf(__('%s uses Mozilla Persona to sign in and does not use passwords. Password reset is disabled.', c_bid_text_domain), $blogname) . "</p>");
-				login_footer('user_login');
-				exit();
-			}
+		function Disallow_lost_password() {
+			// The blogname option is escaped with esc_html on the way into the database in sanitize_option
+			// we want to reverse this for the plain text arena of emails.
+			$blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+			login_header(__('Password reset disabled', c_bid_text_domain), 
+				'<p class="message">' . sprintf(__('%s uses Mozilla Persona to sign in and does not use passwords. Password reset is disabled.', c_bid_text_domain), $blogname) . "</p>");
+			login_footer('user_login');
+			exit();
 		}
 
 		// Disable reset password if in BrowserID only mode
-		function Allow_password_reset_filter() {
-			return !self::Is_option_browserid_only_auth();
+		function Disallow_password_reset() {
+			return false;
 		}
 
 		// Disable change password form if in BrowserID only mode
-		function Show_password_fields_filter() {
-			return !self::Is_option_browserid_only_auth();
+		function Hide_password_fields() {
+			return false;
 		}
 
 		// In Disable Non-Persona auth mode, Hide the "Lost your password?" 
 		// link from the login page by not giving it any text. If the user 
 		// still lands on the reset password page, a nice error screen is
 		// shown saying "no way, Jose."
-		function Gettext_lost_password_filter($text) {
+		function Hide_lost_password_text($text) {
 			if ($text == 'Lost your password?') {
 				$text = '';
 			}
@@ -863,6 +881,16 @@ if (!class_exists('MozillaPersona')) {
 			add_settings_field('browserid_persona_source', __('Persona source:', c_bid_text_domain), array(&$this, 'Option_persona_source'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_vserver', __('Verification server:', c_bid_text_domain), array(&$this, 'Option_vserver'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_debug', __('Debug mode:', c_bid_text_domain), array(&$this, 'Option_debug'), 'browserid', 'plugin_main');
+		}
+
+		// set a fake password when creating a password for a user.
+		// only called if "BrowserID Only" auth is set.
+		function Admin_action_createuser() {
+			if (! (isset( $_POST['pass1']) && isset( $_POST['pass2']))) {
+				$user_pass = wp_generate_password( 12, false);
+				$_POST['pass1'] = $user_pass;
+				$_POST['pass2'] = $user_pass;
+			}
 		}
 
 		// Main options section
