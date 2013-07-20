@@ -224,8 +224,9 @@ if (!class_exists('MozillaPersona')) {
 						=> self::Get_registration_redirect_url(),
 				'error' => self::Get_error_message(),
 				'failed' => self::Get_verification_failed_message(),
-				'sitename' => self::Get_sitename(),
-				'sitelogo' => self::Get_sitelogo(),
+				'siteName' => self::Get_sitename(),
+				'siteLogo' => self::Get_sitelogo(),
+				'backgroundColor' => self::Get_background_color(),
 				'logout_redirect' => wp_logout_url(),
 				'logged_in_user' => self::Get_browserid_loggedin_user(),
 				'persona_only_auth' => self::Is_option_browserid_only_auth(),
@@ -833,6 +834,14 @@ if (!class_exists('MozillaPersona')) {
 			return '';
 		}
 
+		// Get backgroundColor 
+		function Get_background_color() {
+			$options = get_option('browserid_options');
+			if (isset($options['browserid_background_color']))
+				return $options['browserid_background_color'];
+			return '';
+		}
+
 		// Override logout on site menu
 		function Admin_toolbar_action($wp_toolbar) {
 			$logged_in_user = self::Get_browserid_loggedin_user();
@@ -869,8 +878,10 @@ if (!class_exists('MozillaPersona')) {
 		function Admin_init_action() {
 			register_setting('browserid_options', 'browserid_options', null);
 			add_settings_section('plugin_main', null, array(&$this, 'Options_main'), 'browserid');
-			add_settings_field('browserid_sitename', __('Site name:', c_bid_text_domain), array(&$this, 'Option_sitename'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_sitelogo', __('Site logo:', c_bid_text_domain), array(&$this, 'Option_sitelogo'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_sitename', __('Site name (shown in dialog):', c_bid_text_domain), array(&$this, 'Option_sitename'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_sitelogo', __('Site logo (shown in dialog):', c_bid_text_domain), array(&$this, 'Option_sitelogo'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_background_color', __('Background color (shown in 
+      dialog):', c_bid_text_domain), array(&$this, 'Option_background_color'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_login_html', __('Login button HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_logout_html', __('Logout button HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
@@ -925,6 +936,16 @@ if (!class_exists('MozillaPersona')) {
 
 			self::Print_option_text_input($options, 'browserid_sitelogo');
 			echo '<br />' . __('Absolute path, works only with SSL', c_bid_text_domain);
+		}
+
+		// backgroundColor option
+		function Option_background_color() {
+			$options = get_option('browserid_options');
+			if (empty($options['browserid_background_color']))
+				$options['browserid_background_color'] = null;
+
+			self::Print_option_text_input($options, 'browserid_background_color');
+			echo '<br />' . __('3 or 6 character hex value. e.g. #333 or #333333', c_bid_text_domain);
 		}
 
 		// Login HTML option
