@@ -1,4 +1,14 @@
 
+.persona-button--select-color {
+  line-height: 23px;
+}
+
+input[type=radio].persona-button--select-color-radio {
+  margin: 0 10px 0 0;
+  display: table-cell;
+  vertical-align: middle;
+}
+
 /* Link body */
 .persona-button {
   color: #fff !important;
@@ -168,6 +178,8 @@
   -webkit-box-shadow: inset 0 -1px 0 rgba(0,0,0,0.3);
   box-shadow:     inset 0 -1px 0 rgba(0,0,0,0.3);
 }
+
+
 
 /* ========================================================
  *    Dark button

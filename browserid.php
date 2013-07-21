@@ -759,9 +759,10 @@ if (!class_exists('MozillaPersona')) {
 					.	'<span class="%s">%s</span>'
 					. '</a> %s';
 
+			$color = $this->Get_option_button_color();
 			$button_html = sprintf($button_html,
 				"Mozilla Persona",
-				"persona-button",
+				"persona-button " . $color,
 				$classname,
 				"persona-button__text",
 				$html,
@@ -893,6 +894,8 @@ if (!class_exists('MozillaPersona')) {
 			add_settings_field('browserid_sitename', __('Site name:', c_bid_text_domain), array(&$this, 'Option_sitename'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_sitelogo', __('Site logo:', c_bid_text_domain), array(&$this, 'Option_sitelogo'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_background_color', __('Dialog background color:', c_bid_text_domain), array(&$this, 'Option_background_color'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_button_color', __('Persona button color:', c_bid_text_domain), 
+					array(&$this, 'Option_button_color'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_login_html', __('Login button HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_logout_html', __('Logout button HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
@@ -1094,6 +1097,38 @@ if (!class_exists('MozillaPersona')) {
 			$options = get_option('browserid_options');
 
 			return isset($options['browserid_only_auth']) && $options['browserid_only_auth'];
+		}
+
+		function Option_button_color() {
+			echo "<ul>";
+			$this->Print_persona_button_selection(__('Blue', c_bid_text_domain), 'blue');
+			$this->Print_persona_button_selection(__('Black', c_bid_text_domain), 'dark');
+			$this->Print_persona_button_selection(__('Orange', c_bid_text_domain), 'orange');
+			echo "</ul>";
+		}
+
+		function Get_option_button_color() {
+			$options = get_option('browserid_options');
+
+			if (isset($options['browserid_button_color'])) {
+				return $options['browserid_button_color'];
+			}
+
+			return "blue";
+		}
+
+		function Print_persona_button_selection($name, $value) {
+			$color = $this->Get_option_button_color();
+			$chk = ($color == $value ? " checked='checked'" : '');
+
+			echo "<li class='persona-button--select-color'>" .
+					 "<input name='browserid_options[browserid_button_color]' " .
+							"class='persona-button--select-color-radio'" .
+							"type='radio' value='". $value ."'" . $chk. "/>" .
+					 "<label class='persona-button " . $value ."'>" .
+						 "<span class='persona-button__text'>" . $name . "</span>" .
+					 "</label>" .
+				 "</li>";
 		}
 
 		// Render options page
