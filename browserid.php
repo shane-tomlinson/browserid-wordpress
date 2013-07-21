@@ -217,7 +217,7 @@ if (!class_exists('MozillaPersona')) {
 		function Add_external_dependencies() {
 			// Add the Persona button styles.
 			wp_register_style('persona-style',
-					plugins_url('style.css', __FILE__));
+					plugins_url('browserid.css', __FILE__));
 			wp_enqueue_style('persona-style');
 
 			// Enqueue BrowserID scripts
@@ -226,7 +226,7 @@ if (!class_exists('MozillaPersona')) {
 
 			// This one script takes care of all work.
 			wp_register_script('browserid_common',
-					plugins_url('login.js', __FILE__),
+					plugins_url('browserid.js', __FILE__),
 					array('jquery', 'browserid'), '', true);
 
 			$data_array = array(
