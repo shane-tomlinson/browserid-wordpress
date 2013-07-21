@@ -9,5 +9,5 @@ if [ ! -e $localeroot/browserid.pot ]; then
   touch $localeroot/browserid.pot
 fi
 
-xgettext -j -L PHP --keyword="__" --output-dir=$localeroot --output=browserid.pot --package-name="browserid-wordpress" --from-code=utf-8 $pluginroot/lib/browserid.php
+xgettext -j -L PHP --keyword="__" --output-dir=$localeroot --output=browserid.pot --package-name="browserid-wordpress" --from-code=utf-8 $pluginroot/browserid.php
 
