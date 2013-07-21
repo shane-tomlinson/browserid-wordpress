@@ -719,6 +719,11 @@ if (!class_exists('MozillaPersona')) {
 
 		// Add BrowserID to comment form
 		function Comment_form_action($post_id) {
+			if (!is_user_logged_in()) {
+				$html = $this->Get_option_comment_html();
+				$this->Print_persona_button_html("js-persona__submit-comment", $html);
+			}
+
 			// Display error message
 			if (isset($_REQUEST['browserid_error'])) {
 				self::Print_persona_error($_REQUEST['browserid_error'], 'persona__error-comment');
@@ -894,14 +899,16 @@ if (!class_exists('MozillaPersona')) {
 			add_settings_field('browserid_sitename', __('Site name:', c_bid_text_domain), array(&$this, 'Option_sitename'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_sitelogo', __('Site logo:', c_bid_text_domain), array(&$this, 'Option_sitelogo'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_background_color', __('Dialog background color:', c_bid_text_domain), array(&$this, 'Option_background_color'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_button_color', __('Persona button color:', c_bid_text_domain), 
-					array(&$this, 'Option_button_color'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_button_color', __('Login button color:', c_bid_text_domain), 
+					array(&$this, 'Option_button_color'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_login_html', __('Login button HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_logout_html', __('Logout button HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
 
 			add_settings_field('browserid_login_redir', __('Login redirection URL:', c_bid_text_domain), array(&$this, 'Option_login_redir'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_comments', __('Enable for comments:', c_bid_text_domain), array(&$this, 'Option_comments'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_comment_html', __('Comment button HTML:', c_bid_text_domain), 
+					array(&$this, 'Option_comment_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_bbpress', __('Enable bbPress integration:', c_bid_text_domain), array(&$this, 'Option_bbpress'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_persona_source', __('Persona source:', c_bid_text_domain), array(&$this, 'Option_persona_source'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_vserver', __('Verification server:', c_bid_text_domain), array(&$this, 'Option_vserver'), 'browserid', 'plugin_main');
@@ -1008,6 +1015,24 @@ if (!class_exists('MozillaPersona')) {
 
 			return isset($options['browserid_comments']) &&
 						$options['browserid_comments'];
+		}
+
+		function Option_comment_html() {
+			$options = get_option('browserid_options');
+
+			if (empty($options['browserid_comment_html']))
+				$options['browserid_comment_html'] = __('Post Comment', c_bid_text_domain);
+
+			self::Print_option_text_input($options, 'browserid_comment_html');
+		}
+
+		function Get_option_comment_html() {
+			$options = get_option('browserid_options');
+
+			if (empty($options['browserid_comment_html']))
+				$options['browserid_comment_html'] = __('Post Comment', c_bid_text_domain);
+
+			return $options['browserid_comment_html'];
 		}
 
 		// Enable bbPress integration

@@ -309,7 +309,16 @@ input[type=radio].persona-button--select-color-radio {
  */
 .persona--persona-only-auth #wp-submit {
 	position: absolute;
-  left: -9999px !important;
+	left: -9999px !important;
+}
+
+/**
+ * Comment form.
+ *
+ */
+.persona--comments #respond input[type=submit] {
+	position: absolute;
+	left: -9999px !important;
 }
 
 /**

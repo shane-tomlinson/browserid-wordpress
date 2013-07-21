@@ -46,7 +46,12 @@
   if (browserid_common.comments) {
     $("body").addClass("persona--comments");
 
-    $("#commentform").submit(function(event) {
+    $(".js-persona__submit-comment").click(function(event) {
+		event.preventDefault();
+		$("#commentform").submit();
+	});
+
+	$("#commentform").submit(function(event) {
       // Make sure there is a comment before submitting
       if ($("#comment").hasClass("disabled")) {
         event.preventDefault();
