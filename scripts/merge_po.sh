@@ -5,7 +5,7 @@
 
 pluginroot=`dirname $0`/..
 locale_dir=$pluginroot/locale
-plugin_language_dir=$pluginroot/lib/languages
+plugin_language_dir=$pluginroot/languages
 
 for lang in `find $locale_dir -type f -name "*.po" -not -path '*/db_LB/*'`; do
     dir=`dirname $lang`
