@@ -226,7 +226,9 @@
     var opts = {
       siteName: browserid_common.siteName || "",
       siteLogo: browserid_common.siteLogo || "",
-      backgroundColor: browserid_common.backgroundColor || ""
+      backgroundColor: browserid_common.backgroundColor || "",
+	  termsOfService: browserid_common.termsOfService || "",
+	  privacyPolicy: browserid_common.privacyPolicy || ""
     };
 
    /**

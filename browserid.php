@@ -239,6 +239,8 @@ if (!class_exists('MozillaPersona')) {
 				'siteName' => self::Get_sitename(),
 				'siteLogo' => self::Get_sitelogo(),
 				'backgroundColor' => self::Get_background_color(),
+				'termsOfService' => self::Get_terms_of_service(),
+				'privacyPolicy' => self::Get_privacy_policy(),
 				'logout_redirect' => wp_logout_url(),
 				'logged_in_user' => self::Get_browserid_loggedin_user(),
 				'persona_only_auth' => self::Is_option_browserid_only_auth(),
@@ -833,10 +835,7 @@ if (!class_exists('MozillaPersona')) {
 
 		// Get (customized) site name
 		function Get_sitename() {
-			$name = null;
-			$options = get_option('browserid_options');
-			if (isset($options['browserid_sitename']))
-				$name = $options['browserid_sitename'];
+			$name = $this->Get_option('browserid_sitename');
 			if (empty($name))
 				$name = get_bloginfo('name');
 			return $name;
@@ -847,17 +846,28 @@ if (!class_exists('MozillaPersona')) {
 			$options = get_option('browserid_options');
 			// sitelogo is only valid with SSL connections
 			if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
-				if (isset($options['browserid_sitelogo']))
-					return $options['browserid_sitelogo'];
+				return $this->Get_option('browserid_sitelogo');
 			return '';
 		}
 
 		// Get backgroundColor
 		function Get_background_color() {
+			return $this->Get_option('browserid_background_color');
+		}
+
+		function Get_terms_of_service() {
+			return $this->Get_option('browserid_terms_of_service');
+		}
+
+		function Get_privacy_policy() {
+			return $this->Get_option('browserid_privacy_policy');
+		}
+
+		function Get_option($option_name, $default_value = '') {
 			$options = get_option('browserid_options');
-			if (isset($options['browserid_background_color']))
-				return $options['browserid_background_color'];
-			return '';
+			if (isset($options[$option_name]))
+				return $options[$option_name];
+			return $default_value;
 		}
 
 		// Override logout on site menu
@@ -898,7 +908,12 @@ if (!class_exists('MozillaPersona')) {
 			add_settings_section('plugin_main', null, array(&$this, 'Options_main'), 'browserid');
 			add_settings_field('browserid_sitename', __('Site name:', c_bid_text_domain), array(&$this, 'Option_sitename'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_sitelogo', __('Site logo:', c_bid_text_domain), array(&$this, 'Option_sitelogo'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_background_color', __('Dialog background color:', c_bid_text_domain), array(&$this, 'Option_background_color'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_background_color', __('Dialog background color:', c_bid_text_domain), 
+					array(&$this, 'Option_background_color'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_terms_of_service', __('Terms of service:', c_bid_text_domain), 
+					array(&$this, 'Option_terms_of_service'), 'browserid', 'plugin_main');
+			add_settings_field('browserid_privacy_policy', __('Privacy policy:', c_bid_text_domain), 
+					array(&$this, 'Option_privacy_policy'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_button_color', __('Login button color:', c_bid_text_domain), 
 					array(&$this, 'Option_button_color'), 'browserid', 'plugin_main');
@@ -931,12 +946,16 @@ if (!class_exists('MozillaPersona')) {
 		}
 
 		// Print a text input for a plugin option
-		function Print_option_text_input($options, $id) {
+		function Print_option_text_input($options, $id, $info = null) {
 			echo sprintf("<input id='%s' name='browserid_options[%s]'
 			type='text' size='50' value='%s' />",
 				$id,
 				$id,
 				htmlspecialchars($options[$id], ENT_QUOTES));
+
+			if ($info) {
+				echo '<br />' . $info;
+			}
 		}
 
 
@@ -955,8 +974,8 @@ if (!class_exists('MozillaPersona')) {
 			if (empty($options['browserid_sitelogo']))
 				$options['browserid_sitelogo'] = null;
 
-			self::Print_option_text_input($options, 'browserid_sitelogo');
-			echo '<br />' . __('Absolute path, works only with SSL', c_bid_text_domain);
+			self::Print_option_text_input($options, 'browserid_sitelogo',
+					__('Absolute path, works only with SSL', c_bid_text_domain));
 		}
 
 		// backgroundColor option
@@ -965,8 +984,28 @@ if (!class_exists('MozillaPersona')) {
 			if (empty($options['browserid_background_color']))
 				$options['browserid_background_color'] = null;
 
-			self::Print_option_text_input($options, 'browserid_background_color');
-			echo '<br />' . __('3 or 6 character hex value. e.g. #333 or #333333', c_bid_text_domain);
+			self::Print_option_text_input($options, 'browserid_background_color',
+					__('3 or 6 character hex value. e.g. #333 or #333333', c_bid_text_domain));
+		}
+
+		// termsOfService option
+		function Option_terms_of_service() {
+			$options = get_option('browserid_options');
+			if (empty($options['browserid_terms_of_service']))
+				$options['browserid_terms_of_service'] = null;
+
+			self::Print_option_text_input($options, 'browserid_terms_of_service',
+					__('Absolute path, must be defined together with Privacy policy', c_bid_text_domain));
+		}
+
+		// privacyPolicy option
+		function Option_privacy_policy() {
+			$options = get_option('browserid_options');
+			if (empty($options['browserid_privacy_policy']))
+				$options['browserid_privacy_policy'] = null;
+
+			self::Print_option_text_input($options, 'browserid_privacy_policy',
+					__('Absolute path, must be defined together with Terms of service', c_bid_text_domain));
 		}
 
 		// Login HTML option
@@ -992,8 +1031,8 @@ if (!class_exists('MozillaPersona')) {
 			$options = get_option('browserid_options');
 			if (empty($options['browserid_login_redir']))
 				$options['browserid_login_redir'] = null;
-			self::Print_option_text_input($options, 'browserid_login_redir');
-			echo '<br />' . __('Default WordPress dashboard', c_bid_text_domain);
+			self::Print_option_text_input($options, 'browserid_login_redir',
+					__('Default WordPress dashboard', c_bid_text_domain));
 		}
 
 		// Get the login redir URL
@@ -1056,9 +1095,8 @@ if (!class_exists('MozillaPersona')) {
 			$options = get_option('browserid_options');
 			$options['browserid_persona_source'] = self::Get_option_persona_source();
 
-			self::Print_option_text_input($options, 'browserid_persona_source');
-			echo '<br />' . __('Default', c_bid_text_domain)
-					. ' ' . c_bid_source;
+			self::Print_option_text_input($options, 'browserid_persona_source',
+					__('Default', c_bid_text_domain) . ' ' . c_bid_source);
 		}
 
 		function Get_option_persona_source() {
@@ -1077,9 +1115,8 @@ if (!class_exists('MozillaPersona')) {
 			$options = get_option('browserid_options');
 			$options['browserid_vserver'] = self::Get_option_vserver();
 
-			self::Print_option_text_input($options, 'browserid_vserver');
-			echo '<br />' . __('Default', c_bid_text_domain)
-					. ' ' . c_bid_verifier . '/verify';
+			self::Print_option_text_input($options, 'browserid_vserver',
+				__('Default', c_bid_text_domain) . ' ' . c_bid_verifier . '/verify');
 		}
 
 		function Get_option_vserver() {
