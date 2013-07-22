@@ -833,43 +833,6 @@ if (!class_exists('MozillaPersona')) {
 			return $html;
 		}
 
-		// Get (customized) site name
-		function Get_sitename() {
-			$name = $this->Get_option('browserid_sitename');
-			if (empty($name))
-				$name = get_bloginfo('name');
-			return $name;
-		}
-
-		// Get site logo
-		function Get_sitelogo() {
-			$options = get_option('browserid_options');
-			// sitelogo is only valid with SSL connections
-			if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
-				return $this->Get_option('browserid_sitelogo');
-			return '';
-		}
-
-		// Get backgroundColor
-		function Get_background_color() {
-			return $this->Get_option('browserid_background_color');
-		}
-
-		function Get_terms_of_service() {
-			return $this->Get_option('browserid_terms_of_service');
-		}
-
-		function Get_privacy_policy() {
-			return $this->Get_option('browserid_privacy_policy');
-		}
-
-		function Get_option($option_name, $default_value = '') {
-			$options = get_option('browserid_options');
-			if (isset($options[$option_name]))
-				return $options[$option_name];
-			return $default_value;
-		}
-
 		// Override logout on site menu
 		function Admin_toolbar_action($wp_toolbar) {
 			$logged_in_user = self::Get_browserid_loggedin_user();
@@ -946,7 +909,8 @@ if (!class_exists('MozillaPersona')) {
 		}
 
 		// Print a text input for a plugin option
-		function Print_option_text_input($options, $id, $info = null) {
+		function Print_option_text_input($id, $default_value = null, $info = null) {
+			$options = get_option('browserid_options');
 			echo sprintf("<input id='%s' name='browserid_options[%s]'
 			type='text' size='50' value='%s' />",
 				$id,
@@ -959,86 +923,100 @@ if (!class_exists('MozillaPersona')) {
 		}
 
 
+		// Generic Get_option to get an option, if it is not set, return the 
+		// default value
+		function Get_option($option_name, $default_value = '') {
+			$options = get_option('browserid_options');
+			if (isset($options[$option_name]))
+				return $options[$option_name];
+			return $default_value;
+		}
+
+
 		// Site name option
 		function Option_sitename() {
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_sitename']))
-				$options['browserid_sitename'] = self::Get_sitename();
-
-			self::Print_option_text_input($options, 'browserid_sitename');
+			self::Print_option_text_input('browserid_sitename', self::Get_sitename());
 		}
+
+		// Get (customized) site name
+		function Get_sitename() {
+			$name = $this->Get_option('browserid_sitename');
+			if (empty($name))
+				$name = get_bloginfo('name');
+			return $name;
+		}
+
 
 		// Site logo option
 		function Option_sitelogo() {
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_sitelogo']))
-				$options['browserid_sitelogo'] = null;
-
-			self::Print_option_text_input($options, 'browserid_sitelogo',
+			self::Print_option_text_input('browserid_sitelogo', null,
 					__('Absolute path, works only with SSL', c_bid_text_domain));
 		}
 
+		// Get site logo
+		function Get_sitelogo() {
+			$options = get_option('browserid_options');
+			// sitelogo is only valid with SSL connections
+			if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
+				return $this->Get_option('browserid_sitelogo');
+			return '';
+		}
+
+
 		// backgroundColor option
 		function Option_background_color() {
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_background_color']))
-				$options['browserid_background_color'] = null;
-
-			self::Print_option_text_input($options, 'browserid_background_color',
+			self::Print_option_text_input('browserid_background_color', null,
 					__('3 or 6 character hex value. e.g. #333 or #333333', c_bid_text_domain));
 		}
 
+		// Get backgroundColor
+		function Get_background_color() {
+			return $this->Get_option('browserid_background_color');
+		}
+
+
 		// termsOfService option
 		function Option_terms_of_service() {
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_terms_of_service']))
-				$options['browserid_terms_of_service'] = null;
-
-			self::Print_option_text_input($options, 'browserid_terms_of_service',
+			self::Print_option_text_input('browserid_terms_of_service', null,
 					__('Absolute path, must be defined together with Privacy policy', c_bid_text_domain));
 		}
 
+		function Get_terms_of_service() {
+			return $this->Get_option('browserid_terms_of_service');
+		}
+
+
 		// privacyPolicy option
 		function Option_privacy_policy() {
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_privacy_policy']))
-				$options['browserid_privacy_policy'] = null;
-
-			self::Print_option_text_input($options, 'browserid_privacy_policy',
+			self::Print_option_text_input('browserid_privacy_policy', null,
 					__('Absolute path, must be defined together with Terms of service', c_bid_text_domain));
 		}
 
+		function Get_privacy_policy() {
+			return $this->Get_option('browserid_privacy_policy');
+		}
+
+
 		// Login HTML option
 		function Option_login_html() {
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_login_html']))
-				$options['browserid_login_html'] =
-					__('Sign in with your email', c_bid_text_domain);
-
-			self::Print_option_text_input($options, 'browserid_login_html');
+			self::Print_option_text_input('browserid_login_html', 
+					__('Sign in with your email', c_bid_text_domain));
 		}
 
 		// Logout HTML option
 		function Option_logout_html() {
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_logout_html']))
-				$options['browserid_logout_html'] = __('Logout', c_bid_text_domain);
-			self::Print_option_text_input($options, 'browserid_logout_html');
+			self::Print_option_text_input('browserid_logout_html', __('Logout', c_bid_text_domain));
 		}
 
 		// Login redir URL option
 		function Option_login_redir() {
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_login_redir']))
-				$options['browserid_login_redir'] = null;
-			self::Print_option_text_input($options, 'browserid_login_redir',
+			self::Print_option_text_input('browserid_login_redir', null,
 					__('Default WordPress dashboard', c_bid_text_domain));
 		}
 
 		// Get the login redir URL
 		function Get_option_login_redir() {
-			$options = get_option('browserid_options');
-			return isset($options['browserid_login_redir']) ? $options['browserid_login_redir'] : null;
+			return $this->Get_option('browserid_login_redir', null);
 		}
 
 		// Enable comments integration
@@ -1050,28 +1028,15 @@ if (!class_exists('MozillaPersona')) {
 
 		// Can a user leave a comment using BrowserID
 		function Is_option_comments() {
-			$options = get_option('browserid_options');
-
-			return isset($options['browserid_comments']) &&
-						$options['browserid_comments'];
+			return $this->Get_option('browserid_comments', false);
 		}
 
 		function Option_comment_html() {
-			$options = get_option('browserid_options');
-
-			if (empty($options['browserid_comment_html']))
-				$options['browserid_comment_html'] = __('Post Comment', c_bid_text_domain);
-
-			self::Print_option_text_input($options, 'browserid_comment_html');
+			self::Print_option_text_input('browserid_comment_html', __('Post Comment', c_bid_text_domain));
 		}
 
 		function Get_option_comment_html() {
-			$options = get_option('browserid_options');
-
-			if (empty($options['browserid_comment_html']))
-				$options['browserid_comment_html'] = __('Post Comment', c_bid_text_domain);
-
-			return $options['browserid_comment_html'];
+			return $this->get_option('browserid_comment_html', __('post comment', c_bid_text_domain));
 		}
 
 		// Enable bbPress integration
@@ -1092,31 +1057,18 @@ if (!class_exists('MozillaPersona')) {
 
 		// Persona shim source option
 		function Option_persona_source() {
-			$options = get_option('browserid_options');
-			$options['browserid_persona_source'] = self::Get_option_persona_source();
-
-			self::Print_option_text_input($options, 'browserid_persona_source',
+			self::Print_option_text_input('browserid_persona_source', c_bid_source,
 					__('Default', c_bid_text_domain) . ' ' . c_bid_source);
 		}
 
 		function Get_option_persona_source() {
-			$options = get_option('browserid_options');
-
-			if (isset($options['browserid_persona_source']) && $options['browserid_persona_source'])
-				$persona_source = $options['browserid_persona_source'];
-			else
-				$persona_source = c_bid_source;
-
-			return $persona_source;
+			return $this->Get_option('browserid_persona_source', c_bid_source);
 		}
 
 		// Verification server option
 		function Option_vserver() {
-			$options = get_option('browserid_options');
-			$options['browserid_vserver'] = self::Get_option_vserver();
-
-			self::Print_option_text_input($options, 'browserid_vserver',
-				__('Default', c_bid_text_domain) . ' ' . c_bid_verifier . '/verify');
+			self::Print_option_text_input('browserid_vserver', self::Get_option_vserver(),
+					__('Default', c_bid_text_domain) . ' ' . c_bid_verifier . '/verify');
 		}
 
 		function Get_option_vserver() {
@@ -1170,13 +1122,7 @@ if (!class_exists('MozillaPersona')) {
 		}
 
 		function Get_option_button_color() {
-			$options = get_option('browserid_options');
-
-			if (isset($options['browserid_button_color'])) {
-				return $options['browserid_button_color'];
-			}
-
-			return "blue";
+			return $this->Get_option('browserid_button_color', 'blue');
 		}
 
 		function Print_persona_button_selection($name, $value) {
