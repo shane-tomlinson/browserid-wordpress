@@ -1,5 +1,5 @@
 /*jshint browser: true*/
-/*global browserid_common: true, $: true*/
+/*global browserid_common, jQuery*/
 (function() {
   "use strict";
 
@@ -36,7 +36,7 @@
   // the js-persona__logout button in the admin toolbar is added after this
   // script is run. Attach a live event (yuck) so that the user is still
   // able to log out.
-  $(".js-persona__logout").live("click", function(event) {
+  liveEvent(".js-persona__logout", "click", function(event) {
     event.preventDefault();
 
     ignoreLogout = false;
@@ -488,6 +488,10 @@
         $(submitButton).addClass("disabled");
       }
     }
+  }
+
+  function liveEvent(selector, eventType, callback) {
+    $("body")[typeof $.fn.on === "function" ? "on" : "delegate"](eventType, selector, callback);
   }
 
 
