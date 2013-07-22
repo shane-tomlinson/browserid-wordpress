@@ -1,186 +1,254 @@
-# Copyright (C) 2013 
-# This file is distributed under the same license as the  package.
 msgid ""
 msgstr ""
-"Project-Id-Version: \n"
-"Report-Msgid-Bugs-To: http://wordpress.org/tag/browserid-wordpress\n"
-"POT-Creation-Date: 2013-07-04 11:02:57+00:00\n"
+"Project-Id-Version: Mozilla Persona v0.44\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2013-07-22 17:00:39+0000\n"
+"Last-Translator: magicfab <fabian@legoutdulibre.com>\n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2013-07-09 20:19-0300\n"
-"Last-Translator: Guillermo Movia <deimidis@mozilla-hispano.org>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"X-Generator: Poedit 1.5.5\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: CSL v1.x\n"
+"X-Poedit-Language: Spanish\n"
+"X-Poedit-Country: SPAIN\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: __;_e;__ngettext:1,2;_n:1,2;__ngettext_noop:1,2;_n_noop:1,2;_c,_nc:4c,1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;_nx_noop:4c,1,2;\n"
+"X-Poedit-Basepath: ../\n"
+"X-Poedit-Bookmarks: \n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Textdomain-Support: yes"
 
-#: browserid.php:131 browserid.php:909
+#: browserid.php:132
+#: browserid.php:907
+#@ browserid
 msgid "Sign in with your email"
-msgstr "Ingresa con tu correo electrónico"
+msgstr "Conectarse con su email"
 
-#: browserid.php:135 browserid.php:918
+#: browserid.php:136
+#: browserid.php:916
+#@ browserid
 msgid "Logout"
-msgstr "Salir"
+msgstr "Desconexión"
 
-#: browserid.php:139 browserid.php:973
-msgid "Comment"
-msgstr "Comentario"
-
-#: browserid.php:164
+#: browserid.php:162
+#@ browserid
 msgid "Settings"
-msgstr "Preferencias"
+msgstr "Opciones"
 
-#: browserid.php:269 browserid.php:395
+#: browserid.php:267
+#: browserid.php:393
+#@ browserid
 msgid "Verification failed"
 msgstr "Falló la verificación"
 
-#: browserid.php:388
+#: browserid.php:386
+#@ browserid
 msgid "Verification response invalid"
-msgstr "La respuesta de la verificación es inválida"
+msgstr "Respuesta de verificación inválida"
 
-#: browserid.php:462
+#: browserid.php:395
+#@ browserid
+msgid "reason"
+msgstr "razón"
+
+#: browserid.php:460
+#@ browserid
 msgid "You must already have an account to log in with Persona."
-msgstr "Debes tener al menos una cuenta para ingresar con Persona."
+msgstr "Ya debe tener una cuenta para acceder con Persona"
 
-#: browserid.php:491
+#: browserid.php:489
+#@ default
 msgid "<strong>ERROR</strong>: Your account has been marked as a spammer."
-msgstr "<strong>ERROR</strong>: Tu cuenta ha sido marcada como spammer."
-
-#: browserid.php:497
-msgid "Site Suspended."
-msgstr "Sitio suspendido."
-
-#: browserid.php:594
-msgid "Register"
-msgstr "Registrarse"
-
-#: browserid.php:654
-msgid "Password reset disabled"
-msgstr "El reinicio de la contraseña está deshabilitado"
-
-#: browserid.php:655
-msgid ""
-"%s uses Mozilla Persona to sign in and does not use passwords. Password "
-"reset is disabled."
 msgstr ""
-"%s usa Mozilla Persona para ingresar y no usar contraseñas. El reinicio de "
-"la contraseña está deshabilitado."
 
-#: browserid.php:793
+#: browserid.php:495
+#@ default
+msgid "Site Suspended."
+msgstr ""
+
+#: browserid.php:592
+#@ browserid
+msgid "Register"
+msgstr "Registro"
+
+#: browserid.php:626
+#, php-format
+#@ browserid
+msgid "<strong>ERROR</strong>:  %s uses Mozilla Persona for registration. Please register using Persona."
+msgstr "<strong>ERROR</strong>:  %s usa Mozilla Persona para el registro. Por favoir regístrese usando Persona."
+
+#: browserid.php:652
+#@ browserid
+msgid "Password reset disabled"
+msgstr "Está desactivada la reinicialización de clave"
+
+#: browserid.php:653
+#, php-format
+#@ browserid
+msgid "%s uses Mozilla Persona to sign in and does not use passwords. Password reset is disabled."
+msgstr "%s usa Mozilla Persona para acceder y no usa claves. La reinicialización de clave está desactivada."
+
+#: browserid.php:791
+#@ browserid
 msgid "What is Persona?"
 msgstr "¿Qué es Persona?"
 
-#: browserid.php:845 browserid.php:846 browserid.php:1031
+#: browserid.php:843
+#: browserid.php:844
+#: browserid.php:1043
+#@ browserid
 msgid "Mozilla Persona"
 msgstr "Mozilla Persona"
 
-#: browserid.php:845
+#: browserid.php:843
+#@ browserid
 msgid "Administration"
 msgstr "Administración"
 
-#: browserid.php:856
+#: browserid.php:854
+#@ browserid
 msgid "Site name:"
 msgstr "Nombre del sitio:"
 
-#: browserid.php:857
+#: browserid.php:855
+#@ browserid
 msgid "Site logo:"
 msgstr "Logo del sitio:"
 
-#: browserid.php:858
+#: browserid.php:856
+#@ browserid
 msgid "Disable non-Persona logins:"
-msgstr "Deshabilitar el ingreso sin Persona:"
+msgstr "Desactivar el acceso sin Persona:"
 
-#: browserid.php:859
+#: browserid.php:857
+#@ browserid
 msgid "Login button HTML:"
-msgstr "HTML del botón de ingreso:"
+msgstr "HTML del botón de acceso:"
+
+#: browserid.php:858
+#@ browserid
+msgid "Logout button HTML:"
+msgstr "HTML del botón de desconexión:"
 
 #: browserid.php:860
-msgid "Logout button HTML:"
-msgstr "HTML del botón de salida:"
+#@ browserid
+msgid "Login redirection URL:"
+msgstr "URL de redirección del acceso:"
+
+#: browserid.php:861
+#@ browserid
+msgid "Enable for comments:"
+msgstr "Activar para los comentarios:"
 
 #: browserid.php:862
-msgid "Login redirection URL:"
-msgstr "URL de redirección de ingreso:"
+#@ browserid
+msgid "Enable bbPress integration:"
+msgstr "Activar la integración bbPress:"
 
 #: browserid.php:863
-msgid "Enable for comments:"
-msgstr "Habilitar para comentarios:"
+#@ browserid
+msgid "Persona source:"
+msgstr "Fuente de Persona:"
 
 #: browserid.php:864
-msgid "Enable bbPress integration:"
-msgstr "Habilitar integración con bbPress:"
-
-#: browserid.php:865
-msgid "Comment button HTML:"
-msgstr "HTML de botón de comentario:"
-
-#: browserid.php:866
+#@ browserid
 msgid "Verification server:"
 msgstr "Servidor de verificación:"
 
-#: browserid.php:867
+#: browserid.php:865
+#@ browserid
 msgid "Debug mode:"
-msgstr "Modo depuración:"
+msgstr "Modo \\\"debug\\\":"
 
-#: browserid.php:901
+#: browserid.php:899
+#@ browserid
 msgid "Absolute path, works only with SSL"
-msgstr "Dirección absoluta, funciona solo con SSL"
+msgstr "Camino absoluto, sólo funciona con SSL:"
 
-#: browserid.php:928
+#: browserid.php:926
+#@ browserid
 msgid "Default WordPress dashboard"
-msgstr "Tablero predeterminado de WordPress"
+msgstr "Panel de control WordPress por defecto"
 
-#: browserid.php:958
+#: browserid.php:956
+#@ browserid
 msgid "Enables anonymous posting implicitly"
-msgstr "Permitir la publicación anónima"
+msgstr "Activa de mandera implícita los enviós anónimos"
 
-#: browserid.php:984
+#: browserid.php:972
+#: browserid.php:993
+#@ browserid
 msgid "Default"
-msgstr "Predeterminado"
+msgstr "Por defecto"
 
-#: browserid.php:1004
+#: browserid.php:1016
+#@ browserid
 msgid "Security risk!"
-msgstr "¡Riesgo de seguridad!"
+msgstr "Riesgo de seguridad!"
 
-#: browserid.php:1036
+#: browserid.php:1048
+#@ default
 msgid "Save Changes"
-msgstr "Guardar cambios"
+msgstr ""
 
-#: browserid.php:1109
+#: browserid.php:1121
+#@ browserid
 msgid "Mozilla Persona login button"
-msgstr "Botón de ingreso de Mozilla Persona"
+msgstr "Botón de acceso Mozilla Persona"
 
-#: browserid.php:1140
+#: browserid.php:1152
+#@ default
 msgid "Title:"
-msgstr "Título:"
+msgstr ""
 
-#: browserid.php:1184
+#: browserid.php:1196
+#, php-format
+#@ default
 msgid "New user registration on your site %s:"
-msgstr "Registro de nuevo usuario en tu sitio web %s:"
+msgstr ""
 
-#: browserid.php:1185 browserid.php:1193
-msgid "Username: %s"
-msgstr "Nombre de usuario: %s"
-
-#: browserid.php:1186
-msgid "E-mail: %s"
-msgstr "Correo electrónico: %s"
-
-#: browserid.php:1188
-msgid "[%s] New User Registration"
-msgstr "[%s] Registración de nuevo usuario"
-
-#: browserid.php:1202
-msgid "%s uses Mozilla Persona to sign in and does not use passwords"
-msgstr "%s usa Mozilla Persona para ingresar y no usar contraseñas"
-
-#: browserid.php:1203
-msgid "[%s] Your username"
-msgstr "[%s] Tu nombre de usuario"
-
+#: browserid.php:1197
 #: browserid.php:1205
-msgid "Password: %s"
-msgstr "Contraseña: %s"
+#, php-format
+#@ default
+msgid "Username: %s"
+msgstr ""
 
-#: browserid.php:1206
+#: browserid.php:1198
+#, php-format
+#@ default
+msgid "E-mail: %s"
+msgstr ""
+
+#: browserid.php:1200
+#, php-format
+#@ default
+msgid "[%s] New User Registration"
+msgstr ""
+
+#: browserid.php:1214
+#, php-format
+#@ browserid
+msgid "%s uses Mozilla Persona to sign in and does not use passwords"
+msgstr "%s usa Mozilla Persona para el acceso y no usa claves"
+
+#: browserid.php:1215
+#, php-format
+#@ default
+msgid "[%s] Your username"
+msgstr ""
+
+#: browserid.php:1217
+#, php-format
+#@ default
+msgid "Password: %s"
+msgstr ""
+
+#: browserid.php:1218
+#, php-format
+#@ default
 msgid "[%s] Your username and password"
-msgstr "[%s] Tu usuario y contraseña"
+msgstr ""
+
