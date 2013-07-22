@@ -46,6 +46,9 @@ Please report any issues on the plugin's [issue tracker](https://github.com/shan
 ## Acknowledgments
 [Marcel Bokhorst](http://blog.bokhorst.biz/) is the original author of this plugin. His awesome work has allowed me to continue.
 [Guillermo Movia](mailto://deimidis@mozilla-hispano.org) for Spanish translations.
+[Ruslan Bekenev](mailto://furyinbox@gmail.com) for Russian translations as well as many bug report.
+[MagicFab](https://github.com/MagicFab) for French and Canadian French translations as well as man bug reports.
+[Edwin Wong](http://www.edwinsf.com/blog/) for continued testing.
 
 This plugin uses:
 
