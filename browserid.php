@@ -61,6 +61,13 @@ if (!class_exists('MozillaPersona')) {
 			// Register actions & filters
 			add_action('init', array(&$this, 'Init'), 0);
 
+			add_action('wp_enqueue_scripts', 
+					array(&$this, 'Add_external_dependencies'));
+			add_action('admin_enqueue_scripts', 
+					array(&$this, 'Add_external_dependencies'));
+			add_action('login_head', 
+					array(&$this, 'Add_external_dependencies'));
+
 			// Authentication
 			add_action('set_auth_cookie',
 					array(&$this, 'Set_auth_cookie_action'), 10, 5);
@@ -203,8 +210,6 @@ if (!class_exists('MozillaPersona')) {
 			$l10npath = dirname(plugin_basename(__FILE__)) . '/languages/';
 			load_plugin_textdomain(c_bid_text_domain, false, $l10npath);
 
-			self::Add_external_dependencies();
-
 			// On the login pages, if there is an error, surface it to be
 			// printed into the templates.
 			if (isset($_REQUEST['browserid_error'])) {
@@ -215,30 +220,58 @@ if (!class_exists('MozillaPersona')) {
 
 		// Add external dependencies - both JS & CSS
 		function Add_external_dependencies() {
-			// Add the Persona button styles.
-			wp_register_style('persona-style',
+			$this->Attach_css();
+			$this->Attach_javascript();
+		}
+
+		function Attach_css() {
+			wp_enqueue_style('browserid.css',
 					plugins_url('browserid.css', __FILE__),
 					array(), c_bid_version);
-			wp_enqueue_style('persona-style');
+		}
 
-			// Enqueue BrowserID scripts
-			wp_register_script('browserid',
+		function Attach_javascript() {
+			wp_enqueue_script('include.js',
 					self::Get_option_persona_source() . '/include.js', 
 					array(), c_bid_version, true);
 
-			// This one script takes care of all work.
-			wp_register_script('browserid_common',
+			wp_enqueue_script('browserid.js',
 					plugins_url('browserid.js', __FILE__),
-					array('jquery', 'browserid'), c_bid_version, true);
+					array('jquery'), c_bid_version, true);
 
-			$data_array = array(
+
+			$browserid_common = $this->Get_Javascript_data();
+
+			/**
+			 * wp_localize_script calls json_encode which escapes all of the 
+			 * URLs and replaces any / with \/. This messes with certain 
+			 * who do not normalize the extra \ and refuse to serve the 
+			 * siteLogo. 
+			 * To avoid the double escaping, manually write out the script,
+			 * replacing any \/ with /. 
+			 * All parameters passed to Persona will be properly escaped.
+			 * See issue #47 
+			 * https://github.com/shane-tomlinson/browserid-wordpress/issues/47
+			 */
+			$encoded_browserid_common = str_replace('\\/', '/', 
+					json_encode( $browserid_common ) );
+			?>
+<script>
+	var browserid_common = <?php echo $encoded_browserid_common; ?>
+</script>
+			<?php
+		}
+
+		function Get_Javascript_data() {
+			$browserid_common = array(
 				'urlLoginSubmit' => get_site_url(null, '/'),
 				'urlLoginRedirect' => self::Get_login_redirect_url(),
 				'urlRegistrationRedirect'
 						=> self::Get_registration_redirect_url(),
 				'urlLogoutRedirect' => wp_logout_url(),
-				'msgError' => self::Get_error_message(),
-				'msgFailed' => self::Get_verification_failed_message(),
+				'msgError' => htmlspecialchars(self::Get_error_message()),
+				'msgFailed' => htmlspecialchars(
+								self::Get_verification_failed_message()),
 				'isPersonaOnlyAuth' => self::Is_option_browserid_only_auth(),
 				'isPersonaUsedWithComments' => self::Is_option_comments(),
 
@@ -250,9 +283,8 @@ if (!class_exists('MozillaPersona')) {
 				'privacyPolicy' => self::Get_privacy_policy(),
 				'loggedInUser' => self::Get_browserid_loggedin_user(),
 			);
-			wp_localize_script( 'browserid_common', 'browserid_common',
-					$data_array );
-			wp_enqueue_script('browserid_common');
+
+			return $browserid_common;
 		}
 
 
