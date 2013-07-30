@@ -979,7 +979,7 @@ if (!class_exists('MozillaPersona')) {
 		// termsOfService option
 		function Option_terms_of_service() {
 			self::Print_option_text_input('browserid_terms_of_service', null,
-					__('Absolute path, must be defined together with Privacy policy', c_bid_text_domain));
+					__('URL or absolute path, works only with SSL and must be defined together with Privacy policy', c_bid_text_domain));
 		}
 
 		function Get_terms_of_service() {
@@ -990,7 +990,7 @@ if (!class_exists('MozillaPersona')) {
 		// privacyPolicy option
 		function Option_privacy_policy() {
 			self::Print_option_text_input('browserid_privacy_policy', null,
-					__('Absolute path, must be defined together with Terms of service', c_bid_text_domain));
+					__('URL or absolute path, works only with SSL and must be and must be defined together with Terms of service', c_bid_text_domain));
 		}
 
 		function Get_privacy_policy() {
