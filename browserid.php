@@ -913,13 +913,11 @@ if (!class_exists('MozillaPersona')) {
 		}
 
 		// Print a text input for a plugin option
-		function Print_option_text_input($id, $default_value = null, $info = null) {
-			$options = get_option('browserid_options');
-			$option_value = (empty($options[$id]) ? '' : $options[$id]);
-			echo sprintf("<input id='%s' name='browserid_options[%s]'
-			type='text' size='50' value='%s' />",
-				$id,
-				$id,
+		function Print_option_text_input($option_name, $default_value = null, $info = null) {
+			$option_value = $this->Get_option($option_name, $default_value);
+			echo sprintf("<input id='%s' name='browserid_options[%s]' type='text' size='50' value='%s' />",
+				$option_name,
+				$option_name,
 				htmlspecialchars($option_value, ENT_QUOTES));
 
 			if ($info) {
@@ -932,8 +930,10 @@ if (!class_exists('MozillaPersona')) {
 		// default value
 		function Get_option($option_name, $default_value = '') {
 			$options = get_option('browserid_options');
-			if (isset($options[$option_name]))
+			if (isset($options[$option_name]) 
+					&& !empty($options[$option_name])) {
 				return $options[$option_name];
+			}
 			return $default_value;
 		}
 
@@ -1041,7 +1041,7 @@ if (!class_exists('MozillaPersona')) {
 		}
 
 		function Get_option_comment_html() {
-			return $this->get_option('browserid_comment_html', __('post comment', c_bid_text_domain));
+			return $this->Get_option('browserid_comment_html', __('post comment', c_bid_text_domain));
 		}
 
 		// Enable bbPress integration
