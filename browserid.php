@@ -232,21 +232,23 @@ if (!class_exists('MozillaPersona')) {
 					array('jquery', 'browserid'), c_bid_version, true);
 
 			$data_array = array(
-				'siteurl' => get_site_url(null, '/'),
-				'login_redirect' => self::Get_login_redirect_url(),
-                'registration_redirect'
+				'urlLoginSubmit' => get_site_url(null, '/'),
+				'urlLoginRedirect' => self::Get_login_redirect_url(),
+				'urlRegistrationRedirect'
 						=> self::Get_registration_redirect_url(),
-				'error' => self::Get_error_message(),
-				'failed' => self::Get_verification_failed_message(),
+				'urlLogoutRedirect' => wp_logout_url(),
+				'msgError' => self::Get_error_message(),
+				'msgFailed' => self::Get_verification_failed_message(),
+				'isPersonaOnlyAuth' => self::Is_option_browserid_only_auth(),
+				'isPersonaUsedWithComments' => self::Is_option_comments(),
+
+				// From here down is passed to the Persona dialog.
 				'siteName' => self::Get_sitename(),
 				'siteLogo' => self::Get_sitelogo(),
 				'backgroundColor' => self::Get_background_color(),
 				'termsOfService' => self::Get_terms_of_service(),
 				'privacyPolicy' => self::Get_privacy_policy(),
-				'logout_redirect' => wp_logout_url(),
-				'logged_in_user' => self::Get_browserid_loggedin_user(),
-				'persona_only_auth' => self::Is_option_browserid_only_auth(),
-				'comments' => self::Is_option_comments()
+				'loggedInUser' => self::Get_browserid_loggedin_user(),
 			);
 			wp_localize_script( 'browserid_common', 'browserid_common',
 					$data_array );
