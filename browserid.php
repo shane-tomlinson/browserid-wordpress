@@ -35,16 +35,9 @@ Original Author URI: http://blog.bokhorst.biz/about/
 if (version_compare(PHP_VERSION, '5.0.0', '<'))
 	die('Mozilla Persona requires at least PHP 5, installed version is ' . PHP_VERSION);
 
-// Define constants
-define('c_bid_text_domain', 'browserid');
-define('c_bid_version', '0.45');
-define('c_bid_option_request', 'bid_request');
-define('c_bid_option_response', 'bid_response');
-define('c_bid_browserid_login_cookie', 'bid_browserid_login_' . COOKIEHASH);
+include_once('constants.php');
+include_once('verifier.php');
 
-
-define('c_bid_source', 'https://login.persona.org');
-define('c_bid_verifier', 'https://verifier.login.persona.org');
 
 
 // Define class
@@ -314,12 +307,7 @@ if (!class_exists('MozillaPersona')) {
 		// Check if an assertion is received. If one has been, verify it and
 		// log the user in. If not, continue.
 		function Check_assertion($assertion) {
-			// Verify assertion
-			$response = self::Post_assertion_to_verifier($assertion);
-
-			// Decode response. If the response is invalid, an error
-			// message will be printed.
-			$result = self::Check_verifier_response($response);
+			$result = self::Verify_assertion($assertion);
 
 			if ($result) {
 				$email = $result['email'];
@@ -355,33 +343,27 @@ if (!class_exists('MozillaPersona')) {
 		// Post the assertion to the verifier. If the assertion does not
 		// verify, an error message will be displayed and no more processing
 		// will occur
-		function Post_assertion_to_verifier($assertion) {
+		function Verify_assertion($assertion) {
 			$audience = self::Get_audience();
-
-			// Get verification server URL
 			$vserver = self::Get_option_vserver();
+			$verifier = new MozillaPersonaVerifier($audience, $vserver);
 
-			// Build arguments
-			$args = array(
-				'method' => 'POST',
-				'timeout' => 30,
-				'redirection' => 0,
-				'httpversion' => '1.0',
-				'blocking' => true,
-				'headers' => array(),
-				'body' => array(
-					'assertion' => $assertion,
-					'audience' => $audience
-				),
-				'cookies' => array(),
-				'sslverify' => true
-			);
+			$response = $verifier->Verify($assertion);
 
-			if (self::Is_option_debug())
-				update_option(c_bid_option_request, $vserver . ' ' . print_r($args, true));
+			return $this->Check_verifier_response($response);
+		}
 
-			// Verify assertion
-			$response = wp_remote_post($vserver, $args);
+		// Check response. If response is either invalid or indicates a bad
+		// assertion, an error message will be printed and processing
+		// will stop. If verification succeeds, response will be returned.
+		function Check_verifier_response($response) {
+			// Persist debug info
+			if (self::Is_option_debug()) {
+				$response['vserver'] = self::Get_option_vserver();
+				$response['audience'] = self::Get_audience();
+				$response['rememberme'] = self::Get_rememberme();
+				update_option(c_bid_option_response, $response);
+			}
 
 			// If error, print the error message and exit.
 			if (is_wp_error($response)) {
@@ -394,50 +376,8 @@ if (!class_exists('MozillaPersona')) {
 				self::Handle_error($message, $message, $response);
 			}
 
-			// Persist debug info
-			if (self::Is_option_debug()) {
-				$response['vserver'] = self::Get_option_vserver();
-				$response['audience'] = self::Get_audience();
-				$response['rememberme'] = self::Get_rememberme();
-				update_option(c_bid_option_response, $response);
-			}
-
-
+			// Success!
 			return $response;
-		}
-
-		// Check result. If result is either invalid or indicates a bad
-		// assertion, an error message will be printed and processing
-		// will stop. If verification succeeds, response will be returned.
-		function Check_verifier_response($response) {
-			$result = json_decode($response['body'], true);
-
-			if (empty($result) || empty($result['status'])) {
-				// No result or status
-				$message = __('Verification response invalid',
-									c_bid_text_domain);
-
-				$debug_message = $message . PHP_EOL . $response['response']['message'];
-			}
-			else if ($result['status'] != 'okay') {
-				// Bad status
-				$message = __('Verification failed', c_bid_text_domain);
-				if (isset($result['reason']))
-					$message .= ': ' . __($result['reason'], c_bid_text_domain);
-
-				$debug_message = $message . PHP_EOL;
-			}
-			else {
-				// Succeeded
-				return $result;
-			}
-
-			// Verification has failed, display erorr and stop processing.
-			$debug_message .= 'audience=' . self::Get_audience() . PHP_EOL;
-			$debug_message .= 'vserver=' . parse_url(self::Get_option_vserver(), PHP_URL_HOST) . PHP_EOL;
-			$debug_message .= 'time=' . time();
-
-			self::Handle_error($message, $debug_message, $result);
 		}
 
 		// Determine if login or comment
