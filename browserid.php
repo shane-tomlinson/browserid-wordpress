@@ -38,7 +38,7 @@ if (version_compare(PHP_VERSION, '5.0.0', '<'))
 include_once('constants.php');
 include_once('verifier.php');
 include_once('widget.php');
-
+include_once('browserid_options.php');
 
 
 // Define class
@@ -46,9 +46,12 @@ if (!class_exists('MozillaPersona')) {
 	class MozillaPersona {
 		// Class variables
 		var $debug = null;
+		private $options = null;
 
 		// Constructor
 		function __construct() {
+			$this->options = new MozillaPersonaOptions();
+
 			// Register de-activation
 			register_deactivation_hook(__FILE__, array(&$this, 'Deactivate'));
 
@@ -61,7 +64,7 @@ if (!class_exists('MozillaPersona')) {
 			add_action('clear_auth_cookie',
 					array(&$this, 'Clear_auth_cookie_action'));
 
-			if (self::Is_option_browserid_only_auth()) {
+			if ($this->options->Is_browserid_only_auth()) {
 				add_filter('wp_authenticate_user',
 						array(&$this, 'Disallow_non_persona_logins_filter'));
 			}
@@ -74,7 +77,7 @@ if (!class_exists('MozillaPersona')) {
 
 
 			// Registration
-			if (self::Is_option_browserid_only_auth()) {
+			if ($this->options->Is_browserid_only_auth()) {
 				add_action('register_form',
 						array(&$this, 'Add_persona_to_registration_form'));
 				add_action('user_register',
@@ -86,7 +89,7 @@ if (!class_exists('MozillaPersona')) {
 			}
 
 			// Lost password
-			if (self::Is_option_browserid_only_auth()) {
+			if ($this->options->Is_browserid_only_auth()) {
 				add_action('lost_password',
 						array(&$this, 'Disallow_lost_password'));
 				add_filter('allow_password_reset',
@@ -106,7 +109,7 @@ if (!class_exists('MozillaPersona')) {
 				add_action('admin_menu', array(&$this, 'Admin_menu_action'));
 				add_action('admin_init', array(&$this, 'Admin_init_action'));
 
-				if (self::Is_option_browserid_only_auth()) {
+				if ($this->options->Is_browserid_only_auth()) {
 					add_action('admin_action_createuser',
 							array(&$this, 'Admin_action_createuser'));
 				}
@@ -118,14 +121,14 @@ if (!class_exists('MozillaPersona')) {
 			add_action('http_api_curl', array(&$this, 'http_api_curl'));
 
 			// Comment integration
-			if (self::Is_option_comments()) {
+			if ($this->options->Is_comments()) {
 				add_filter('comment_form_default_fields', array(&$this, 'Comment_form_action_default_fields_filter'));
 				add_action('comment_form', array(&$this, 'Comment_form_action'));
 				add_filter('pre_comment_approved', array(&$this, 'Pre_comment_approved_filter'), 20, 2);
 			}
 
 			// bbPress integration
-			if (self::Is_option_bbpress()) {
+			if ($this->options->Is_bbpress()) {
 				add_action('bbp_allow_anonymous', create_function('', 'return !is_user_logged_in();'));
 				add_action('bbp_is_anonymous', create_function('', 'return !is_user_logged_in();'));
 				add_action('bbp_theme_before_topic_form_submit_button', array(&$this, 'bbPress_submit'));
@@ -143,22 +146,11 @@ if (!class_exists('MozillaPersona')) {
 		// Handle plugin activation
 		function Activate() {
 			global $wpdb;
-			$options = get_option('browserid_options');
-			if (empty($options['browserid_login_html']))
-				$options['browserid_login_html'] =
-					__('Sign in with your email', c_bid_text_domain);
-
-			if (empty($options['browserid_logout_html']))
-				$options['browserid_logout_html'] =
-					__('Logout', c_bid_text_domain);
-
-			update_option('browserid_options', $options);
 		}
 
 		// Handle plugin deactivation
 		function Deactivate() {
-			if(get_option('browserid_options'))
-				delete_option('browserid_options');
+      $this->options->Deactivate();
 		}
 
 		// Add a "Settings" link to the plugin list page.
@@ -217,7 +209,7 @@ if (!class_exists('MozillaPersona')) {
 
 			// Enqueue BrowserID scripts
 			wp_register_script('browserid',
-					self::Get_option_persona_source() . '/include.js', 
+					$this->options->Get_persona_source() . '/include.js', 
 					array(), c_bid_version, true);
 
 			// This one script takes care of all work.
@@ -233,15 +225,17 @@ if (!class_exists('MozillaPersona')) {
 				'urlLogoutRedirect' => wp_logout_url(),
 				'msgError' => self::Get_error_message(),
 				'msgFailed' => self::Get_verification_failed_message(),
-				'isPersonaOnlyAuth' => self::Is_option_browserid_only_auth(),
-				'isPersonaUsedWithComments' => self::Is_option_comments(),
+				'isPersonaOnlyAuth' => 
+						$this->options->Is_browserid_only_auth(),
+				'isPersonaUsedWithComments' => 
+						$this->options->Is_comments(),
 
 				// From here down is passed to the Persona dialog.
-				'siteName' => self::Get_sitename(),
-				'siteLogo' => self::Get_sitelogo(),
-				'backgroundColor' => self::Get_background_color(),
-				'termsOfService' => self::Get_terms_of_service(),
-				'privacyPolicy' => self::Get_privacy_policy(),
+				'siteName' => $this->options->Get_sitename(),
+				'siteLogo' => $this->options->Get_sitelogo(),
+				'backgroundColor' => $this->options->Get_background_color(),
+				'termsOfService' => $this->options->Get_terms_of_service(),
+				'privacyPolicy' => $this->options->Get_privacy_policy(),
 				'loggedInUser' => self::Get_browserid_loggedin_user(),
 			);
 			wp_localize_script( 'browserid_common', 'browserid_common',
@@ -263,7 +257,7 @@ if (!class_exists('MozillaPersona')) {
 			// third, if if the global login redirect  is specified, use that.
 			// forth, use the admin URL.
 
-			$option_redirect_url = self::Get_option_login_redir();
+			$option_redirect_url = $this->options->Get_login_redir();
 			$request_redirect_url = self::Get_request_redirect_url();
 
 			if(!empty($request_redirect_url)) {
@@ -346,7 +340,7 @@ if (!class_exists('MozillaPersona')) {
 		// will occur
 		function Verify_assertion($assertion) {
 			$audience = self::Get_audience();
-			$vserver = self::Get_option_vserver();
+			$vserver = $this->options->Get_vserver();
 			$verifier = new MozillaPersonaVerifier($audience, $vserver);
 
 			$response = $verifier->Verify($assertion);
@@ -359,8 +353,8 @@ if (!class_exists('MozillaPersona')) {
 		// will stop. If verification succeeds, response will be returned.
 		function Check_verifier_response($response) {
 			// Persist debug info
-			if (self::Is_option_debug()) {
-				$response['vserver'] = self::Get_option_vserver();
+			if ($this->options->Is_debug()) {
+				$response['vserver'] = $this->options->Get_vserver();
 				$response['audience'] = self::Get_audience();
 				$response['rememberme'] = self::Get_rememberme();
 				update_option(c_bid_option_response, $response);
@@ -370,7 +364,7 @@ if (!class_exists('MozillaPersona')) {
 			if (is_wp_error($response)) {
 				// Debug info
 				$message = __($response->get_error_message());
-				if (self::Is_option_debug()) {
+				if ($this->options->Is_debug()) {
 					update_option(c_bid_option_response, $response);
 				}
 
@@ -383,8 +377,8 @@ if (!class_exists('MozillaPersona')) {
 
 		// Determine if login or comment
 		function Is_comment() {
-			$options = get_option('browserid_options');
-			if (self::Is_option_comments() || self::Is_option_bbpress())
+			if ($this->options->Is_comments() || 
+					$this->options->Is_bbpress())
 				return (isset($_REQUEST['browserid_comment']) ? $_REQUEST['browserid_comment'] : null);
 			else
 				return null;
@@ -397,7 +391,7 @@ if (!class_exists('MozillaPersona')) {
 
 		// Generic error handling
 		function Handle_error($message, $debug_message = '', $result = '') {
-			if (self::Is_option_debug() && !empty($debug_message)) {
+			if ($this->options->Is_debug() && !empty($debug_message)) {
 				header('Content-type: text/plain');
 				echo $debug_message . PHP_EOL;
 
@@ -554,7 +548,7 @@ if (!class_exists('MozillaPersona')) {
 			// Only enable registration via Persona if Persona is the only
 			// authentication mechanism or else the user will not see the
 			// "check your email" screen.
-			if (self::Is_option_browserid_only_auth()) {
+			if ($this->options->Is_browserid_only_auth()) {
 				echo '<input type="hidden" name="browserid_assertion" id="browserid_assertion" />';
 
 				$html = __('Register', c_bid_text_domain) ;
@@ -566,7 +560,7 @@ if (!class_exists('MozillaPersona')) {
 		// Process registration - get the email address from the assertion and
 		// process the rest of the form.
 		function Handle_registration($email) {
-			if (self::Is_option_browserid_only_auth()) {
+			if ($this->options->Is_browserid_only_auth()) {
 				// Keep track of whether the user is registering with
 				// BrowserID. Non BrowserID registrations are disabled in
 				// BrowserID only auth.
@@ -601,7 +595,7 @@ if (!class_exists('MozillaPersona')) {
 		function Registration_redirect_filter($redirect_to) {
 			if ($redirect_to) return $redirect_to;
 
-			if (self::Is_option_browserid_only_auth()) {
+			if ($this->options->Is_browserid_only_auth()) {
 				// The user successfully signed up using Persona,
 				// send them to their profile page
 				return self::Get_registration_redirect_url();
@@ -658,7 +652,7 @@ if (!class_exists('MozillaPersona')) {
 
 		// Get rid of the email field in the comment form
 		function Comment_form_action_default_fields_filter($fields) {
-			if (self::Is_option_comments()) {
+			if ($this->options->Is_comments()) {
 				unset($fields['email']);
 			}
 			return $fields;
@@ -667,7 +661,7 @@ if (!class_exists('MozillaPersona')) {
 		// Add BrowserID to comment form
 		function Comment_form_action($post_id) {
 			if (!is_user_logged_in()) {
-				$html = $this->Get_option_comment_html();
+				$html = $this->options->Get_comment_html();
 				$this->Print_persona_button_html("js-persona__submit-comment", $html);
 			}
 
@@ -711,7 +705,7 @@ if (!class_exists('MozillaPersona')) {
 					.	'<span class="%s">%s</span>'
 					. '</a> %s';
 
-			$color = $this->Get_option_button_color();
+			$color = $this->options->Get_button_color();
 			$button_html = sprintf($button_html,
 				"Mozilla Persona",
 				"persona-button " . $color,
@@ -733,22 +727,11 @@ if (!class_exists('MozillaPersona')) {
 			return self::Get_loginout_html();
 		}
 
-		// Git spiffy logout text for Persona
-		function Get_logout_text() {
-			// User logged in
-			$options = get_option('browserid_options');
-			$html = __($options['browserid_logout_html'], c_bid_text_domain);
-
-			return $html;
-		}
-
 
 		// Build HTML for login/out button/link
 		function Get_loginout_html($check_login = true) {
-			$options = get_option('browserid_options');
-
 			if ($check_login && is_user_logged_in()) {
-				$html = self::Get_logout_text();
+				$html = $this->options->Get_logout_html();
 
 				// Simple link
 				if (empty($html))
@@ -758,7 +741,7 @@ if (!class_exists('MozillaPersona')) {
 			}
 			else {
 				// User not logged in
-				$html = __($options['browserid_login_html'], c_bid_text_domain);
+				$html = $this->options->Get_login_html();
 				// Button
 				$html = self::Get_persona_button_html("js-persona__login", $html);
 
@@ -788,7 +771,7 @@ if (!class_exists('MozillaPersona')) {
 				$wp_toolbar->remove_node('logout');
 				$wp_toolbar->add_node(array(
 					'id' => 'logout',
-					'title' => self::Get_logout_text(),
+					'title' => $this->options->Get_logout_html(),
 					'parent' => 'user-actions',
 					'href' => '#',
 					'meta' => array(
@@ -812,30 +795,7 @@ if (!class_exists('MozillaPersona')) {
 
 		// Define options page
 		function Admin_init_action() {
-			register_setting('browserid_options', 'browserid_options', null);
-			add_settings_section('plugin_main', null, array(&$this, 'Options_main'), 'browserid');
-			add_settings_field('browserid_sitename', __('Site name:', c_bid_text_domain), array(&$this, 'Option_sitename'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_sitelogo', __('Site logo:', c_bid_text_domain), array(&$this, 'Option_sitelogo'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_background_color', __('Dialog background color:', c_bid_text_domain), 
-					array(&$this, 'Option_background_color'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_terms_of_service', __('Terms of service:', c_bid_text_domain), 
-					array(&$this, 'Option_terms_of_service'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_privacy_policy', __('Privacy policy:', c_bid_text_domain), 
-					array(&$this, 'Option_privacy_policy'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_button_color', __('Login button color:', c_bid_text_domain), 
-					array(&$this, 'Option_button_color'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_login_html', __('Login button HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_logout_html', __('Logout button HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
-
-			add_settings_field('browserid_login_redir', __('Login redirection URL:', c_bid_text_domain), array(&$this, 'Option_login_redir'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_comments', __('Enable for comments:', c_bid_text_domain), array(&$this, 'Option_comments'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_comment_html', __('Comment button HTML:', c_bid_text_domain), 
-					array(&$this, 'Option_comment_html'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_bbpress', __('Enable bbPress integration:', c_bid_text_domain), array(&$this, 'Option_bbpress'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_persona_source', __('Persona source:', c_bid_text_domain), array(&$this, 'Option_persona_source'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_vserver', __('Verification server:', c_bid_text_domain), array(&$this, 'Option_vserver'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_debug', __('Debug mode:', c_bid_text_domain), array(&$this, 'Option_debug'), 'browserid', 'plugin_main');
+			$this->options->Register_settings();
 		}
 
 		// set a fake password when creating a password for a user.
@@ -848,242 +808,6 @@ if (!class_exists('MozillaPersona')) {
 			}
 		}
 
-		// Main options section
-		function Options_main() {
-			// Empty
-		}
-
-		// Print a text input for a plugin option
-		function Print_option_text_input($option_name, $default_value = null, $info = null) {
-			$option_value = $this->Get_option($option_name, $default_value);
-			echo sprintf("<input id='%s' name='browserid_options[%s]' type='text' size='50' value='%s' />",
-				$option_name,
-				$option_name,
-				htmlspecialchars($option_value, ENT_QUOTES));
-
-			if ($info) {
-				echo '<br />' . $info;
-			}
-		}
-
-
-		// Generic Get_option to get an option, if it is not set, return the 
-		// default value
-		function Get_option($option_name, $default_value = '') {
-			$options = get_option('browserid_options');
-			if (isset($options[$option_name]) 
-					&& !empty($options[$option_name])) {
-				return $options[$option_name];
-			}
-			return $default_value;
-		}
-
-
-		// Site name option
-		function Option_sitename() {
-			self::Print_option_text_input('browserid_sitename', self::Get_sitename());
-		}
-
-		// Get (customized) site name
-		function Get_sitename() {
-			$name = $this->Get_option('browserid_sitename');
-			if (empty($name))
-				$name = get_bloginfo('name');
-			return $name;
-		}
-
-
-		// Site logo option
-		function Option_sitelogo() {
-			self::Print_option_text_input('browserid_sitelogo', null,
-					__('Absolute path, works only with SSL', c_bid_text_domain));
-		}
-
-		// Get site logo
-		function Get_sitelogo() {
-			$options = get_option('browserid_options');
-			// sitelogo is only valid with SSL connections
-			if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
-				return $this->Get_option('browserid_sitelogo');
-			return '';
-		}
-
-
-		// backgroundColor option
-		function Option_background_color() {
-			self::Print_option_text_input('browserid_background_color', null,
-					__('3 or 6 character hex value. e.g. #333 or #333333', c_bid_text_domain));
-		}
-
-		// Get backgroundColor
-		function Get_background_color() {
-			return $this->Get_option('browserid_background_color');
-		}
-
-
-		// termsOfService option
-		function Option_terms_of_service() {
-			self::Print_option_text_input('browserid_terms_of_service', null,
-					__('URL or absolute path, works only with SSL and must be defined together with Privacy policy', c_bid_text_domain));
-		}
-
-		function Get_terms_of_service() {
-			return $this->Get_option('browserid_terms_of_service');
-		}
-
-
-		// privacyPolicy option
-		function Option_privacy_policy() {
-			self::Print_option_text_input('browserid_privacy_policy', null,
-					__('URL or absolute path, works only with SSL and must be and must be defined together with Terms of service', c_bid_text_domain));
-		}
-
-		function Get_privacy_policy() {
-			return $this->Get_option('browserid_privacy_policy');
-		}
-
-
-		// Login HTML option
-		function Option_login_html() {
-			self::Print_option_text_input('browserid_login_html', 
-					__('Sign in with your email', c_bid_text_domain));
-		}
-
-		// Logout HTML option
-		function Option_logout_html() {
-			self::Print_option_text_input('browserid_logout_html', __('Logout', c_bid_text_domain));
-		}
-
-		// Login redir URL option
-		function Option_login_redir() {
-			self::Print_option_text_input('browserid_login_redir', null,
-					__('Default WordPress dashboard', c_bid_text_domain));
-		}
-
-		// Get the login redir URL
-		function Get_option_login_redir() {
-			return $this->Get_option('browserid_login_redir', null);
-		}
-
-		// Enable comments integration
-		function Option_comments() {
-			$options = get_option('browserid_options');
-			$chk = (isset($options['browserid_comments']) && $options['browserid_comments'] ? " checked='checked'" : '');
-			echo "<input id='browserid_comments' name='browserid_options[browserid_comments]' type='checkbox'" . $chk. "/>";
-		}
-
-		// Can a user leave a comment using BrowserID
-		function Is_option_comments() {
-			return $this->Get_option('browserid_comments', false);
-		}
-
-		function Option_comment_html() {
-			self::Print_option_text_input('browserid_comment_html', __('Post Comment', c_bid_text_domain));
-		}
-
-		function Get_option_comment_html() {
-			return $this->Get_option('browserid_comment_html', __('post comment', c_bid_text_domain));
-		}
-
-		// Enable bbPress integration
-		function Option_bbpress() {
-			$options = get_option('browserid_options');
-			$chk = (isset($options['browserid_bbpress']) && $options['browserid_bbpress'] ? " checked='checked'" : '');
-			echo "<input id='browserid_bbpress' name='browserid_options[browserid_bbpress]' type='checkbox'" . $chk. "/>";
-			echo '<strong>Beta!</strong>';
-			echo '<br />' . __('Enables anonymous posting implicitly', c_bid_text_domain);
-		}
-
-		function Is_option_bbpress() {
-			$options = get_option('browserid_options');
-
-			return isset($options['browserid_bbpress']) &&
-						$options['browserid_bbpress'];
-		}
-
-		// Persona shim source option
-		function Option_persona_source() {
-			self::Print_option_text_input('browserid_persona_source', c_bid_source,
-					__('Default', c_bid_text_domain) . ' ' . c_bid_source);
-		}
-
-		function Get_option_persona_source() {
-			return $this->Get_option('browserid_persona_source', c_bid_source);
-		}
-
-		// Verification server option
-		function Option_vserver() {
-			self::Print_option_text_input('browserid_vserver', self::Get_option_vserver(),
-					__('Default', c_bid_text_domain) . ' ' . c_bid_verifier . '/verify');
-		}
-
-		function Get_option_vserver() {
-			$options = get_option('browserid_options');
-			$source = self::Get_option_persona_source();
-
-			if (isset($options['browserid_vserver']) && $options['browserid_vserver'])
-				$vserver = $options['browserid_vserver'];
-			else if ($source != c_bid_source)
-				$vserver = $source . '/verify';
-			else
-				$vserver = c_bid_verifier . '/verify';
-
-			return $vserver;
-		}
-
-		// Debug option
-		function Option_debug() {
-			$options = get_option('browserid_options');
-			$chk = (isset($options['browserid_debug']) && $options['browserid_debug'] ? " checked='checked'" : '');
-			echo "<input id='browserid_debug' name='browserid_options[browserid_debug]' type='checkbox'" . $chk. "/>";
-			echo '<strong>' . __('Security risk!', c_bid_text_domain) . '</strong>';
-		}
-
-		// Is the debug option set
-		function Is_option_debug() {
-			$options = get_option('browserid_options');
-			return ((isset($options['browserid_debug']) && $options['browserid_debug']));
-		}
-
-		// Only allow Persona logins
-		function Option_browserid_only_auth() {
-			$options = get_option('browserid_options');
-			$chk = (isset($options['browserid_only_auth']) && $options['browserid_only_auth'] ? " checked='checked'" : '');
-			echo "<input id='browserid_only_auth' name='browserid_options[browserid_only_auth]' type='checkbox'" . $chk. "/>";
-		}
-
-		// Does the site have browserid only authentication enabled.
-		function Is_option_browserid_only_auth() {
-			$options = get_option('browserid_options');
-
-			return isset($options['browserid_only_auth']) && $options['browserid_only_auth'];
-		}
-
-		function Option_button_color() {
-			echo "<ul>";
-			$this->Print_persona_button_selection(__('Blue', c_bid_text_domain), 'blue');
-			$this->Print_persona_button_selection(__('Black', c_bid_text_domain), 'dark');
-			$this->Print_persona_button_selection(__('Orange', c_bid_text_domain), 'orange');
-			echo "</ul>";
-		}
-
-		function Get_option_button_color() {
-			return $this->Get_option('browserid_button_color', 'blue');
-		}
-
-		function Print_persona_button_selection($name, $value) {
-			$color = $this->Get_option_button_color();
-			$chk = ($color == $value ? " checked='checked'" : '');
-
-			echo "<li class='persona-button--select-color'>" .
-					 "<input name='browserid_options[browserid_button_color]' " .
-							"class='persona-button--select-color-radio'" .
-							"type='radio' value='". $value ."'" . $chk. "/>" .
-					 "<label class='persona-button " . $value ."'>" .
-						 "<span class='persona-button__text'>" . $name . "</span>" .
-					 "</label>" .
-				 "</li>";
-		}
 
 		// Render options page
 		function Administration() {
@@ -1099,7 +823,7 @@ if (!class_exists('MozillaPersona')) {
 				</form>
 			</div>
 <?php
-			if (self::Is_option_debug()) {
+			if ($this->options->Is_debug()) {
 				$options = get_option('browserid_options');
 				$request = get_option(c_bid_option_request);
 				$response = get_option(c_bid_option_response);
@@ -1210,12 +934,7 @@ if (!function_exists('wp_new_user_notification')) {
 		$message  = sprintf(__('Username: %s'), $user_login) . "\r\n";
 		$title = '';
 
-		// Get plugin options
-		$options = get_option('browserid_options');
-
-		// XXX Collapse this in to the Get_browserid_only_auth
-		if ((isset($options['browserid_only_auth']) &&
-					$options['browserid_only_auth'])) {
+		if ($this->options->Is_browserid_only_auth()) {
 			$message .= sprintf(__('%s uses Mozilla Persona to sign in and does not use passwords', c_bid_text_domain), $blogname) . "\r\n";
 			$title .= sprintf(__('[%s] Your username'), $blogname);
 		} else {
