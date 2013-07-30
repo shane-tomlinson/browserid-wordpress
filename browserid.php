@@ -143,7 +143,7 @@ if (!class_exists('MozillaPersona')) {
 			add_shortcode('mozilla_persona', array(&$this, 'Shortcode_loginout'));
 
 
-            $this->user_registering_with_browserid = false;
+			$this->user_registering_with_browserid = false;
 		}
 
 		// Handle plugin activation
@@ -164,7 +164,7 @@ if (!class_exists('MozillaPersona')) {
 		// Handle plugin deactivation
 		function Deactivate() {
 			if(get_option('browserid_options'))
-                delete_option('browserid_options');
+				delete_option('browserid_options');
 		}
 
 		// Add a "Settings" link to the plugin list page.
@@ -283,10 +283,10 @@ if (!class_exists('MozillaPersona')) {
 			return $redirect_to;
 		}
 
-        // Get the registration redirect URL
-        function Get_registration_redirect_url() {
-            return admin_url() . 'profile.php';
-        }
+		// Get the registration redirect URL
+		function Get_registration_redirect_url() {
+			return admin_url() . 'profile.php';
+		}
 
 		// Get the error message
 		function Get_error_message() {
@@ -663,7 +663,7 @@ if (!class_exists('MozillaPersona')) {
 			if (self::Is_option_browserid_only_auth()) {
 				// The user successfully signed up using Persona,
 				// send them to their profile page
-                return self::Get_registration_redirect_url();
+				return self::Get_registration_redirect_url();
 			}
 
 			return '';
@@ -763,9 +763,9 @@ if (!class_exists('MozillaPersona')) {
 		}
 
 
-        // Get the Persona Button HTML
-        function Get_persona_button_html($classname, $html) {
-            $button_html = ''
+		// Get the Persona Button HTML
+		function Get_persona_button_html($classname, $html) {
+			$button_html = ''
 					. '<a href="#" title="%s" class="%s %s">'
 					.	'<span class="%s">%s</span>'
 					. '</a> %s';
@@ -780,12 +780,12 @@ if (!class_exists('MozillaPersona')) {
 				self::What_is());
 
 			return $button_html;
-        }
+		}
 
-        // Print a Persona button
-        function Print_persona_button_html($classname, $html) {
-            echo self::Get_persona_button_html($classname, $html);
-        }
+		// Print a Persona button
+		function Print_persona_button_html($classname, $html) {
+			echo self::Get_persona_button_html($classname, $html);
+		}
 
 		// Shortcode "mozilla_persona"
 		function Shortcode_loginout() {
@@ -819,7 +819,7 @@ if (!class_exists('MozillaPersona')) {
 				// User not logged in
 				$html = __($options['browserid_login_html'], c_bid_text_domain);
 				// Button
-                $html = self::Get_persona_button_html("js-persona__login", $html);
+				$html = self::Get_persona_button_html("js-persona__login", $html);
 
 				return $html;
 			}
@@ -915,12 +915,12 @@ if (!class_exists('MozillaPersona')) {
 		// Print a text input for a plugin option
 		function Print_option_text_input($id, $default_value = null, $info = null) {
 			$options = get_option('browserid_options');
-            $option_value = (empty($options[$id]) ? '' : $options[$id]);
+			$option_value = (empty($options[$id]) ? '' : $options[$id]);
 			echo sprintf("<input id='%s' name='browserid_options[%s]'
 			type='text' size='50' value='%s' />",
 				$id,
 				$id,
-                htmlspecialchars($option_value, ENT_QUOTES));
+				htmlspecialchars($option_value, ENT_QUOTES));
 
 			if ($info) {
 				echo '<br />' . $info;
