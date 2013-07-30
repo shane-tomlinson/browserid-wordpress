@@ -911,11 +911,12 @@ if (!class_exists('MozillaPersona')) {
 		// Print a text input for a plugin option
 		function Print_option_text_input($id, $default_value = null, $info = null) {
 			$options = get_option('browserid_options');
+            $option_value = (empty($options[$id]) ? '' : $options[$id]);
 			echo sprintf("<input id='%s' name='browserid_options[%s]'
 			type='text' size='50' value='%s' />",
 				$id,
 				$id,
-				htmlspecialchars($options[$id], ENT_QUOTES));
+                htmlspecialchars($option_value, ENT_QUOTES));
 
 			if ($info) {
 				echo '<br />' . $info;
