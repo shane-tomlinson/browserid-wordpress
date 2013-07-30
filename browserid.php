@@ -37,6 +37,7 @@ if (version_compare(PHP_VERSION, '5.0.0', '<'))
 
 include_once('constants.php');
 include_once('verifier.php');
+include_once('widget.php');
 
 
 
@@ -97,7 +98,7 @@ if (!class_exists('MozillaPersona')) {
 			}
 
 			// Widgets and admin menu
-			add_action('widgets_init', create_function('', 'return register_widget("BrowserID_Widget");'));
+			add_action('widgets_init', create_function('', 'return register_widget("MozillaPersonaWidget");'));
 			if (is_admin()) {
 				// Action link in the plugins page
 				add_filter('plugin_action_links', array(&$this, 'Plugin_action_links_filter'), 10, 2);
@@ -1157,50 +1158,6 @@ if (!class_exists('MozillaPersona')) {
 			if (!function_exists($name))
 				die('Required WordPress function "' . $name . '" does not exist');
 		}
-	}
-}
-
-// Define widget
-class BrowserID_Widget extends WP_Widget {
-	// Widget constructor
-	function BrowserID_Widget() {
-		$widget_ops = array(
-			'classname' => 'browserid_widget',
-			'description' => __('Mozilla Persona login button', c_bid_text_domain)
-		);
-		$this->WP_Widget('BrowserID_Widget', 'Mozilla Persona', $widget_ops);
-	}
-
-	// Widget contents
-	function widget($args, $instance) {
-		global $persona_plugin;
-		extract($args);
-		$title = apply_filters('widget_title', $instance['title']);
-		echo $before_widget;
-		if (!empty($title))
-			echo $before_title . $title . $after_title;
-
-		echo "<ul><li class='only-child'>" . $persona_plugin->Get_loginout_html() . "</li></ul>";
-		echo $after_widget;
-	}
-
-	// Update settings
-	function update($new_instance, $old_instance) {
-		$instance = $old_instance;
-		$instance['title'] = strip_tags($new_instance['title']);
-		return $instance;
-	}
-
-	// Render settings
-	function form($instance) {
-		if (empty($instance['title']))
-			$instance['title'] = null;
-?>
-		<p>
-			<label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?></label>
-			<input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($instance['title']); ?>" />
-		</p>
-<?php
 	}
 }
 
