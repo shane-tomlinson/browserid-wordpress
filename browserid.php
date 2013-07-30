@@ -37,7 +37,7 @@ if (version_compare(PHP_VERSION, '5.0.0', '<'))
 
 // Define constants
 define('c_bid_text_domain', 'browserid');
-define('c_bid_option_version', 'bid_version');
+define('c_bid_version', '0.45');
 define('c_bid_option_request', 'bid_request');
 define('c_bid_option_response', 'bid_response');
 define('c_bid_browserid_login_cookie', 'bid_browserid_login_' . COOKIEHASH);
@@ -217,17 +217,19 @@ if (!class_exists('MozillaPersona')) {
 		function Add_external_dependencies() {
 			// Add the Persona button styles.
 			wp_register_style('persona-style',
-					plugins_url('browserid.css', __FILE__));
+					plugins_url('browserid.css', __FILE__),
+					array(), c_bid_version);
 			wp_enqueue_style('persona-style');
 
 			// Enqueue BrowserID scripts
 			wp_register_script('browserid',
-					self::Get_option_persona_source() . '/include.js', array(), '', true);
+					self::Get_option_persona_source() . '/include.js', 
+					array(), c_bid_version, true);
 
 			// This one script takes care of all work.
 			wp_register_script('browserid_common',
 					plugins_url('browserid.js', __FILE__),
-					array('jquery', 'browserid'), '', true);
+					array('jquery', 'browserid'), c_bid_version, true);
 
 			$data_array = array(
 				'siteurl' => get_site_url(null, '/'),
