@@ -3,7 +3,7 @@ Contributors: stomlinson, Marcel Bokhorst, M66B
 Tags: security, admin, authentication, access, widget, login, shortcode, comment, comments, discussion, bbPress, bbPress 2.0, browserid, mozilla, persona
 Requires at least: 3.1
 Tested up to: 3.5.1
-Stable tag: 0.43
+Stable tag: 0.45
 
 Implementation of Mozilla Persona (BrowserID) for WordPress
 
@@ -108,6 +108,20 @@ Follow these steps to install the development version:
 * Click *Upload* (a link at the top)
 * Click *Choose file* and select the file you downloaded before
 * Click *Install*, then *Activate Plugin*
+
+= 0.45 =
+* New Feature: Russian Translations - Thanks Ruslan Bekenev (@KryDos)!
+* New Feature: French (CA and FR) - Thanks Fabian Rodriguez (@MagicFab)!
+* New Feature: backgroundColor support!
+* New Feature: termsOfService and privacyPolicy support!
+* New Feature: Select one of 3 Persona button styles
+* Improvement: Localize widget buttons
+* Improvement: Updated Dutch translation - Thanks @janw-oostendorp!
+* Bug Fix: Prevent comments being accepted without assertion
+* Bug Fix: Admins can add new users
+* Bug Fix: Use Persona button for comments
+* Bug Fix: Fix live events not working with jQuery 1.9+ - Thanks @davidmurdoch!
+* Bug Fix: Get rid of the warning on the Persona settings page - Thanks @KryDos
 
 = 0.44 =
 * Improvement: Commenting for new Persona users is simpler
