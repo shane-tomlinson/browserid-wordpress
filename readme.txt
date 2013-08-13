@@ -4,6 +4,8 @@ Tags: security, admin, authentication, access, widget, login, shortcode, comment
 Requires at least: 3.1
 Tested up to: 3.5.1
 Stable tag: 0.45
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.htm
 
 Implementation of Mozilla Persona (BrowserID) for WordPress
 
@@ -45,6 +47,7 @@ Please report any issues on [GitHub](https://github.com/shane-tomlinson/browseri
 == Frequently Asked Questions ==
 
 = What is 'Custom login HTML for?' =
+
 
 Try putting the following into this option:
 
@@ -320,6 +323,27 @@ Follow these steps to install the development version:
 
 == Upgrade Notice ==
 
+= 0.45 =
+Russian, French, Dutch translations. backgroundColor, termsOfService and privacyPolicy support. Multiple Persona button styles. Multiple bug fixes.
+
+= 0.44 =
+Spanish translations, 8 improvements, 4 bug fixes
+
+= 0.43 = 
+Security improvement, three bug fixes
+
+= 0.42 =
+Revert to v0.37 until update process is figured out
+
+= 0.41 = 
+Bug fix for "missing arguments" error
+
+= 0.40 =
+Three new features, six improvements, one bug fix
+
+= 0.37 =
+Maintainer change - info update
+
 = 0.36 =
 One bugfix
 
@@ -336,7 +360,7 @@ Renamed Mozilla BrowserID into Mozilla Persona
 One improvement, one new translation
 
 = 0.28 =
-One new feature, threee improvements
+One new feature, three improvements
 
 = 0.27 =
 One bugfix
@@ -414,8 +438,13 @@ One bugfix
 First public release
 
 == Acknowledgments ==
-[Marcel Bokhorst](http://blog.bokhorst.biz/) is the original author of this plugin. His awesome work has allowed me to continue.
-[Guillermo Movia](mailto://deimidis@mozilla-hispano.org) for Spanish translations.
+* [Marcel Bokhorst](http://blog.bokhorst.biz/) is the original author of this plugin. His awesome work has allowed me to continue.
+* [Guillermo Movia](mailto://deimidis@mozilla-hispano.org) for Spanish translations.
+* [Ruslan Bekenev - @KryDos](https://github.com/KryDos) for Russian translations, bug fixes, and continued support.
+* [Fabian Rodriguez - @MagicFab](https://github.com/MagicFab) for French and Canadian French translations as well as man bug reports.
+* [Edwin Wong @edmoz](http://www.edwinsf.com/blog/) for continued testing.
+* [@janw-oostendorp](https://github.com/janw-oostendorp) for updated Dutch translations.
+* [David Murdoch @davidmurdoch](https://github.com/davidmurdoch/) fixing jQuery 1.9+ compatability
 
 
 This plugin uses:
