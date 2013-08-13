@@ -85,9 +85,11 @@ You can write comments on [GitHub](https://github.com/shane-tomlinson/browserid-
 
 == Screenshots ==
 
-1. Mozilla Persona logo
-1. Mozilla Persona login button
-1. WordPress login dialog
+1. WordPress login with Persona
+2. Wordpress login with "Disable Non-Persona authentication"
+3. Login widget
+4. Comment with Persona
+5. Persona dialog using siteName, siteLogo and backgroundColor
 
 == Getting Involved ==
 
