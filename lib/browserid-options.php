@@ -1,27 +1,33 @@
 <?php
 /*
-	Copyright (c) 2011, 2012, 2013 Shane Tomlinson, Marcel Bokhorst
+   Copyright (c) 2011, 2012, 2013 Shane Tomlinson, Marcel Bokhorst
 
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 3 of the License, or
-	(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to the Free Software
-	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-include_once('constants.php');
+include_once('browserid-constants.php');
 
 if (!class_exists('MozillaPersonaOptions')) {
 	class MozillaPersonaOptions {
 		public function  __construct() {
+		}
+
+		public function Init() {
+			if (is_admin()) {
+				add_action('admin_init', array(&$this, 'Register_settings'));
+			}
 		}
 
 		public function Register_settings() {
@@ -96,8 +102,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		public function Deactivate() {
-			if(get_option('browserid_options'))
-				delete_option('browserid_options');
+			if (get_option('browserid_options')) delete_option('browserid_options');
 		}
 
 		// Main options section
@@ -233,7 +238,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		function Get_comment_html() {
-			return $this->Get_option('browserid_comment_html', __('post comment', c_bid_text_domain));
+			return $this->Get_option('browserid_comment_html', 
+					__('post comment', c_bid_text_domain));
 		}
 
 
@@ -250,7 +256,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			$options = get_option('browserid_options');
 
 			return isset($options['browserid_bbpress']) &&
-						$options['browserid_bbpress'];
+				$options['browserid_bbpress'];
 		}
 
 
@@ -288,6 +294,11 @@ if (!class_exists('MozillaPersonaOptions')) {
 			return $vserver;
 		}
 
+		
+		// The audience is a non-settable option
+		function Get_audience() {
+			return $_SERVER['HTTP_HOST'];
+		}
 
 
 		function Print_debug() {
@@ -342,22 +353,22 @@ if (!class_exists('MozillaPersonaOptions')) {
 			$chk = ($color == $value ? " checked='checked'" : '');
 
 			echo "<li class='persona-button--select-color'>" .
-					 "<input name='browserid_options[browserid_button_color]' " .
-							"class='persona-button--select-color-radio'" .
-							"type='radio' value='". $value ."'" . $chk. "/>" .
-					 "<label class='persona-button " . $value ."'>" .
-						 "<span class='persona-button__text'>" . $name . "</span>" .
-					 "</label>" .
-				 "</li>";
+				"<input name='browserid_options[browserid_button_color]' " .
+				"class='persona-button--select-color-radio'" .
+				"type='radio' value='". $value ."'" . $chk. "/>" .
+				"<label class='persona-button " . $value ."'>" .
+				"<span class='persona-button__text'>" . $name . "</span>" .
+				"</label>" .
+				"</li>";
 		}
 
 		// Print a text input for a plugin option
 		private function Print_text_input($option_name, $default_value = null, $info = null) {
 			$option_value = $this->Get_option($option_name, $default_value);
 			echo sprintf("<input id='%s' name='browserid_options[%s]' type='text' size='50' value='%s' />",
-				$option_name,
-				$option_name,
-				htmlspecialchars($option_value, ENT_QUOTES));
+					$option_name,
+					$option_name,
+					htmlspecialchars($option_value, ENT_QUOTES));
 
 			if ($info) {
 				echo '<br />' . $info;
