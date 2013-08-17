@@ -2,7 +2,7 @@
 Contributors: stomlinson, Marcel Bokhorst, M66B
 Tags: security, admin, authentication, access, widget, login, shortcode, comment, comments, discussion, bbPress, bbPress 2.0, browserid, mozilla, persona
 Requires at least: 3.1
-Tested up to: 3.5.1
+Tested up to: 3.6
 Stable tag: 0.45
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.htm
