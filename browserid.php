@@ -82,6 +82,28 @@ if (!class_exists('MozillaPersona')) {
 
 		// Initialization
 		function Init() {
+			$this->Init_l10n();
+
+			$this->Init_comments();
+			$this->Init_login();
+			$this->Init_registration();
+			$this->Init_bbpress();
+			$this->Init_verifier();
+			$this->Init_assertion_handler();
+
+			if ($this->assertion_handler->Handle_assertion()) return;
+
+			$this->Init_administration();
+			$this->Init_shortcode();
+			$this->Init_widget();
+			$this->Init_lostpassword();
+
+			$this->Add_external_dependencies();
+
+			$this->Set_error_from_request();
+		}
+
+		private function Init_comments() {
 			$this->comments = new MozillaPersonaComments(array(
 				'is_comments_enabled' => $this->options->Is_comments(),
 				'is_bbpress_enabled' => $this->options->Is_bbpress(),
@@ -89,7 +111,9 @@ if (!class_exists('MozillaPersona')) {
 				'button_html' => $this->options->Get_comment_html()
 			));
 			$this->comments->Init();
+		}
 
+		private function Init_login() {
 			$this->login = new MozillaPersonaLogin(array(
 				'is_browserid_only_auth' => $this->options->Is_browserid_only_auth(),
 				'ui' => $this,
@@ -99,7 +123,9 @@ if (!class_exists('MozillaPersona')) {
 				'logout_html' => $this->options->Get_logout_html()
 			));
 			$this->login->Init();
+		}
 
+		private function Init_verifier() {
 			$this->verifier = new MozillaPersonaVerifier(array(
 				'vserver' => $this->options->Get_vserver(),
 				'audience' => $this->options->Get_audience(),
@@ -108,28 +134,34 @@ if (!class_exists('MozillaPersona')) {
 				'rememberme' => $this->login->Get_rememberme()
 			));
 			$this->verifier->Init();
+		}
 
-
+		private function Init_registration() {
 			$this->registration = new MozillaPersonaRegistration(array(
 				'login' => $this->login,
 				'browserid_only_auth' => $this->options->Is_browserid_only_auth(),
 				'ui' => $this
 			));
 			$this->registration->Init();
+		}
 
+		private function Init_bbpress() {
 			$this->bbpress = new MozillaPersonaBbPress(array(
 				'is_bbpress_enabled' => $this->options->Is_bbpress(),
 				'comments' => $this->comments
 			));
 			$this->bbpress->Init();
+		}
 
-
+		private function Init_lostpassword() {
 			$this->lostpassword = new MozillaPersonaLostPassword(array(
 				'browserid_only_auth' => $this->options->Is_browserid_only_auth(),
 				'ui' => $this
 			));
 			$this->lostpassword->Init();
+		}
 
+		private function Init_administration() {
 			$this->administration = new MozillaPersonaAdministration(array(
 				'logged_in_user' => $this->login->Get_browserid_logged_in_user(),
 				'browserid_only_auth' => $this->options->Is_browserid_only_auth(),
@@ -139,12 +171,16 @@ if (!class_exists('MozillaPersona')) {
 				'logout_html' => $this->options->Get_logout_html()
 			));
 			$this->administration->Init();
+		}
 
+		private function Init_shortcode() {
 			$this->shortcode = new MozillaPersonaShortcode(array(
 				'ui' => $this
 			));
 			$this->shortcode->Init();
+		}
 
+		private function Init_assertion_handler() {
 			$this->assertion_handler = new MozillaPersonaAssertionHandler(array(
 				'login' => $this->login,
 				'comments' => $this->comments,
@@ -152,21 +188,14 @@ if (!class_exists('MozillaPersona')) {
 				'verifier' => $this->verifier
 			));
 			$this->assertion_handler->Init();
-
-
-			if ($this->assertion_handler->Handle_assertion()) return;
-
-			$this->widget = new MozillaPersonaWidget();
-			$this->widget->Init();
-
-			$this->Initialize_l10n();
-			$this->Add_external_dependencies();
-
-			$this->Set_error_from_request();
 		}
 
-		// Initialize L10N
-		private function Initialize_l10n() {
+		private function Init_widget() {
+			$this->widget = new MozillaPersonaWidget();
+			$this->widget->Init();
+		}
+
+		private function Init_l10n() {
 			$l10npath = dirname(plugin_basename(__FILE__)) . '/languages/';
 			load_plugin_textdomain(c_bid_text_domain, false, $l10npath);
 		}
