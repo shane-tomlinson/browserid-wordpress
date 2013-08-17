@@ -41,14 +41,14 @@ if (!class_exists('MozillaPersonaLogin')) {
 		public function Init() {
 			// Authentication
 			add_action('set_auth_cookie',
-					array(&$this, 'Set_auth_cookie_action'), 10, 5);
+					array(&$this, 'Set_cookie_if_persona_login'), 10, 5);
 
 			add_action('clear_auth_cookie',
-					array(&$this, 'Clear_auth_cookie_action'));
+					array(&$this, 'Clear_persona_login_cookie'));
 
 			if ($this->is_browserid_only_auth) {
 				add_filter('wp_authenticate_user',
-						array(&$this, 'Disallow_non_persona_logins_filter'));
+						array(&$this, 'Disallow_non_persona_logins'));
 			}
 
 			add_filter('check_password',
@@ -59,9 +59,7 @@ if (!class_exists('MozillaPersonaLogin')) {
 
 		}
 
-		// Set a cookie that keeps track whether the user signed in
-		// using BrowserID
-		public function Set_auth_cookie_action(
+		public function Set_cookie_if_persona_login(
 				$auth_cookie, $expire, $expiration, $user_id, $scheme) {
 			// Persona should only manage Persona logins. If this is
 			// a Persona login, keep track of it so that the user is
@@ -74,19 +72,17 @@ if (!class_exists('MozillaPersonaLogin')) {
 			else {
 				// If the user is not logged in via BrowserID, clear the
 				// cookie.
-				$this->Clear_auth_cookie_action();
+				$this->Clear_persona_login_cookie();
 			}
 		}
 
-		// Clear the cookie that keeps track of whether the user
-		// signed in using BrowserID
-		public function Clear_auth_cookie_action() {
+		public function Clear_persona_login_cookie() {
 			$expire = time() - YEAR_IN_SECONDS;
 			setcookie(c_bid_browserid_login_cookie, ' ', $expire, 
 					COOKIEPATH, COOKIE_DOMAIN);
 		}
 
-		public function Disallow_non_persona_logins_filter($user) {
+		public function Disallow_non_persona_logins($user) {
 			if (! $this->is_browserid_login) {
 				return new WP_error('invalid_login',
 						'Only BrowserID logins are allowed');

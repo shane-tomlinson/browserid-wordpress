@@ -36,11 +36,11 @@ if (!class_exists('MozillaPersonaComments')) {
 			if (! $this->is_comments_enabled) return;
 
 			add_filter('comment_form_default_fields', 
-					array(&$this, 'Comment_form_action_default_fields_filter'));
+					array(&$this, 'Remove_email_field_filter'));
 			add_action('comment_form', 
-					array(&$this, 'Comment_form_action'));
+					array(&$this, 'Add_persona_to_comment_form_action'));
 			add_filter('pre_comment_approved', 
-					array(&$this, 'Pre_comment_approved_filter'), 20, 2);
+					array(&$this, 'Only_allow_comments_with_assertions_filter'), 20, 2);
 		}
 
 		public function Is_comment() {
@@ -90,14 +90,12 @@ if (!class_exists('MozillaPersonaComments')) {
 		}
 
 
-		// Get rid of the email field in the comment form
-		public function Comment_form_action_default_fields_filter($fields) {
+		public function Remove_email_field_filter($fields) {
 			unset($fields['email']);
 			return $fields;
 		}
 
-		// Add BrowserID to comment form
-		public function Comment_form_action($post_id) {
+		public function Add_persona_to_comment_form_action($post_id) {
 			if (!is_user_logged_in()) {
 				$this->ui->Print_persona_button_html(
 						"js-persona__submit-comment", $this->button_html);
@@ -111,9 +109,7 @@ if (!class_exists('MozillaPersonaComments')) {
 			}
 		}
 
-		// If Persona-Only auth is enabled, comment must be submitted with an
-		// assertion.
-		public function Pre_comment_approved_filter($approved, $commentdata) {
+		public function Only_allow_comments_with_assertions_filter($approved, $commentdata) {
 			$assertion = $this->ui->Get_assertion();
 			if (empty($assertion)) {
 				if ( defined('DOING_AJAX') )

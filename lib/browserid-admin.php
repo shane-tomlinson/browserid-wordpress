@@ -39,30 +39,29 @@ if (!class_exists('MozillaPersonaAdministration')) {
 
 		public function Init() {
 			if (is_admin()) {
-				// Action link in the plugins page
 				add_filter('plugin_action_links', 
-						array(&$this, 'Plugin_action_links_filter'), 10, 2);
+						array(&$this, 'Add_settings_link_filter'), 10, 2);
 
 				add_action('admin_menu', 
-						array(&$this, 'Admin_menu_action'));
+						array(&$this, 'Add_persona_to_settings_list_action'));
 
 				if ($this->browserid_only_auth) {
 					// XXX this could equally go in browserid-registration
 					add_action('admin_action_createuser',
-							array(&$this, 'Admin_action_createuser'));
+							array(&$this, 'Set_new_user_password_action'));
 				}
 			}
 
-			// top toolbar logout button override
 			add_action('admin_bar_menu', 
-					array(&$this, 'Admin_toolbar_action'), 999);
+					array(&$this, 'Admin_toolbar_replace_logout_action'), 999);
 		}
 
 		// Add a "Settings" link to the plugin list page.
-		public function Plugin_action_links_filter($links, $file) {
+		public function Add_settings_link_filter($links, $file) {
 			static $this_plugin;
 
 			if (!$this_plugin) {
+				// XXX fix this logic to find the plugin's root filename
 				$this_plugin = plugin_basename(__FILE__);
 			}
 
@@ -80,8 +79,7 @@ if (!class_exists('MozillaPersonaAdministration')) {
 			return $links;
 		}
 
-		// Register options page
-		public function Admin_menu_action() {
+		public function Add_persona_to_settings_list_action() {
 			if (function_exists('add_options_page'))
 				add_options_page(
 					__('Mozilla Persona', c_bid_text_domain) . ' ' . __('Administration', c_bid_text_domain),
@@ -94,7 +92,7 @@ if (!class_exists('MozillaPersonaAdministration')) {
 
 		// set a fake password when creating a password for a user.
 		// only called if "BrowserID Only" auth is set.
-		public function Admin_action_createuser() {
+		public function Set_new_user_password_action() {
 			if (! (isset( $_POST['pass1']) && isset( $_POST['pass2']))) {
 				$user_pass = wp_generate_password( 12, false);
 				$_POST['pass1'] = $user_pass;
@@ -102,8 +100,7 @@ if (!class_exists('MozillaPersonaAdministration')) {
 			}
 		}
 
-		// Override logout on site menu
-		public function Admin_toolbar_action($wp_toolbar) {
+		public function Admin_toolbar_replace_logout_action($wp_toolbar) {
 			// If the user is signed in via Persona, replace their toolbar logout
 			// with a logout that will work with Persona.
 			if ( $this->logged_in_user ) {
