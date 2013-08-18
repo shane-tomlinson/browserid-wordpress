@@ -396,7 +396,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Get_comment_html() {
 			return $this->Get_field_value('browserid_comment_html', 
-					__('post comment', c_bid_text_domain));
+					__('Post comment', c_bid_text_domain));
 		}
 
 
