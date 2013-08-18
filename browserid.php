@@ -61,6 +61,11 @@ if (!class_exists('MozillaPersona')) {
 			// Register actions & filters
 			add_action('init', array(&$this, 'Init'), 0);
 
+			// Add css and jscript
+			add_action( 'wp_enqueue_scripts', array( &$this, 'Add_external_dependencies' ) ); // frontend
+			add_action( 'login_enqueue_scripts', array( &$this, 'Add_external_dependencies' ) ); // login screen
+			add_action( 'admin_enqueue_scripts', array( &$this, 'Add_external_dependencies' ) ); // all admin pages
+			add_action( 'admin_print_styles-settings_page_browserid-wordpress/browserid', array( &$this, 'Add_external_dependencies_settings' ) ); // settings page only
 			// Authentication
 			add_action('set_auth_cookie',
 					array(&$this, 'Set_auth_cookie_action'), 10, 5);
@@ -203,8 +208,6 @@ if (!class_exists('MozillaPersona')) {
 			$l10npath = dirname(plugin_basename(__FILE__)) . '/languages/';
 			load_plugin_textdomain(c_bid_text_domain, false, $l10npath);
 
-			self::Add_external_dependencies();
-
 			// On the login pages, if there is an error, surface it to be
 			// printed into the templates.
 			if (isset($_REQUEST['browserid_error'])) {
@@ -216,18 +219,17 @@ if (!class_exists('MozillaPersona')) {
 		// Add external dependencies - both JS & CSS
 		function Add_external_dependencies() {
 			// Add the Persona button styles.
-			wp_register_style('persona-style',
+			wp_enqueue_style('persona-style',
 					plugins_url('browserid.css', __FILE__),
 					array(), c_bid_version);
-			wp_enqueue_style('persona-style');
 
 			// Enqueue BrowserID scripts
 			wp_register_script('browserid',
-					self::Get_option_persona_source() . '/include.js', 
+					self::Get_option_persona_source() . '/include.js',
 					array(), c_bid_version, true);
 
 			// This one script takes care of all work.
-			wp_register_script('browserid_common',
+			wp_enqueue_script('browserid_common',
 					plugins_url('browserid.js', __FILE__),
 					array('jquery', 'browserid'), c_bid_version, true);
 
@@ -252,7 +254,16 @@ if (!class_exists('MozillaPersona')) {
 			);
 			wp_localize_script( 'browserid_common', 'browserid_common',
 					$data_array );
-			wp_enqueue_script('browserid_common');
+		}
+		function Add_external_dependencies_settings() {
+			// Enque color picker for styles
+			wp_enqueue_style( 'wp-color-picker' );
+
+			// Enque js for settings page
+			wp_enqueue_script('browserid_settings',
+				plugins_url('settings.js', __FILE__),
+				array('wp-color-picker'), c_bid_version, true);
+
 		}
 
 
@@ -875,21 +886,21 @@ if (!class_exists('MozillaPersona')) {
 			add_settings_section('plugin_main', null, array(&$this, 'Options_main'), 'browserid');
 			add_settings_field('browserid_sitename', __('Site name:', c_bid_text_domain), array(&$this, 'Option_sitename'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_sitelogo', __('Site logo:', c_bid_text_domain), array(&$this, 'Option_sitelogo'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_background_color', __('Dialog background color:', c_bid_text_domain), 
+			add_settings_field('browserid_background_color', __('Dialog background color:', c_bid_text_domain),
 					array(&$this, 'Option_background_color'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_terms_of_service', __('Terms of service:', c_bid_text_domain), 
+			add_settings_field('browserid_terms_of_service', __('Terms of service:', c_bid_text_domain),
 					array(&$this, 'Option_terms_of_service'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_privacy_policy', __('Privacy policy:', c_bid_text_domain), 
+			add_settings_field('browserid_privacy_policy', __('Privacy policy:', c_bid_text_domain),
 					array(&$this, 'Option_privacy_policy'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_only_auth', __('Disable non-Persona logins:', c_bid_text_domain), array(&$this, 'Option_browserid_only_auth'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_button_color', __('Login button color:', c_bid_text_domain), 
+			add_settings_field('browserid_button_color', __('Login button color:', c_bid_text_domain),
 					array(&$this, 'Option_button_color'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_login_html', __('Login button HTML:', c_bid_text_domain), array(&$this, 'Option_login_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_logout_html', __('Logout button HTML:', c_bid_text_domain), array(&$this, 'Option_logout_html'), 'browserid', 'plugin_main');
 
 			add_settings_field('browserid_login_redir', __('Login redirection URL:', c_bid_text_domain), array(&$this, 'Option_login_redir'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_comments', __('Enable for comments:', c_bid_text_domain), array(&$this, 'Option_comments'), 'browserid', 'plugin_main');
-			add_settings_field('browserid_comment_html', __('Comment button HTML:', c_bid_text_domain), 
+			add_settings_field('browserid_comment_html', __('Comment button HTML:', c_bid_text_domain),
 					array(&$this, 'Option_comment_html'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_bbpress', __('Enable bbPress integration:', c_bid_text_domain), array(&$this, 'Option_bbpress'), 'browserid', 'plugin_main');
 			add_settings_field('browserid_persona_source', __('Persona source:', c_bid_text_domain), array(&$this, 'Option_persona_source'), 'browserid', 'plugin_main');
@@ -926,11 +937,11 @@ if (!class_exists('MozillaPersona')) {
 		}
 
 
-		// Generic Get_option to get an option, if it is not set, return the 
+		// Generic Get_option to get an option, if it is not set, return the
 		// default value
 		function Get_option($option_name, $default_value = '') {
 			$options = get_option('browserid_options');
-			if (isset($options[$option_name]) 
+			if (isset($options[$option_name])
 					&& !empty($options[$option_name])) {
 				return $options[$option_name];
 			}
@@ -970,8 +981,7 @@ if (!class_exists('MozillaPersona')) {
 
 		// backgroundColor option
 		function Option_background_color() {
-			self::Print_option_text_input('browserid_background_color', null,
-					__('3 or 6 character hex value. e.g. #333 or #333333', c_bid_text_domain));
+			self::Print_option_text_input('browserid_background_color', null);
 		}
 
 		// Get backgroundColor
@@ -1004,7 +1014,7 @@ if (!class_exists('MozillaPersona')) {
 
 		// Login HTML option
 		function Option_login_html() {
-			self::Print_option_text_input('browserid_login_html', 
+			self::Print_option_text_input('browserid_login_html',
 					__('Sign in with your email', c_bid_text_domain));
 		}
 
