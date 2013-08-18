@@ -282,15 +282,6 @@ input[type=radio].persona-button--select-color-radio {
 }
 
 /**
- * Admin screen.
- *
- * Do not display the ugly password nag in persona only auth
- */
-.persona--persona-only-auth .default-password-nag {
-  display: none;
-}
-
-/**
  * Registration screen.
  *
  * Hide the user email address in persona only auth.

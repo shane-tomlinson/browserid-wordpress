@@ -43,13 +43,15 @@ if (!class_exists('MozillaPersonaRegistration')) {
 			if (! $this->browserid_only_auth) return;
 
 			add_action('register_form',
-					array(&$this, 'Add_persona_to_registration_form'));
+					array(&$this, 'Add_browserid_to_registration_form'));
 			add_action('user_register',
-					array(&$this, 'Sign_in_new_persona_user'));
+					array(&$this, 'Complete_new_user_creation'));
 			add_filter('registration_errors',
-					array(&$this, 'Disallow_non_persona_registration_filter'));
+					array(&$this, 'Disallow_non_browserid_registration_filter'));
 			add_filter('registration_redirect',
 					array(&$this, 'Registration_redirect_filter'));
+			add_action('admin_init',
+					array(&$this, 'Remove_password_nag_if_browserid_registration'));
 		}
 
 		public function Is_registration() {
@@ -69,23 +71,32 @@ if (!class_exists('MozillaPersonaRegistration')) {
 
 
 		// Add Persona button to registration form and remove the email form.
-		public function Add_persona_to_registration_form() {
+		public function Add_browserid_to_registration_form() {
 			echo '<input type="hidden" name="browserid_assertion" id="browserid_assertion" />';
 
 			$html = __('Register', c_bid_text_domain) ;
-
 			$this->ui->Print_persona_button_html("js-persona__register", $html);
 		}
 
-		// Now that the user is registered, log them in
-		public function Sign_in_new_persona_user($user_id) {
+		// Now that the user is registered, set a fake password and log them in
+		public function Complete_new_user_creation($user_id) {
+			add_user_meta($user_id, 'browserid_registration', $this->user_registering_with_browserid);
 			if ($this->user_registering_with_browserid) {
-				return $this->login->Login_by_id($user_id, false);
+				$this->login->Login_by_id($user_id, false);
+			}
+		}
+
+		public function Remove_password_nag_if_browserid_registration() {
+			global $user_ID;
+			$registered_with_browserid = get_user_meta($user_ID, 'browserid_registration', true);
+			if ($registered_with_browserid === true) {
+				delete_user_setting('default_password_nag', $user_ID);
+				update_user_option($user_ID, 'default_password_nag', false, true);
 			}
 		}
 
 		// Check if traditional registration has been disabled.
-		public function Disallow_non_persona_registration_filter($errors) {
+		public function Disallow_non_browserid_registration_filter($errors) {
 			if (! $this->user_registering_with_browserid) {
 				$blogname = wp_specialchars_decode(
 									get_option('blogname'), ENT_QUOTES);
