@@ -24,7 +24,6 @@ if (!class_exists('MozillaPersonaOptions')) {
 		private $plugin_options_key = 'browserid_options';
 		private $general_settings_key = 'browserid_general_options';
 		private $advanced_settings_key = 'browserid_advanced_options';
-		private $is_debug = false;
 		private $settings = null;
 
 		public function  __construct() {
@@ -167,8 +166,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 				</form>
 			</div>
 <?php
-			if ($this->is_debug && $tab === $this->advanced_settings_key) {
-				// XXX consider moving a lot of this to browserid-options.
+			if ($this->Is_debug() && $tab === $this->advanced_settings_key) {
 				$options = get_option('browserid_options');
 				$request = get_option(c_bid_option_request);
 				$response = get_option(c_bid_option_response);
@@ -185,7 +183,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 					echo '<p><strong>Assertion valid until</strong>: ' . $result['expires'] . ' > ' . date('c', $result['expires'] / 1000) . '</p>';
 				}
 
-				echo '<p><strong>PHP audience</strong>: ' . htmlentities($this->audience) . '</p>';
+				/*echo '<p><strong>PHP audience</strong>: 
+				' . htmlentities($this->audience) . '</p>';*/
 				echo '<script type="text/javascript">';
 				echo 'document.write("<p><strong>JS audience</strong>: " + window.location.hostname + "</p>");';
 				echo '</script>';
@@ -215,22 +214,35 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		// Main options section
 		function General_settings_description() {
-			echo __('These options are safe to change.', 
-						c_bid_text_domain);
+			// Nothing to print here!
 		}
 
 		function Advanced_settings_description() {
-			echo __('Changing these options can cause you to be locked out of your site.', 
+			echo '<p class="persona__warning persona__warning-heading">';
+			echo __('Changing these options can cause you to be locked out of your site!', 
 						c_bid_text_domain);
+			echo '</p>';
 		}
 
 
 		function Add_general_settings_field($field_name, $option_title, $display_func) {
+			$setting = array(
+				'page' => $this->general_settings_key,
+				'section' => 'section_general'
+			);
+			$this->settings[$field_name] = $setting;
+
 			add_settings_field($field_name, $option_title,
 					array(&$this, $display_func), $this->general_settings_key, 'section_general');
 		}
 
 		function Add_advanced_settings_field($field_name, $option_title, $display_func) {
+			$setting = array(
+				'page' => $this->advanced_settings_key,
+				'section' => 'section_advanced'
+			);
+			$this->settings[$field_name] = $setting;
+
 			add_settings_field($field_name, $option_title,
 					array(&$this, $display_func), $this->advanced_settings_key, 'section_advanced');
 		}
@@ -338,13 +350,11 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		function Print_comments($section) {
-			$options = get_option($section);
-			$chk = (isset($options['browserid_comments']) && $options['browserid_comments'] ? " checked='checked'" : '');
-			echo "<input id='browserid_comments' name='" . $section . "[browserid_comments]' type='checkbox'" . $chk. "/>";
+			$this->Print_checkbox_input('browserid_comments');
 		}
 
 		function Is_comments() {
-			return $this->Get_option('browserid_comments', false);
+			return $this->Get_boolean_option('browserid_comments');
 		}
 
 
@@ -363,18 +373,13 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		function Print_bbpress() {
-			$options = get_option('browserid_options');
-			$chk = (isset($options['browserid_bbpress']) && $options['browserid_bbpress'] ? " checked='checked'" : '');
-			echo "<input id='browserid_bbpress' name='browserid_options[browserid_bbpress]' type='checkbox'" . $chk. "/>";
+			$this->Print_checkbox_input('browserid_bbpress');
 			echo '<strong>Beta!</strong>';
 			echo '<br />' . __('Enables anonymous posting implicitly', c_bid_text_domain);
 		}
 
 		function Is_bbpress() {
-			$options = get_option('browserid_options');
-
-			return isset($options['browserid_bbpress']) &&
-				$options['browserid_bbpress'];
+			return $this->Get_boolean_option('browserid_bbpress');
 		}
 
 
@@ -399,12 +404,12 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		function Get_vserver() {
-			$options = get_option('browserid_options');
-			$source = self::Get_persona_source();
+			$vserver = $this->Get_option('browserid_vserver');
+			$source = $this->Get_persona_source();
 
-			if (isset($options['browserid_vserver']) && $options['browserid_vserver'])
-				$vserver = $options['browserid_vserver'];
-			else if ($source != c_bid_source)
+			if ($vserver) return $vserver;
+
+			if ($source != c_bid_source)
 				$vserver = $source . '/verify';
 			else
 				$vserver = c_bid_verifier . '/verify';
@@ -420,30 +425,23 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		function Print_debug() {
-			$options = get_option('browserid_options');
-			$chk = (isset($options['browserid_debug']) && $options['browserid_debug'] ? " checked='checked'" : '');
-			echo "<input id='browserid_debug' name='browserid_options[browserid_debug]' type='checkbox'" . $chk. "/>";
+			$this->Print_checkbox_input('browserid_debug');
 			echo '<strong>' . __('Security risk!', c_bid_text_domain) . '</strong>';
 		}
 
 		function Is_debug() {
-			$options = get_option('browserid_options');
-			return ((isset($options['browserid_debug']) && $options['browserid_debug']));
+			return $this->Get_boolean_option('browserid_debug');
 		}
 
 
 
 
 		function Print_browserid_only_auth() {
-			$options = get_option('browserid_options');
-			$chk = (isset($options['browserid_only_auth']) && $options['browserid_only_auth'] ? " checked='checked'" : '');
-			echo "<input id='browserid_only_auth' name='browserid_options[browserid_only_auth]' type='checkbox'" . $chk. "/>";
+			$this->Print_checkbox_input('browserid_only_auth');
 		}
 
 		function Is_browserid_only_auth() {
-			$options = get_option('browserid_options');
-
-			return isset($options['browserid_only_auth']) && $options['browserid_only_auth'];
+			return $this->Get_boolean_option('browserid_only_auth');
 		}
 
 
@@ -471,7 +469,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			$chk = ($color == $value ? " checked='checked'" : '');
 ?>
 			<li class='persona-button--select-color'>
-				<input name='<?php echo $this->general_settings_key; ?>[browserid_button_color]' 
+				<input name='<?php echo $this->Get_option_page('browserid_button_color'); ?>[browserid_button_color]' 
 					class='persona-button--select-color-radio' 
 					type='radio' value='<?php echo $value; ?>' <?php echo $chk; ?> /> 
 				<label class='persona-button <?php echo $value; ?>'> 
@@ -482,15 +480,12 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		// Print a text input for a plugin option
-		private function Print_text_input($option_name, $default_value = null, 
-				$info = null, $section = null) {
+		private function Print_text_input($option_name, $default_value = null, $info = null) {
+			$option_value = $this->Get_option($option_name, $default_value);
 
-			if ($section === null) $section = $this->general_settings_key;
-
-			$option_value = $this->Get_option($option_name, $default_value, $section);
 			echo sprintf("<input id='%s' name='%s[%s]' type='text' size='50' value='%s' />",
 					$option_name,
-					$section,
+					$this->Get_option_page($option_name),
 					$option_name,
 					htmlspecialchars($option_value, ENT_QUOTES));
 
@@ -499,76 +494,38 @@ if (!class_exists('MozillaPersonaOptions')) {
 			}
 		}
 
+		private function Print_checkbox_input($option_name) {
+			$option_page = $this->Get_option_page($option_name);
+			$options = get_option($option_page);
+			$chk = (isset($options[$option_name]) && $options[$option_name] ? " checked='checked'" : '');
+			echo "<input id='" . $option_name . "' name='" . $option_page . "[". $option_name . "]' type='checkbox'" . $chk. "/>";
+		}
+
+
+
 		// Generic Get_option to get an option, if it is not set, return the 
 		// default value
-		private function Get_option($option_name, $default_value = '', $section = null) {
-			if ($section === null) $section = $this->general_settings_key;
+		private function Get_option($option_name, $default_value = '') {
+			$options = get_option($this->Get_option_page($option_name));
 
-			$options = get_option($section);
 			if (isset($options[$option_name]) 
 					&& !empty($options[$option_name])) {
 				return $options[$option_name];
 			}
 			return $default_value;
 		}
+
+		private function Get_boolean_option($option_name) {
+			$options = get_option($this->Get_option_page($option_name));
+
+			return (isset($options[$option_name]) && $options[$option_name]);
+		}
+
+		private function Get_option_page($option_name) {
+			$setting = $this->settings[$option_name];
+			return $setting['page'];
+		}
+
 	}
-
-	/*
-	class Setting {
-		protected $section;
-		protected $option_name;
-
-		public function __construct($options) {
-			$this->section = $options['section'];
-			$this->option_name = $options['option_name'];
-		}
-
-		public function Get() {
-		}
-
-		public function Set($value) {
-		}
-
-		public function PrintOption() {
-		}
-	}
-
-	class ButtonColorSetting extends Setting {
-		private $color;
-
-		public function __construct($options) {
-			if (empty($options['option_name']) $options['option_name'] = 'browserid_button_color';
-			parent::__construct($options);
-		}
-
-		public function PrintOption() {
-			echo "<ul>";
-			$this->Print_persona_button_selection(
-					__('Blue', c_bid_text_domain), 'blue');
-			$this->Print_persona_button_selection(
-					__('Black', c_bid_text_domain), 'dark');
-			$this->Print_persona_button_selection(
-					__('Orange', c_bid_text_domain), 'orange');
-			echo "</ul>";
-		}
-
-		private function Print_persona_button_selection($name, $value) {
-			$color = $this->Get();
-			$chk = ($color == $value ? " checked='checked'" : '');
-?>
-			<li class='persona-button--select-color'>
-				<input name='<?php echo $this->section; ?>[browserid_button_color]' 
-					class='persona-button--select-color-radio' 
-					type='radio' value='<?php echo $value; ?>' <?php echo $chk; ?> /> 
-				<label class='persona-button <?php echo $value; ?>'> 
-					<span class='persona-button__text'><?php echo $name; ?></span> 
-				</label> 
-			</li>
-<?php
-		}
-	}
-*/
-
-
 }
 ?>

@@ -281,6 +281,18 @@ input[type=radio].persona-button--select-color-radio {
   display: inline-block;
 }
 
+.persona__warning {
+  padding: 12px;
+  background-color: #ffebe8;
+  color: #333;
+  border: 1px solid #cc0000;
+  font-size: 12px;
+}
+
+.persona__warning-heading {
+  display: inline-block;
+}
+
 /**
  * Registration screen.
  *
