@@ -21,99 +21,218 @@ include_once('browserid-constants.php');
 
 if (!class_exists('MozillaPersonaOptions')) {
 	class MozillaPersonaOptions {
+		private $plugin_options_key = 'browserid_options';
+		private $general_settings_key = 'browserid_general_options';
+		private $advanced_settings_key = 'browserid_advanced_options';
+		private $is_debug = false;
+		private $settings = null;
+
 		public function  __construct() {
+			$settings = array();
 		}
 
 		public function Init() {
 			if (is_admin()) {
-				add_action('admin_init', array(&$this, 'Register_settings'));
+				add_action('admin_menu', 
+						array(&$this, 'Add_persona_to_settings_list_action'));
+				add_action('admin_init', array(&$this, 'Register_general_settings'));
+				add_action('admin_init', array(&$this, 'Register_advanced_settings'));
 			}
 		}
 
-		public function Register_settings() {
-			register_setting('browserid_options', 'browserid_options', null);
+		public function Add_persona_to_settings_list_action() {
+			if (function_exists('add_options_page'))
+				add_options_page(
+					__('Mozilla Persona', c_bid_text_domain) . ' ' . __('Administration', c_bid_text_domain),
+					__('Mozilla Persona', c_bid_text_domain),
+					'manage_options',
+					$this->plugin_options_key,
+					array(&$this, 'Render_admin_page'));
+		}
 
-			add_settings_section('plugin_main', null, 
-					array(&$this, 'Options_main'), 'browserid');
+		public function Load_settings() {
+			$this->general_settings = (array) get_option( $this->general_settings_key );
+			$this->advanced_settings = (array) get_option( $this->advanced_settings_key );
 
-			$this->Add_settings_field('browserid_sitename', 
+			// Merge with defaults
+			$this->general_settings = array_merge( array(
+				'general_option' => 'General value'
+			), $this->general_settings );
+
+			$this->advanced_settings = array_merge( array(
+				'advanced_option' => 'Advanced value'
+			), $this->advanced_settings );
+		}
+
+		public function Register_general_settings() {
+			$this->plugin_settings_tabs[$this->general_settings_key] = 'General';
+
+			register_setting($this->general_settings_key, $this->general_settings_key);
+
+			add_settings_section('section_general', 'General Plugin Settings', 
+					array(&$this, 'General_settings_description'), $this->general_settings_key);
+
+
+			$this->Add_general_settings_field('browserid_sitename', 
 					__('Site name:', c_bid_text_domain), 
 					'Print_sitename');
 
-			$this->Add_settings_field('browserid_sitelogo', 
+			$this->Add_general_settings_field('browserid_sitelogo', 
 					__('Site logo:', c_bid_text_domain), 
 					'Print_sitelogo');
 
-			$this->Add_settings_field('browserid_background_color', 
+			$this->Add_general_settings_field('browserid_background_color', 
 					__('Dialog background color:', c_bid_text_domain), 
 					'Print_background_color');
 
-			$this->Add_settings_field('browserid_terms_of_service', 
+			$this->Add_general_settings_field('browserid_terms_of_service', 
 					__('Terms of service:', c_bid_text_domain), 
 					'Print_terms_of_service');
 
-			$this->Add_settings_field('browserid_privacy_policy', 
+			$this->Add_general_settings_field('browserid_privacy_policy', 
 					__('Privacy policy:', c_bid_text_domain), 
 					'Print_privacy_policy');
 
-			$this->Add_settings_field('browserid_only_auth', 
+			$this->Add_general_settings_field('browserid_only_auth', 
 					__('Disable non-Persona logins:', c_bid_text_domain), 
 					'Print_browserid_only_auth');
 
-			$this->Add_settings_field('browserid_button_color', 
+			$this->Add_general_settings_field('browserid_button_color', 
 					__('Login button color:', c_bid_text_domain), 
 					'Print_button_color');
 
-			$this->Add_settings_field('browserid_login_html', 
+			$this->Add_general_settings_field('browserid_login_html', 
 					__('Login button HTML:', c_bid_text_domain), 
 					'Print_login_html');
 
-			$this->Add_settings_field('browserid_logout_html', 
+			$this->Add_general_settings_field('browserid_logout_html', 
 					__('Logout button HTML:', c_bid_text_domain), 
 					'Print_logout_html');
 
-			$this->Add_settings_field('browserid_login_redir', 
+			$this->Add_general_settings_field('browserid_login_redir', 
 					__('Login redirection URL:', c_bid_text_domain), 
 					'Print_login_redir');
 
-			$this->Add_settings_field('browserid_comments', 
+			$this->Add_general_settings_field('browserid_comments', 
 					__('Enable for comments:', c_bid_text_domain), 
 					'Print_comments');
 
-			$this->Add_settings_field('browserid_comment_html', 
+			$this->Add_general_settings_field('browserid_comment_html', 
 					__('Comment button HTML:', c_bid_text_domain), 
 					'Print_comment_html');
 
-			$this->Add_settings_field('browserid_bbpress', 
+			$this->Add_general_settings_field('browserid_bbpress', 
 					__('Enable bbPress integration:', c_bid_text_domain), 
 					'Print_bbpress');
+		}
 
-			$this->Add_settings_field('browserid_persona_source', 
+		public function Register_advanced_settings() {
+			$this->plugin_settings_tabs[$this->advanced_settings_key] = 'Advanced';
+
+			register_setting($this->advanced_settings_key, $this->advanced_settings_key);
+
+			add_settings_section('section_advanced', 'Advanced Plugin Settings', 
+					array(&$this, 'Advanced_settings_description'), $this->advanced_settings_key);
+
+			$this->Add_advanced_settings_field('browserid_persona_source', 
 					__('Persona source:', c_bid_text_domain), 
 					'Print_persona_source');
 
-			$this->Add_settings_field('browserid_vserver', 
+			$this->Add_advanced_settings_field('browserid_vserver', 
 					__('Verification server:', c_bid_text_domain), 
 					'Print_vserver');
 
-			$this->Add_settings_field('browserid_debug', 
+			$this->Add_advanced_settings_field('browserid_debug', 
 					__('Debug mode:', c_bid_text_domain), 
 					'Print_debug');
 		}
 
 		public function Deactivate() {
-			if (get_option('browserid_options')) delete_option('browserid_options');
+			if (get_option($this->general_settings_key)) delete_option($this->general_settings_key);
+			if (get_option($this->advanced_settings_key)) delete_option($this->advanced_settings_key);
+		}
+
+		function Render_admin_page() {
+			$tab = isset( $_GET['tab'] ) ? $_GET['tab'] : $this->general_settings_key;
+			?>
+			<div class="wrap">
+				<?php screen_icon(); ?>
+				<h2><?php _e('Mozilla Persona', c_bid_text_domain); ?></h2>
+				<?php $this->plugin_options_tabs(); ?>
+				<form method="post" action="options.php">
+					<?php wp_nonce_field( 'update-options' ); ?>
+					<?php settings_fields($tab); ?>
+					<?php do_settings_sections($tab); ?>
+					<?php submit_button(); ?>
+				</form>
+			</div>
+<?php
+			if ($this->is_debug && $tab === $this->advanced_settings_key) {
+				// XXX consider moving a lot of this to browserid-options.
+				$options = get_option('browserid_options');
+				$request = get_option(c_bid_option_request);
+				$response = get_option(c_bid_option_response);
+				if (is_wp_error($response))
+					$result = $response;
+				else
+					$result = json_decode($response['body'], true);
+
+				echo '<p><strong>Site URL</strong>: ' . get_site_url() . ' (WordPress address / folder)</p>';
+				echo '<p><strong>Home URL</strong>: ' . get_home_url() . ' (Blog address / Home page)</p>';
+
+				if (!empty($result) && !is_wp_error($result)) {
+					echo '<p><strong>PHP Time</strong>: ' . time() . ' > ' . date('c', time()) . '</p>';
+					echo '<p><strong>Assertion valid until</strong>: ' . $result['expires'] . ' > ' . date('c', $result['expires'] / 1000) . '</p>';
+				}
+
+				echo '<p><strong>PHP audience</strong>: ' . htmlentities($this->audience) . '</p>';
+				echo '<script type="text/javascript">';
+				echo 'document.write("<p><strong>JS audience</strong>: " + window.location.hostname + "</p>");';
+				echo '</script>';
+
+				echo '<br /><pre>Options=' . htmlentities(print_r($options, true)) . '</pre>';
+				echo '<br /><pre>BID request=' . htmlentities(print_r($request, true)) . '</pre>';
+				echo '<br /><pre>BID response=' . htmlentities(print_r($response, true)) . '</pre>';
+				echo '<br /><pre>PHP request=' . htmlentities(print_r($_REQUEST, true)) . '</pre>';
+				echo '<br /><pre>PHP server=' . htmlentities(print_r($_SERVER, true)) . '</pre>';
+			}
+			else {
+				delete_option(c_bid_option_request);
+				delete_option(c_bid_option_response);
+			}
+		}
+
+		function plugin_options_tabs() {
+			$current_tab = isset( $_GET['tab'] ) ? $_GET['tab'] : $this->general_settings_key;
+
+			echo '<h2 class="nav-tab-wrapper">';
+			foreach ( $this->plugin_settings_tabs as $tab_key => $tab_caption ) {
+				$active = $current_tab == $tab_key ? 'nav-tab-active' : '';
+				echo '<a class="nav-tab ' . $active . '" href="?page=' . $this->plugin_options_key . '&tab=' . $tab_key . '">' . $tab_caption . '</a>';
+			}
+			echo '</h2>';
 		}
 
 		// Main options section
-		function Options_main() {
-			// Empty
+		function General_settings_description() {
+			echo __('These options are safe to change.', 
+						c_bid_text_domain);
+		}
+
+		function Advanced_settings_description() {
+			echo __('Changing these options can cause you to be locked out of your site.', 
+						c_bid_text_domain);
 		}
 
 
-		function Add_settings_field($field_name, $option_title, $display_func) {
+		function Add_general_settings_field($field_name, $option_title, $display_func) {
 			add_settings_field($field_name, $option_title,
-					array(&$this, $display_func), 'browserid', 'plugin_main');
+					array(&$this, $display_func), $this->general_settings_key, 'section_general');
+		}
+
+		function Add_advanced_settings_field($field_name, $option_title, $display_func) {
+			add_settings_field($field_name, $option_title,
+					array(&$this, $display_func), $this->advanced_settings_key, 'section_advanced');
 		}
 
 
@@ -138,7 +257,6 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		function Get_sitelogo() {
-			$options = get_option('browserid_options');
 			// sitelogo is only valid with SSL connections
 			if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
 				return $this->Get_option('browserid_sitelogo');
@@ -219,10 +337,10 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 
-		function Print_comments() {
-			$options = get_option('browserid_options');
+		function Print_comments($section) {
+			$options = get_option($section);
 			$chk = (isset($options['browserid_comments']) && $options['browserid_comments'] ? " checked='checked'" : '');
-			echo "<input id='browserid_comments' name='browserid_options[browserid_comments]' type='checkbox'" . $chk. "/>";
+			echo "<input id='browserid_comments' name='" . $section . "[browserid_comments]' type='checkbox'" . $chk. "/>";
 		}
 
 		function Is_comments() {
@@ -351,22 +469,28 @@ if (!class_exists('MozillaPersonaOptions')) {
 		private function Print_persona_button_selection($name, $value) {
 			$color = $this->Get_button_color();
 			$chk = ($color == $value ? " checked='checked'" : '');
-
-			echo "<li class='persona-button--select-color'>" .
-				"<input name='browserid_options[browserid_button_color]' " .
-				"class='persona-button--select-color-radio'" .
-				"type='radio' value='". $value ."'" . $chk. "/>" .
-				"<label class='persona-button " . $value ."'>" .
-				"<span class='persona-button__text'>" . $name . "</span>" .
-				"</label>" .
-				"</li>";
+?>
+			<li class='persona-button--select-color'>
+				<input name='<?php echo $this->general_settings_key; ?>[browserid_button_color]' 
+					class='persona-button--select-color-radio' 
+					type='radio' value='<?php echo $value; ?>' <?php echo $chk; ?> /> 
+				<label class='persona-button <?php echo $value; ?>'> 
+					<span class='persona-button__text'><?php echo $name; ?></span> 
+				</label> 
+			</li>
+<?php
 		}
 
 		// Print a text input for a plugin option
-		private function Print_text_input($option_name, $default_value = null, $info = null) {
-			$option_value = $this->Get_option($option_name, $default_value);
-			echo sprintf("<input id='%s' name='browserid_options[%s]' type='text' size='50' value='%s' />",
+		private function Print_text_input($option_name, $default_value = null, 
+				$info = null, $section = null) {
+
+			if ($section === null) $section = $this->general_settings_key;
+
+			$option_value = $this->Get_option($option_name, $default_value, $section);
+			echo sprintf("<input id='%s' name='%s[%s]' type='text' size='50' value='%s' />",
 					$option_name,
+					$section,
 					$option_name,
 					htmlspecialchars($option_value, ENT_QUOTES));
 
@@ -377,8 +501,10 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		// Generic Get_option to get an option, if it is not set, return the 
 		// default value
-		private function Get_option($option_name, $default_value = '') {
-			$options = get_option('browserid_options');
+		private function Get_option($option_name, $default_value = '', $section = null) {
+			if ($section === null) $section = $this->general_settings_key;
+
+			$options = get_option($section);
 			if (isset($options[$option_name]) 
 					&& !empty($options[$option_name])) {
 				return $options[$option_name];
@@ -386,5 +512,63 @@ if (!class_exists('MozillaPersonaOptions')) {
 			return $default_value;
 		}
 	}
+
+	/*
+	class Setting {
+		protected $section;
+		protected $option_name;
+
+		public function __construct($options) {
+			$this->section = $options['section'];
+			$this->option_name = $options['option_name'];
+		}
+
+		public function Get() {
+		}
+
+		public function Set($value) {
+		}
+
+		public function PrintOption() {
+		}
+	}
+
+	class ButtonColorSetting extends Setting {
+		private $color;
+
+		public function __construct($options) {
+			if (empty($options['option_name']) $options['option_name'] = 'browserid_button_color';
+			parent::__construct($options);
+		}
+
+		public function PrintOption() {
+			echo "<ul>";
+			$this->Print_persona_button_selection(
+					__('Blue', c_bid_text_domain), 'blue');
+			$this->Print_persona_button_selection(
+					__('Black', c_bid_text_domain), 'dark');
+			$this->Print_persona_button_selection(
+					__('Orange', c_bid_text_domain), 'orange');
+			echo "</ul>";
+		}
+
+		private function Print_persona_button_selection($name, $value) {
+			$color = $this->Get();
+			$chk = ($color == $value ? " checked='checked'" : '');
+?>
+			<li class='persona-button--select-color'>
+				<input name='<?php echo $this->section; ?>[browserid_button_color]' 
+					class='persona-button--select-color-radio' 
+					type='radio' value='<?php echo $value; ?>' <?php echo $chk; ?> /> 
+				<label class='persona-button <?php echo $value; ?>'> 
+					<span class='persona-button__text'><?php echo $name; ?></span> 
+				</label> 
+			</li>
+<?php
+		}
+	}
+*/
+
+
 }
 ?>

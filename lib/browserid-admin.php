@@ -42,9 +42,6 @@ if (!class_exists('MozillaPersonaAdministration')) {
 				add_filter('plugin_action_links', 
 						array(&$this, 'Add_settings_link_filter'), 10, 2);
 
-				add_action('admin_menu', 
-						array(&$this, 'Add_persona_to_settings_list_action'));
-
 				if ($this->browserid_only_auth) {
 					// XXX this could equally go in browserid-registration
 					add_action('admin_action_createuser',
@@ -79,16 +76,6 @@ if (!class_exists('MozillaPersonaAdministration')) {
 			return $links;
 		}
 
-		public function Add_persona_to_settings_list_action() {
-			if (function_exists('add_options_page'))
-				add_options_page(
-					__('Mozilla Persona', c_bid_text_domain) . ' ' . __('Administration', c_bid_text_domain),
-					__('Mozilla Persona', c_bid_text_domain),
-					'manage_options',
-					__FILE__,
-					array(&$this, 'Render_admin_page'));
-		}
-
 
 		// set a fake password when creating a password for a user.
 		// only called if "BrowserID Only" auth is set.
@@ -117,54 +104,6 @@ if (!class_exists('MozillaPersonaAdministration')) {
 			}
 		}
 
-		// Render options page
-		public function Render_admin_page() {
-?>
-			<div class="wrap">
-				<h2><?php _e('Mozilla Persona', c_bid_text_domain); ?></h2>
-				<form method="post" action="options.php">
-					<?php settings_fields('browserid_options'); ?>
-					<?php do_settings_sections('browserid'); ?>
-					<p class="submit">
-						<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
-					</p>
-				</form>
-			</div>
-<?php
-			if ($this->is_debug) {
-				// XXX consider moving a lot of this to browserid-options.
-				$options = get_option('browserid_options');
-				$request = get_option(c_bid_option_request);
-				$response = get_option(c_bid_option_response);
-				if (is_wp_error($response))
-					$result = $response;
-				else
-					$result = json_decode($response['body'], true);
-
-				echo '<p><strong>Site URL</strong>: ' . get_site_url() . ' (WordPress address / folder)</p>';
-				echo '<p><strong>Home URL</strong>: ' . get_home_url() . ' (Blog address / Home page)</p>';
-
-				if (!empty($result) && !is_wp_error($result)) {
-					echo '<p><strong>PHP Time</strong>: ' . time() . ' > ' . date('c', time()) . '</p>';
-					echo '<p><strong>Assertion valid until</strong>: ' . $result['expires'] . ' > ' . date('c', $result['expires'] / 1000) . '</p>';
-				}
-
-				echo '<p><strong>PHP audience</strong>: ' . htmlentities($this->audience) . '</p>';
-				echo '<script type="text/javascript">';
-				echo 'document.write("<p><strong>JS audience</strong>: " + window.location.hostname + "</p>");';
-				echo '</script>';
-
-				echo '<br /><pre>Options=' . htmlentities(print_r($options, true)) . '</pre>';
-				echo '<br /><pre>BID request=' . htmlentities(print_r($request, true)) . '</pre>';
-				echo '<br /><pre>BID response=' . htmlentities(print_r($response, true)) . '</pre>';
-				echo '<br /><pre>PHP request=' . htmlentities(print_r($_REQUEST, true)) . '</pre>';
-				echo '<br /><pre>PHP server=' . htmlentities(print_r($_SERVER, true)) . '</pre>';
-			}
-			else {
-				delete_option(c_bid_option_request);
-				delete_option(c_bid_option_response);
-			}
-		}
 	}
 }
 ?>
