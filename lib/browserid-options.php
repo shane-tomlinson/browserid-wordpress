@@ -330,7 +330,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Print_privacy_policy() {
 			$this->Print_text_input('browserid_privacy_policy', null,
-					__('URL or absolute path, works only with SSL and must be and must be defined together with Terms of service', c_bid_text_domain));
+					__('URL or absolute path, works only with SSL and must be defined together with Terms of service', c_bid_text_domain));
 		}
 
 		public function Get_privacy_policy() {
