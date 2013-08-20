@@ -155,7 +155,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 			// Nothing to print here!
 		}
 
-		private function Add_general_settings_field($field_name, $title, $display_func) {
+		private function Add_general_settings_field($field_name, $title, 
+				$display_func) {
 			$setting = array(
 				'page' => $this->general_settings_key,
 				'section' => 'section_general',
@@ -307,8 +308,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		public function Print_background_color() {
-			$this->Print_text_input('browserid_background_color', null,
-					__('3 or 6 character hex value. e.g. #333 or #333333', c_bid_text_domain));
+			$this->Print_text_input('browserid_background_color', null, null, 'js-persona__color-picker');
 		}
 
 		public function Get_background_color() {
@@ -509,14 +509,16 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		// Print a text input for a plugin option
-		private function Print_text_input($field_name, $default_value = null, $info = null) {
+		private function Print_text_input($field_name, $default_value = null, 
+				$info = null, $class_name = '') {
 			$option_value = $this->Get_field_value($field_name, $default_value);
 
-			echo sprintf("<input id='%s' name='%s[%s]' type='text' size='50' value='%s' />",
+			echo sprintf("<input id='%s' name='%s[%s]' type='text' size='50' value='%s' class='%s'/>",
 					$field_name,
 					$this->Get_field_option_name($field_name),
 					$field_name,
-					htmlspecialchars($option_value, ENT_QUOTES));
+					htmlspecialchars($option_value, ENT_QUOTES),
+					$class_name);
 
 			if ($info) {
 				echo '<br />' . $info;
