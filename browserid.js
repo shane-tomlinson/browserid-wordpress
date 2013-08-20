@@ -274,6 +274,7 @@
       rememberme: rememberme
     };
 
+    // XXX is this necessary? Won't it be fetched from options?
     if (browserid_common.urlLoginRedirect !== null)
       fields.redirect_to = browserid_common.urlLoginRedirect;
 
