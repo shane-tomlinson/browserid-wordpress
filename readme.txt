@@ -114,6 +114,10 @@ Follow these steps to install the development version:
 * Click *Choose file* and select the file you downloaded before
 * Click *Install*, then *Activate Plugin*
 
+= 0.46 =
+* New Feature: Use the wordpress color picker when selecting a background color - Thanks @janw-oostendorp!
+* Improvement: massive refactor to make code easier to browse.
+
 = 0.45 =
 * New Feature: Russian Translations - Thanks Ruslan Bekenev (@KryDos)!
 * New Feature: French (CA and FR) - Thanks Fabian Rodriguez (@MagicFab)!

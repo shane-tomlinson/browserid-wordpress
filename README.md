@@ -49,7 +49,7 @@ Please report any issues on the plugin's [issue tracker](https://github.com/shan
 [Ruslan Bekenev - @KryDos](https://github.com/KryDos) for Russian translations, bug fixes, and continued support.
 [Fabian Rodriguez - @MagicFab](https://github.com/MagicFab) for French and Canadian French translations as well as man bug reports.
 [Edwin Wong @edmoz](http://www.edwinsf.com/blog/) for continued testing.
-[@janw-oostendorp](https://github.com/janw-oostendorp) for updated Dutch translations.
+[@janw-oostendorp](https://github.com/janw-oostendorp) for updated Dutch translations and backgroundColor color picker.
 [David Murdoch @davidmurdoch](https://github.com/davidmurdoch/) fixing jQuery 1.9+ compatability
 
 This plugin uses:
