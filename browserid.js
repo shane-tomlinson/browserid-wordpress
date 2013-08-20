@@ -26,10 +26,6 @@
   // effect if the user types "enter" into one of the commentor info fields.
   var enableCommentSubmit = browserid_common.loggedInUser || false;
 
-	// add color picker to the background setting
-	$('.js-persona__color-picker').wpColorPicker();
-
-
   $(".js-persona__login").click(function(event) {
     event.preventDefault();
 

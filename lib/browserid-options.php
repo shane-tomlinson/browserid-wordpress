@@ -83,8 +83,12 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Register_all_fields() {
 			foreach ($this->fields as $field_name => $field) {
-				add_settings_field($field_name, $field['title'],
-						array(&$this, $field['display_func']), $field['page'], $field['section']);
+				if (! $field['https_only'] || $this->Is_https()) {
+
+					add_settings_field($field_name, $field['title'],
+							array(&$this, $field['display_func']), 
+									$field['page'], $field['section']);
+				}
 			}
 		}
 
@@ -156,12 +160,13 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		private function Add_general_settings_field($field_name, $title, 
-				$display_func) {
+				$display_func, $https_only = false) {
 			$setting = array(
 				'page' => $this->general_settings_key,
 				'section' => 'section_general',
 				'title' => $title,
-				'display_func' => $display_func
+				'display_func' => $display_func,
+				'https_only' => $https_only
 			);
 			$this->fields[$field_name] = $setting;
 		}
@@ -198,12 +203,14 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 
-		private function Add_advanced_settings_field($field_name, $title, $display_func) {
+		private function Add_advanced_settings_field($field_name, $title, 
+					$display_func, $https_only = false) {
 			$field_config = array(
 				'page' => $this->advanced_settings_key,
 				'section' => 'section_advanced',
 				'title' => $title,
-				'display_func' => $display_func
+				'display_func' => $display_func,
+				'https_only' => $https_only
 			);
 			$this->fields[$field_name] = $field_config;
 		}
@@ -280,8 +287,10 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		public function Print_sitename() {
-			$this->Print_text_input('browserid_sitename', 
-					$this->Get_sitename());
+			$this->Print_text_input(array(
+				'name' => 'browserid_sitename', 
+				'default_value' => $this->Get_sitename()
+			));
 		}
 
 		public function Get_sitename() {
@@ -294,8 +303,12 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		public function Print_sitelogo() {
-			$this->Print_text_input('browserid_sitelogo', null,
-					__('Absolute path, works only with SSL', c_bid_text_domain));
+			$this->Print_file_picker_input(array(
+				'name' => 'browserid_sitelogo', 
+				'description' => __('Must be a data URI or image served over HTTPS', c_bid_text_domain),
+				'type' => 'image',
+				'title' => __('Site Logo', c_bid_text_domain)
+			));
 		}
 
 		public function Get_sitelogo() {
@@ -308,7 +321,10 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		public function Print_background_color() {
-			$this->Print_text_input('browserid_background_color', null, null, 'js-persona__color-picker');
+			$this->Print_text_input(array(
+				'name' => 'browserid_background_color', 
+				'class' => 'js-persona__color-picker'
+			));
 		}
 
 		public function Get_background_color() {
@@ -316,10 +332,20 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 
+		private function Is_https() {
+			return (!empty($_SERVER['HTTPS']) 
+						&& $_SERVER['HTTPS'] !== 'off' || 
+							$_SERVER['SERVER_PORT'] == 443);
+
+		}
 
 		public function Print_terms_of_service() {
-			$this->Print_text_input('browserid_terms_of_service', null,
-					__('URL or absolute path, works only with SSL and must be defined together with Privacy policy', c_bid_text_domain));
+			$this->Print_file_picker_input(array(
+				'name' => 'browserid_terms_of_service', 
+				'description' => __('Must be defined with Privacy policy', c_bid_text_domain),
+				'type' => 'text',
+				'title' => __('Terms of Service', c_bid_text_domain)
+			));
 		}
 
 		public function Get_terms_of_service() {
@@ -329,8 +355,12 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		public function Print_privacy_policy() {
-			$this->Print_text_input('browserid_privacy_policy', null,
-					__('URL or absolute path, works only with SSL and must be and must be defined together with Terms of service', c_bid_text_domain));
+			$this->Print_file_picker_input(array(
+				'name' => 'browserid_privacy_policy', 
+				'description' => __('Must be and must be defined with Terms of service', c_bid_text_domain),
+				'type' => 'text',
+				'title' => __('Privacy Policy', c_bid_text_domain)
+			));
 		}
 
 		public function Get_privacy_policy() {
@@ -341,8 +371,10 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		public function Print_login_html() {
-			$this->Print_text_input('browserid_login_html', 
-					$this->Get_login_html());
+			$this->Print_text_input(array(
+				'name' => 'browserid_login_html', 
+				'default_value' => $this->Get_login_html()
+			));
 		}
 
 		public function Get_login_html() {
@@ -354,8 +386,10 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		public function Print_logout_html() {
-			$this->Print_text_input('browserid_logout_html', 
-					$this->Get_logout_html());
+			$this->Print_text_input(array(
+				'name' => 'browserid_logout_html', 
+				'default_value' => $this->Get_logout_html()
+			));
 		}
 
 		public function Get_logout_html() {
@@ -367,8 +401,10 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		public function Print_login_redir() {
-			$this->Print_text_input('browserid_login_redir', null,
-					__('Default WordPress dashboard', c_bid_text_domain));
+			$this->Print_text_input(array(
+				'name' => 'browserid_login_redir',
+				'description' => __('Default WordPress dashboard', c_bid_text_domain)
+			));
 		}
 
 		public function Get_login_redir() {
@@ -390,8 +426,10 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		public function Print_comment_html() {
-			$this->Print_text_input('browserid_comment_html', 
-					$this->Get_comment_html());
+			$this->Print_text_input(array(
+				'name' => 'browserid_comment_html', 
+				'default_value' => $this->Get_comment_html()
+			));
 		}
 
 		public function Get_comment_html() {
@@ -414,9 +452,11 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		public function Print_persona_source() {
-			$this->Print_text_input('browserid_persona_source', 
-					$this->Get_persona_source(),
-					__('Default', c_bid_text_domain) . ' ' . c_bid_source);
+			$this->Print_text_input(array(
+				'name' => 'browserid_persona_source', 
+				'default_value' => $this->Get_persona_source(),
+				'description' => __('Default', c_bid_text_domain) . ' ' . c_bid_source
+			));
 		}
 
 		public function Get_persona_source() {
@@ -427,9 +467,11 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 
 		public function Print_vserver() {
-			$this->Print_text_input('browserid_vserver', 
-					$this->Get_vserver(),
-					__('Default', c_bid_text_domain) . ' ' . c_bid_verifier . '/verify');
+			$this->Print_text_input(array(
+				'name' => 'browserid_vserver', 
+				'default_value' => $this->Get_vserver(),
+				'description' => __('Default', c_bid_text_domain) . ' ' . c_bid_verifier . '/verify'
+			));
 		}
 
 		public function Get_vserver() {
@@ -506,30 +548,70 @@ if (!class_exists('MozillaPersonaOptions')) {
 <?php
 		}
 
-
-
-		// Print a text input for a plugin option
-		private function Print_text_input($field_name, $default_value = null, 
-				$info = null, $class_name = '') {
-			$option_value = $this->Get_field_value($field_name, $default_value);
-
-			echo sprintf("<input id='%s' name='%s[%s]' type='text' size='50' value='%s' class='%s'/>",
-					$field_name,
-					$this->Get_field_option_name($field_name),
-					$field_name,
-					htmlspecialchars($option_value, ENT_QUOTES),
-					$class_name);
-
-			if ($info) {
-				echo '<br />' . $info;
-			}
+		private function Get_passed_option($options, $option_name) {
+			return isset($options[$option_name]) ? $options[$option_name] : '';
 		}
 
+
+		private function Print_file_picker_input($options) {
+			$options['extra_html'] = 
+					$this->Build_element_html('button', array(
+						'for' => 
+								$this->Get_passed_option($options, 'name'),
+						'data-title' => 
+								$this->Get_passed_option($options, 'title'),
+						'data-type' => 
+								$this->Get_passed_option($options, 'type'),
+						'class' => 
+								'js-persona__file-picker',
+						'html' =>
+								__('Choose from media', c_bid_text_domain)
+					));
+			$this->Print_text_input($options);
+		}
+
+		// Print a text input for a plugin option
+		private function Print_text_input($options) {
+			$name = $this->Get_passed_option($options, 'name');
+			$default_value = 
+					$this->Get_passed_option($options, 'default_value');
+
+			$this->Print_element('input', array(
+				'id' => $name,
+				'type' => 'text',
+				'size' => '50',
+				'value' => 
+					htmlspecialchars($this->Get_field_value($options['name'], 
+										$default_value), ENT_QUOTES),
+				'name' => 
+					$this->Get_field_option_name($name) . '[' . $name . ']',
+				'class' => $this->Get_passed_option($options, 'class')
+			));
+
+			echo $this->Get_passed_option($options, 'extra_html');
+
+			$description = $this->Get_passed_option($options, 'description');
+			if ($description) {
+				echo '<br />' . $description;
+			}
+		}
+		
 		private function Print_checkbox_input($field_name) {
 			$option_page = $this->Get_field_option_name($field_name);
+
+			$attributes = array(
+				'type' => 'checkbox',
+				'id' => $field_name,
+				'name' => $option_page . '[' . $field_name . ']'
+			);
+
 			$options = get_option($option_page);
-			$chk = (isset($options[$field_name]) && $options[$field_name] ? " checked='checked'" : '');
-			echo "<input id='" . $field_name . "' name='" . $option_page . "[". $field_name . "]' type='checkbox'" . $chk. "/>";
+			$chk = isset($options[$field_name]) && $options[$field_name];
+			if ($chk) {
+				$attributes['checked'] = 'checked';
+			}
+
+			$this->Print_element('input', $attributes);
 		}
 
 
@@ -555,6 +637,37 @@ if (!class_exists('MozillaPersonaOptions')) {
 		private function Get_field_option_name($field_name) {
 			$field = $this->fields[$field_name];
 			return $field['page'];
+		}
+
+
+		/**
+		* Build a string of HTML
+		* @element_name - name of the element
+		* @attributes - list of attributes to add to the element.
+		* @attributes.html - 'special' attribute used to specify
+		*		the element's innerHtml.
+		*/
+		private function Build_element_html(
+							$element_name, $attributes) {
+			$attribute_text = ' ';
+			foreach ($attributes as $attribute_name => $attribute_value) {
+				if (! empty($attribute_value) && $attribute_name !== "html") {
+					$attribute_text .= 
+						' ' . $attribute_name . '="' . $attribute_value . '"';
+				}
+			}
+
+			$inner_html = $this->Get_passed_option($attributes, 'html');
+
+			$text_to_print = '<' . $element_name . $attribute_text . '>' 
+									. $inner_html . '</' . $element_name . '>';
+			return $text_to_print;
+		}
+
+		private function Print_element(
+							$element_name, $attributes) {
+			echo $this->Build_element_html(
+								$element_name, $attributes);
 		}
 
 	}

@@ -18,7 +18,7 @@
 */
 
 define('c_bid_text_domain', 'browserid');
-define('c_bid_version', '0.45');
+define('c_bid_version', '0.46');
 define('c_bid_option_request', 'bid_request');
 define('c_bid_option_response', 'bid_response');
 define('c_bid_browserid_login_cookie', 'bid_browserid_login_' . COOKIEHASH);

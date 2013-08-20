@@ -78,6 +78,22 @@ if (!class_exists('MozillaPersona')) {
 
 			// Register actions & filters
 			add_action('init', array(&$this, 'Init'), 0);
+
+			// frontend
+			add_action('wp_enqueue_scripts', 
+					array(&$this, 'Add_external_dependencies')); 
+
+			// login screen
+			add_action('login_enqueue_scripts', 
+					array(&$this, 'Add_external_dependencies'));
+
+			// admin pages
+			add_action('admin_enqueue_scripts', 
+					array(&$this, 'Add_external_dependencies')); 
+			add_action('admin_enqueue_scripts', 
+					array(&$this, 'Add_external_dependencies_settings')); 
+			add_action('admin_print_styles-settings_page_browserid-wordpress', 
+					array(&$this, 'Add_external_dependencies_settings')); 
 		}
 
 		// Initialization
@@ -97,8 +113,6 @@ if (!class_exists('MozillaPersona')) {
 			$this->Init_shortcode();
 			$this->Init_widget();
 			$this->Init_lostpassword();
-
-			$this->Add_external_dependencies();
 
 			$this->Set_error_from_request();
 		}
@@ -201,13 +215,12 @@ if (!class_exists('MozillaPersona')) {
 		}
 
 		// Add external dependencies - both JS & CSS
-		private function Add_external_dependencies() {
+		public function Add_external_dependencies() {
 			// Add the Persona button styles.
 			wp_enqueue_style('persona-style',
 					plugins_url('browserid.css', __FILE__),
-					array('wp-color-picker'), c_bid_version);
+					array(), c_bid_version);
 
-			// Enqueue BrowserID scripts
 			wp_register_script('browserid',
 					$this->options->Get_persona_source() . '/include.js', 
 					array(), c_bid_version, true);
@@ -215,7 +228,7 @@ if (!class_exists('MozillaPersona')) {
 			// This one script takes care of all work.
 			wp_enqueue_script('browserid_common',
 					plugins_url('browserid.js', __FILE__),
-					array('jquery', 'wp-color-picker', 'browserid'), c_bid_version, true);
+					array('jquery', 'browserid'), c_bid_version, true);
 
 			$data_array = array(
 				'urlLoginSubmit' 
@@ -251,6 +264,17 @@ if (!class_exists('MozillaPersona')) {
 			);
 			wp_localize_script( 'browserid_common', 'browserid_common',
 					$data_array );
+		}
+
+		public function Add_external_dependencies_settings() {
+			// Enqueue color picker for styles
+			wp_enqueue_style( 'wp-color-picker' );
+			wp_enqueue_media();
+
+			// Enqueue js for settings page
+			wp_enqueue_script('browserid_settings',
+				plugins_url('browserid-settings.js', __FILE__),
+				array('wp-color-picker'), c_bid_version, true); 
 		}
 
 		private function Set_error_from_request() {
