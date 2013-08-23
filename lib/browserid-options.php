@@ -361,7 +361,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 				return '';
 			}
 
-			if ($this->Is_https_url($value)) return $value;
+			if ($this->Is_https_url($value)) return esc_url_raw($value, array('https'));
 			if ($this->Is_image_data_uri($value)) return $value;
 
 			add_settings_error('browserid_sitelogo',
@@ -410,8 +410,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 				return '';
 			}
 
-			if ($this->Is_http_or_https_url($value)) return $value;
-			if ($this->Is_absolute_path_url($value)) return $value;
+			if ($this->Is_http_or_https_url($value)) return esc_url_raw($value, array('http', 'https'));
+			if ($this->Is_absolute_path_url($value)) return esc_url_raw($value);
 
 			add_settings_error('browserid_terms_of_service',
 						'browserid_terms_of_service',
@@ -447,8 +447,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 				return '';
 			}
 
-			if ($this->Is_http_or_https_url($value)) return $value;
-			if ($this->Is_absolute_path_url($value)) return $value;
+			if ($this->Is_http_or_https_url($value)) return esc_url_raw($value, array('http', 'https'));
+			if ($this->Is_absolute_path_url($value)) return esc_url_raw($value);
 
 			add_settings_error('browserid_privacy_policy',
 						'browserid_privacy_policy',
@@ -743,7 +743,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			foreach ($attributes as $attribute_name => $attribute_value) {
 				if (! empty($attribute_value) && $attribute_name !== "html") {
 					$attribute_text .= 
-						' ' . $attribute_name . '="' . $attribute_value . '"';
+						' ' . $attribute_name . '="' . esc_attr($attribute_value) . '"';
 				}
 			}
 

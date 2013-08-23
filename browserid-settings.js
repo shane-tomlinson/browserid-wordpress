@@ -1,3 +1,5 @@
+/*jshint browser: true*/
+/*global jQuery, wp*/
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -42,7 +44,11 @@
       var attachment =
           mediaUploaderFrame.state().get('selection').first().toJSON();
 
-      mediaUploaderConfig.input.val(getBase64ImageIfHttpSite(attachment.url));
+      var url = attachment.url;
+      if (mediaType === "image")
+        url = getBase64ImageIfHttpSite(url);
+
+      mediaUploaderConfig.input.val(url);
     });
 
     mediaUploaderFrame.open();
