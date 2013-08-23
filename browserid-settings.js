@@ -42,10 +42,42 @@
       var attachment =
           mediaUploaderFrame.state().get('selection').first().toJSON();
 
-      mediaUploaderConfig.input.val(attachment.url);
+      mediaUploaderConfig.input.val(getBase64ImageIfHttpSite(attachment.url));
     });
 
     mediaUploaderFrame.open();
   });
+
+  function getBase64ImageIfHttpSite(imgURL) {
+      // based on
+      // http://stackoverflow.com/questions/5420384/convert-an-image-into-binary-data-in-javascript
+      // Create an empty canvas element
+      if (document.location.protocol === "https://") return imgURL;
+
+      var canvas = document.createElement("canvas");
+      // if canvas could not be created, abort.
+      if (!canvas) return imgURL;
+
+      var img = document.createElement("img");
+      img.src = imgURL;
+      document.body.appendChild(img);
+
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      // Copy the image contents to the canvas
+      var ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+
+      // Get the data-URL formatted image
+      // Firefox supports PNG and JPEG. You could check img.src to guess the
+      // original format, but be aware the using "image/jpg" will re-encode the image.
+      var dataURL = canvas.toDataURL("image/png");
+
+      document.body.removeChild(img);
+
+      return dataURL;
+  }
 }());
 
