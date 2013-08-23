@@ -123,7 +123,9 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			$this->Add_general_settings_field('browserid_background_color', 
 					__('Dialog background color:', c_bid_text_domain), 
-					'Print_background_color');
+					'Print_background_color',
+					false,
+					'Validate_background_color');
 
 			$this->Add_general_settings_field('browserid_terms_of_service', 
 					__('Terms of service:', c_bid_text_domain), 
@@ -377,7 +379,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			}
 
 			if ($this->Is_https_url($value)) return esc_url_raw($value, array('https'));
-			if ($this->Is_image_data_uri($value)) return $value;
+			/*if ($this->Is_image_data_uri($value)) return $value;*/
 
 			add_settings_error('browserid_sitelogo',
 						'browserid_sitelogo',
@@ -396,6 +398,23 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Get_background_color() {
 			return $this->Get_field_value('browserid_background_color');
+		}
+
+		public function Validate_background_color($value) {
+			$value = trim($value);
+			if ($value === '') return '';
+
+			if (!preg_match('/#/', $value)) $value = "#" . $value;
+
+			if (preg_match('/^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/', $value)) 
+					return $value;
+
+			add_settings_error('browserid_background_color',
+						'browserid_background_color',
+						__('Invalid background color', c_bid_text_domain),
+						'error');
+
+			return '';
 		}
 
 
