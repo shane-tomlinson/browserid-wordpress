@@ -262,9 +262,26 @@ if (!class_exists('MozillaPersona')) {
 				'loggedInUser' 
 						=> $this->login->Get_browserid_logged_in_user(),
 			);
-			wp_localize_script( 'browserid_common', 'browserid_common',
-					$data_array );
-		}
+
+			/**
+			* wp_localize_script calls json_encode which escapes all of the
+			* URLs and replaces any / with \/. This messes with certain servers
+			* that do not normalize the extra \ and refuse to serve the
+			* siteLogo.
+			* To avoid the double escaping, manually write out the script,
+			* replacing any \/ with /.
+			* All parameters passed to Persona will be properly escaped.
+			* See issue #47
+			* https://github.com/shane-tomlinson/browserid-wordpress/issues/47
+			*/
+			$encoded_browserid_common = str_replace('\\/', '/',
+					   json_encode( $data_array) );
+?>
+<script>
+       var browserid_common = <?php echo $encoded_browserid_common; ?>
+</script>
+<?php
+	}
 
 		public function Add_external_dependencies_settings() {
 			// Enqueue color picker for styles
