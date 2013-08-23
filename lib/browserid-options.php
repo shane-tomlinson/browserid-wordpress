@@ -24,6 +24,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 		private $plugin_options_key = 'browserid_options';
 		private $general_settings_key = 'browserid_general_options';
 		private $advanced_settings_key = 'browserid_advanced_options';
+		private $options_to_validate = null;
 
 		// fields is a dictionary of fields, the key to each value 
 		//		is the field's name as stored in the database.
@@ -88,6 +89,11 @@ if (!class_exists('MozillaPersonaOptions')) {
 					add_settings_field($field_name, $field['title'],
 							array(&$this, $field['display_func']), 
 									$field['page'], $field['section']);
+
+					if (isset($field['validation_func'])) {
+						add_filter('persona_validation-' . $field_name,
+								array(&$this, $field['validation_func']));
+					}
 				}
 			}
 		}
@@ -95,7 +101,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 		public function Register_general_tab() {
 			$this->plugin_settings_tabs[$this->general_settings_key] = 'General';
 
-			register_setting($this->general_settings_key, $this->general_settings_key);
+			register_setting($this->general_settings_key, 
+					$this->general_settings_key, array(&$this, 'Validate_input'));
 
 			add_settings_section('section_general', 'General Plugin Settings', 
 					array(&$this, 'General_settings_description'), $this->general_settings_key);
@@ -108,7 +115,9 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			$this->Add_general_settings_field('browserid_sitelogo', 
 					__('Site logo:', c_bid_text_domain), 
-					'Print_sitelogo');
+					'Print_sitelogo',
+					false,
+					'Validate_sitelogo');
 
 			$this->Add_general_settings_field('browserid_background_color', 
 					__('Dialog background color:', c_bid_text_domain), 
@@ -116,11 +125,15 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			$this->Add_general_settings_field('browserid_terms_of_service', 
 					__('Terms of service:', c_bid_text_domain), 
-					'Print_terms_of_service');
+					'Print_terms_of_service',
+					false,
+					'Validate_terms_of_service');
 
 			$this->Add_general_settings_field('browserid_privacy_policy', 
 					__('Privacy policy:', c_bid_text_domain), 
-					'Print_privacy_policy');
+					'Print_privacy_policy',
+					false,
+					'Validate_privacy_policy');
 
 			$this->Add_general_settings_field('browserid_only_auth', 
 					__('Disable non-Persona logins:', c_bid_text_domain), 
@@ -160,13 +173,14 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		private function Add_general_settings_field($field_name, $title, 
-				$display_func, $https_only = false) {
+				$display_func, $https_only = false, $validation_func = null) {
 			$setting = array(
 				'page' => $this->general_settings_key,
 				'section' => 'section_general',
 				'title' => $title,
 				'display_func' => $display_func,
-				'https_only' => $https_only
+				'https_only' => $https_only,
+				'validation_func' => $validation_func
 			);
 			$this->fields[$field_name] = $setting;
 		}
@@ -175,7 +189,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 		public function Register_advanced_tab() {
 			$this->plugin_settings_tabs[$this->advanced_settings_key] = 'Advanced';
 
-			register_setting($this->advanced_settings_key, $this->advanced_settings_key);
+			register_setting($this->advanced_settings_key, 
+					$this->advanced_settings_key, array(&$this, 'Validate_input'));
 
 			add_settings_section('section_advanced', 'Advanced Plugin Settings', 
 					array(&$this, 'Advanced_settings_description'), $this->advanced_settings_key);
@@ -202,6 +217,15 @@ if (!class_exists('MozillaPersonaOptions')) {
 			echo '</p>';
 		}
 
+		public function Validate_input($input) {
+			$this->options_to_validate = $input;
+			foreach( $input as $key => $value ) {
+				$input[$key] = apply_filters( 'persona_validation-' . $key, $value );
+			}
+			$this->options_to_validate = null;
+
+			return $input;
+		}
 
 		private function Add_advanced_settings_field($field_name, $title, 
 					$display_func, $https_only = false) {
@@ -312,12 +336,40 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		public function Get_sitelogo() {
-			// sitelogo is only valid with SSL connections
-			if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443)
-				return $this->Get_field_value('browserid_sitelogo');
-			return '';
+			return $this->Get_field_value('browserid_sitelogo');
 		}
 
+		public function Validate_sitelogo($value) {
+			$value = trim($value);
+			if ($value === '') return '';
+
+			if ($this->Is_absolute_path_url($value)) {
+				// absolute paths are only allowed if site is HTTPS
+				if ($this->Is_https()) return $value;
+				add_settings_error('browserid_sitelogo',
+							'browserid_sitelogo',
+							__('sitelogo URLs beginning with / must be served over https', c_bid_text_domain),
+							'error');
+				return '';
+			}
+
+			if ($this->Is_http_url($value)) {
+				add_settings_error('browserid_sitelogo',
+							'browserid_sitelogo',
+							__('sitelogo must begin with https, / or data:image', c_bid_text_domain),
+							'error');
+				return '';
+			}
+
+			if ($this->Is_https_url($value)) return $value;
+			if ($this->Is_image_data_uri($value)) return $value;
+
+			add_settings_error('browserid_sitelogo',
+						'browserid_sitelogo',
+						__('Invalid sitelogo', c_bid_text_domain),
+						'error');
+			return '';
+		}
 
 
 		public function Print_background_color() {
@@ -332,13 +384,6 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 
-		private function Is_https() {
-			return (!empty($_SERVER['HTTPS']) 
-						&& $_SERVER['HTTPS'] !== 'off' || 
-							$_SERVER['SERVER_PORT'] == 443);
-
-		}
-
 		public function Print_terms_of_service() {
 			$this->Print_file_picker_input(array(
 				'name' => 'browserid_terms_of_service', 
@@ -352,6 +397,28 @@ if (!class_exists('MozillaPersonaOptions')) {
 			return $this->Get_field_value('browserid_terms_of_service');
 		}
 
+		public function Validate_terms_of_service($value) {
+			$value = trim($value);
+			if ($value === '') return '';
+
+			$privacy_policy = trim($this->options_to_validate['browserid_privacy_policy']);
+			if (! $privacy_policy || $privacy_policy === '') {
+				add_settings_error('browserid_terms_of_service',
+							'browserid_terms_of_service',
+							__('Terms of Service must be set with Privacy Policy', c_bid_text_domain),
+							'error');
+				return '';
+			}
+
+			if ($this->Is_http_or_https_url($value)) return $value;
+			if ($this->Is_absolute_path_url($value)) return $value;
+
+			add_settings_error('browserid_terms_of_service',
+						'browserid_terms_of_service',
+						__('Invalid Terms of Service', c_bid_text_domain),
+						'error');
+			return '';
+		}
 
 
 		public function Print_privacy_policy() {
@@ -365,6 +432,29 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Get_privacy_policy() {
 			return $this->Get_field_value('browserid_privacy_policy');
+		}
+
+		public function Validate_privacy_policy($value) {
+			$value = trim($value);
+			if ($value === '') return '';
+
+			$terms_of_service = trim($this->options_to_validate['browserid_terms_of_service']);
+			if (! $terms_of_service || $terms_of_service === '') {
+				add_settings_error('browserid_privacy_policy',
+							'browserid_privacy_policy',
+							__('Privacy Policy must be set with Terms of Service', c_bid_text_domain),
+							'error');
+				return '';
+			}
+
+			if ($this->Is_http_or_https_url($value)) return $value;
+			if ($this->Is_absolute_path_url($value)) return $value;
+
+			add_settings_error('browserid_privacy_policy',
+						'browserid_privacy_policy',
+						__('Invalid Privacy Policy', c_bid_text_domain),
+						'error');
+			return '';
 		}
 
 
@@ -669,6 +759,36 @@ if (!class_exists('MozillaPersonaOptions')) {
 			echo $this->Build_element_html(
 								$element_name, $attributes);
 		}
+
+
+		// These functions are for validation
+		private function Is_https() {
+			return (!empty($_SERVER['HTTPS']) 
+						&& $_SERVER['HTTPS'] !== 'off' || 
+							$_SERVER['SERVER_PORT'] == 443);
+
+		}
+
+		private function Is_absolute_path_url($value) {
+			return preg_match('/^\/[^\/]/', $value);
+		}
+
+		private function Is_http_url($value) {
+			return preg_match('/^http:\/\//', $value);
+		}
+
+		private function Is_https_url($value) {
+			return preg_match('/^https:\/\//', $value);
+		}
+
+		private function Is_http_or_https_url($value) {
+			return preg_match('/^http(s)?:\/\//', $value);
+		}
+
+		private function Is_image_data_uri($value) {
+			return preg_match('/^data:image\//', $value);
+		}
+		
 
 	}
 }

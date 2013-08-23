@@ -42,7 +42,7 @@
       var attachment =
           mediaUploaderFrame.state().get('selection').first().toJSON();
 
-      mediaUplaoderConfig.input.val(attachment.url);
+      mediaUploaderConfig.input.val(attachment.url);
     });
 
     mediaUploaderFrame.open();
