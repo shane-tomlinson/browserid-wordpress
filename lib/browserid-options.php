@@ -111,7 +111,9 @@ if (!class_exists('MozillaPersonaOptions')) {
 		private function Register_general_fields() {
 			$this->Add_general_settings_field('browserid_sitename', 
 					__('Site name:', c_bid_text_domain), 
-					'Print_sitename');
+					'Print_sitename',
+					false,
+					'Trim_input');
 
 			$this->Add_general_settings_field('browserid_sitelogo', 
 					__('Site logo:', c_bid_text_domain), 
@@ -121,7 +123,9 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			$this->Add_general_settings_field('browserid_background_color', 
 					__('Dialog background color:', c_bid_text_domain), 
-					'Print_background_color');
+					'Print_background_color',
+					false,
+					'Validate_background_color');
 
 			$this->Add_general_settings_field('browserid_terms_of_service', 
 					__('Terms of service:', c_bid_text_domain), 
@@ -145,15 +149,21 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			$this->Add_general_settings_field('browserid_login_html', 
 					__('Login button HTML:', c_bid_text_domain), 
-					'Print_login_html');
+					'Print_login_html',
+					false,
+					'Trim_input');
 
 			$this->Add_general_settings_field('browserid_logout_html', 
 					__('Logout button HTML:', c_bid_text_domain), 
-					'Print_logout_html');
+					'Print_logout_html',
+					false,
+					'Trim_input');
 
 			$this->Add_general_settings_field('browserid_login_redir', 
 					__('Login redirection URL:', c_bid_text_domain), 
-					'Print_login_redir');
+					'Print_login_redir',
+					false,
+					'Trim_input');
 
 			$this->Add_general_settings_field('browserid_comments', 
 					__('Enable for comments:', c_bid_text_domain), 
@@ -161,7 +171,9 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			$this->Add_general_settings_field('browserid_comment_html', 
 					__('Comment button HTML:', c_bid_text_domain), 
-					'Print_comment_html');
+					'Print_comment_html',
+					false,
+					'Trim_input');
 
 			$this->Add_general_settings_field('browserid_bbpress', 
 					__('Enable bbPress integration:', c_bid_text_domain), 
@@ -199,11 +211,15 @@ if (!class_exists('MozillaPersonaOptions')) {
 		private function Register_advanced_fields() {
 			$this->Add_advanced_settings_field('browserid_persona_source', 
 					__('Persona source:', c_bid_text_domain), 
-					'Print_persona_source');
+					'Print_persona_source',
+					false,
+					'Validate_persona_source');
 
 			$this->Add_advanced_settings_field('browserid_vserver', 
 					__('Verification server:', c_bid_text_domain), 
-					'Print_vserver');
+					'Print_vserver',
+					false,
+					'Validate_vserver');
 
 			$this->Add_advanced_settings_field('browserid_debug', 
 					__('Debug mode:', c_bid_text_domain), 
@@ -228,13 +244,14 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		private function Add_advanced_settings_field($field_name, $title, 
-					$display_func, $https_only = false) {
+					$display_func, $https_only = false, $validation_func = null) {
 			$field_config = array(
 				'page' => $this->advanced_settings_key,
 				'section' => 'section_advanced',
 				'title' => $title,
 				'display_func' => $display_func,
-				'https_only' => $https_only
+				'https_only' => $https_only,
+				'validation_func' => $validation_func
 			);
 			$this->fields[$field_name] = $field_config;
 		}
@@ -362,7 +379,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			}
 
 			if ($this->Is_https_url($value)) return esc_url_raw($value, array('https'));
-			if ($this->Is_image_data_uri($value)) return $value;
+			/*if ($this->Is_image_data_uri($value)) return $value;*/
 
 			add_settings_error('browserid_sitelogo',
 						'browserid_sitelogo',
@@ -381,6 +398,23 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Get_background_color() {
 			return $this->Get_field_value('browserid_background_color');
+		}
+
+		public function Validate_background_color($value) {
+			$value = trim($value);
+			if ($value === '') return '';
+
+			if (!preg_match('/#/', $value)) $value = "#" . $value;
+
+			if (preg_match('/^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/', $value)) 
+					return $value;
+
+			add_settings_error('browserid_background_color',
+						'browserid_background_color',
+						__('Invalid background color', c_bid_text_domain),
+						'error');
+
+			return '';
 		}
 
 
@@ -553,6 +587,18 @@ if (!class_exists('MozillaPersonaOptions')) {
 			return $this->Get_field_value('browserid_persona_source', c_bid_source);
 		}
 
+		public function Validate_persona_source($value) {
+			$value = trim($value);
+			if ($value === '') return '';
+
+			if ($this->Is_http_or_https_url($value)) return esc_url_raw($value, array('http', 'https'));
+
+			add_settings_error('browserid_persona_source',
+						'browserid_persona_source',
+						__('Persona source must be an http or https URL', c_bid_text_domain),
+						'error');
+			return '';
+		}
 
 
 
@@ -578,6 +624,18 @@ if (!class_exists('MozillaPersonaOptions')) {
 			return $vserver;
 		}
 
+		public function Validate_vserver($value) {
+			$value = trim($value);
+			if ($value === '') return '';
+
+			if ($this->Is_http_or_https_url($value)) return esc_url_raw($value, array('http', 'https'));
+
+			add_settings_error('browserid_vserver',
+						'browserid_vserver',
+						__('Verification server must be an http or https URL', c_bid_text_domain),
+						'error');
+			return '';
+		}
 		
 		// The audience is a non-settable option
 		public function Get_audience() {
@@ -789,7 +847,9 @@ if (!class_exists('MozillaPersonaOptions')) {
 			return preg_match('/^data:image\//', $value);
 		}
 		
-
+		public function Trim_input($value) {
+			return trim($value);
+		}
 	}
 }
 ?>

@@ -55,6 +55,9 @@
   });
 
   function getBase64ImageIfHttpSite(imgURL) {
+	  // disable until this feature makes its way to Persona prod.
+	  return imgURL;
+
       // based on
       // http://stackoverflow.com/questions/5420384/convert-an-image-into-binary-data-in-javascript
       // Create an empty canvas element
