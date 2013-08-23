@@ -11,20 +11,18 @@ Implementation of Mozilla Persona (BrowserID) for WordPress
 
 == Description ==
 
-[Mozilla Persona](https://login.persona.org/ "Mozilla Persona") is an open source identity system from the [Identity Team](http://identity.mozilla.com/ "Identity Team") at [Mozilla](https://mozilla.org/ "Mozilla").
+[Mozilla Persona](https://login.persona.org/ "Mozilla Persona") is an open source identity system from the [Identity Team](http://identity.mozilla.com/ "Identity Team") at [Mozilla](https://mozilla.org/ "Mozilla"). More information on Persona can be found at [https://login.persona.org/about](https://login.persona.org/about).
 
-"*As a user of Mozilla Persona (BrowserID), you confirm your email addresses once. Then, you can sign into any web site that supports Mozilla Persona with just two clicks.*"
+This plugin allows users to sign up, sign in, and comment on your site using Persona.
 
-This plugin allows users to sign into your site using Mozilla Persona. A widget, shortcode and template tags are provided. Custom login and logout links can be created.
-
-**Beta features:**
-
-* Submit comments with Mozilla Persona
-* [bbPress 2](http://bbpress.org/ "bbPress") integration: create topics / reply with Mozilla Persona
-
-** Reporting problems:**
+** Reporting problems: **
 
 Please report any issues on [GitHub](https://github.com/shane-tomlinson/browserid-wordpress/issues).
+
+** Beta features: **
+
+* [bbPress 2](http://bbpress.org/ "bbPress") integration: create topics / reply with Mozilla Persona
+
 
 == Installation ==
 
@@ -46,9 +44,10 @@ Please report any issues on [GitHub](https://github.com/shane-tomlinson/browseri
 
 == Frequently Asked Questions ==
 
+= Where can I find out more about Persona? =
+https://login.persona.org/about
+
 = What is 'Custom login HTML for?' =
-
-
 Try putting the following into this option:
 
 `<img src="https://login.persona.org/i/persona_sign_in_red.png" />`
@@ -61,8 +60,7 @@ The assertion is verified by the server at https://login.persona.org/verify.
 
 = I get 'Login failed' =
 
-Only users that registered before can login.
-The e-mail address used for Mozilla Persona should match the e-mail address registered with.
+Only users that registered before can login. The e-mail address used for Mozilla Persona should match the e-mail address registered with.
 
 = I get 'Verification failed' =
 
@@ -73,11 +71,6 @@ If there isn't an error message, turn on debug mode to see the complete response
 
 Something went terribly wrong.
 If there isn't an error message, turn on debug mode to see the complete response.
-
-= I get 'Verification invalid' =
-
-Maybe the time of your hosting server is incorrect.
-You could check the option *Do not check valid until time* to solve this.
 
 = Where can I ask questions, report bugs and request features? =
 
