@@ -141,11 +141,15 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			$this->Add_general_settings_field('browserid_only_auth', 
 					__('Disable non-Persona logins:', c_bid_text_domain), 
-					'Print_browserid_only_auth');
+					'Print_browserid_only_auth',
+					false,
+					'Validate_browserid_only_auth');
 
 			$this->Add_general_settings_field('browserid_button_color', 
 					__('Login button color:', c_bid_text_domain), 
-					'Print_button_color');
+					'Print_button_color',
+					false,
+					'Validate_button_color');
 
 			$this->Add_general_settings_field('browserid_login_html', 
 					__('Login button HTML:', c_bid_text_domain), 
@@ -167,7 +171,9 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			$this->Add_general_settings_field('browserid_comments', 
 					__('Enable for comments:', c_bid_text_domain), 
-					'Print_comments');
+					'Print_comments',
+					false,
+					'Validate_comments');
 
 			$this->Add_general_settings_field('browserid_comment_html', 
 					__('Comment button HTML:', c_bid_text_domain), 
@@ -177,7 +183,9 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			$this->Add_general_settings_field('browserid_bbpress', 
 					__('Enable bbPress integration:', c_bid_text_domain), 
-					'Print_bbpress');
+					'Print_bbpress',
+					false,
+					'Validate_bbpress');
 		}
 
 		public function General_settings_description() {
@@ -223,7 +231,9 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			$this->Add_advanced_settings_field('browserid_debug', 
 					__('Debug mode:', c_bid_text_domain), 
-					'Print_debug');
+					'Print_debug',
+					false,
+					'Validate_debug');
 		}
 
 		public function Advanced_settings_description() {
@@ -546,6 +556,15 @@ if (!class_exists('MozillaPersonaOptions')) {
 			return $this->Get_boolean_field_value('browserid_comments');
 		}
 
+		public function Validate_comments($value) {
+			if ($this->Is_on_off($value)) return $value;
+			add_settings_error('browserid_comments',
+						'browserid_comments',
+						__('Enable for comments must be on or off', c_bid_text_domain),
+						'error');
+			return false;
+		}
+
 
 
 
@@ -571,6 +590,15 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Is_bbpress() {
 			return $this->Get_boolean_field_value('browserid_bbpress');
+		}
+
+		public function Validate_bbpress($value) {
+			if ($this->Is_on_off($value)) return $value;
+			add_settings_error('browserid_bbpress',
+						'browserid_bbpress',
+						__('Enable for BBPress must be on or off', c_bid_text_domain),
+						'error');
+			return false;
 		}
 
 
@@ -652,6 +680,15 @@ if (!class_exists('MozillaPersonaOptions')) {
 			return $this->Get_boolean_field_value('browserid_debug');
 		}
 
+		public function Validate_debug($value) {
+			if ($this->Is_on_off($value)) return $value;
+			add_settings_error('browserid_debug',
+						'browserid_debug',
+						__('Debug must be on or off', c_bid_text_domain),
+						'error');
+			return false;
+		}
+
 
 
 
@@ -661,6 +698,15 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Is_browserid_only_auth() {
 			return $this->Get_boolean_field_value('browserid_only_auth');
+		}
+
+		public function Validate_browserid_only_auth($value) {
+			if ($this->Is_on_off($value)) return $value;
+			add_settings_error('browserid_only_auth',
+						'browserid_only_auth',
+						__('Persona only auth must be on or off', c_bid_text_domain),
+						'error');
+			return false;
 		}
 
 
@@ -679,6 +725,24 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Get_button_color() {
 			return $this->Get_field_value('browserid_button_color', 'blue');
+		}
+
+		public function Validate_button_color($value) {
+			$value = trim($value);
+			if ($value === '') return $value;
+
+			if ($value === 'blue' 
+					|| $value === 'dark' 
+					|| $value === 'orange') {
+				return $value;
+			}
+
+			add_settings_error('browserid_button_color',
+						'browserid_button_color',
+						__('Button color must be either blue, dark or orange', c_bid_text_domain),
+						'error');
+
+			return 'blue';
 		}
 
 		private function Print_persona_button_selection($name, $value) {
@@ -827,6 +891,10 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		}
 
+		private function Is_on_off($value) {
+			return $value === "on" || $value === "off";
+		}
+
 		private function Is_absolute_path_url($value) {
 			return preg_match('/^\/[^\/]/', $value);
 		}
@@ -850,6 +918,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 		public function Trim_input($value) {
 			return trim($value);
 		}
+
 	}
 }
 ?>
