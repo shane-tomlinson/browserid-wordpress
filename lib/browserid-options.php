@@ -50,6 +50,16 @@ if (!class_exists('MozillaPersonaOptions')) {
 				$this->risky = $options['risky'];
 		}
 
+		public function Register() {
+			add_settings_field($this->Get_name(), $this->Get_title(),
+					array($this, 'Print_option'), 
+							$this->Get_page(), $this->Get_section());
+
+			add_filter('persona_validation-' . $this->Get_name(),
+					array($this, 'Validate'), 10, 2);
+		}
+
+
 		public function Set_page($page) {
 			$this->page = $page;
 		}
@@ -341,7 +351,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			$value = trim($value);
 			if ($value === '') return '';
 
-			if (!preg_match('/#/', $value)) $value = "#" . $value;
+			if (!preg_match('/^#/', $value)) $value = "#" . $value;
 
 			if (preg_match('/^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/', $value)) 
 					return $value;
@@ -551,7 +561,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			return $this->Validation_error(
 						sprintf(__('%s must be an http or https URL', c_bid_text_domain), 
-								$this->Get_name()));
+								$this->Get_title()));
 		}
 	}
 
@@ -696,12 +706,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Register_all_fields() {
 			foreach ($this->fields as $field_name => $field) {
-					add_settings_field($field_name, $field->Get_title(),
-							array($field, 'Print_option'), 
-									$field->Get_page(), $field->Get_section());
-
-					add_filter('persona_validation-' . $field_name,
-							array($field, 'Validate'), 10, 2);
+				$field->Register();
 			}
 		}
 
@@ -771,7 +776,6 @@ if (!class_exists('MozillaPersonaOptions')) {
 			$setting->Set_section('section_advanced');
 			$this->fields[$setting->Get_name()] = $setting;
 		}
-
 
 		public function Advanced_settings_description() {
 			echo '<p class="persona__warning persona__warning-heading">';
