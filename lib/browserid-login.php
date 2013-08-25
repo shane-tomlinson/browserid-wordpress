@@ -85,7 +85,7 @@ if (!class_exists('MozillaPersonaLogin')) {
 		public function Disallow_non_persona_logins($user) {
 			if (! $this->is_browserid_login) {
 				return new WP_error('invalid_login',
-						'Only BrowserID logins are allowed');
+						'Only Persona logins are allowed');
 			}
 
 			return $user;
