@@ -538,10 +538,10 @@ if (!class_exists('MozillaPersonaOptions')) {
 			$chk = ($color == $value ? " checked='checked'" : '');
 ?>
 			<li class='persona-button--select-color'>
-				<input name='<?php echo $this->Get_name_attribute(); ?>'
+				<input id='<?php echo $value; ?>' name='<?php echo $this->Get_name_attribute(); ?>'
 					class='persona-button--select-color-radio' 
 					type='radio' value='<?php echo $value; ?>' <?php echo $chk; ?> /> 
-				<label class='persona-button <?php echo $value; ?>'> 
+				<label class='persona-button <?php echo $value; ?>' for='<?php echo $value; ?>'> 
 					<span class='persona-button__text'><?php echo $name; ?></span> 
 				</label> 
 			</li>
