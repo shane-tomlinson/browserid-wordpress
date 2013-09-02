@@ -331,7 +331,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			}
 
 			if ($this->Is_https_url($value)) return esc_url_raw($value, array('https'));
-			/*if ($this->Is_image_data_uri($value)) return $value;*/
+			if ($this->Is_image_data_uri($value)) return $value;
 
 			return $this->Validation_error(
 					$this->Get_invalid_text($this->Get_title()));
