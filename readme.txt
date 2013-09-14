@@ -451,6 +451,7 @@ First public release
 * [Edwin Wong @edmoz](http://www.edwinsf.com/blog/) for continued testing.
 * [@janw-oostendorp](https://github.com/janw-oostendorp) for updated Dutch translations.
 * [David Murdoch @davidmurdoch](https://github.com/davidmurdoch/) fixing jQuery 1.9+ compatability
+* [Makoto Kato @makotokato](https://github.com/makotokato) for Japanese translations.
 
 
 This plugin uses:
