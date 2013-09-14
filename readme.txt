@@ -3,7 +3,7 @@ Contributors: stomlinson, Marcel Bokhorst, M66B
 Tags: security, admin, authentication, access, widget, login, shortcode, comment, comments, discussion, bbPress, bbPress 2.0, browserid, mozilla, persona
 Requires at least: 3.1
 Tested up to: 3.6
-Stable tag: 0.45
+Stable tag: 0.46
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.htm
 
@@ -87,7 +87,7 @@ You can write comments on [GitHub](https://github.com/shane-tomlinson/browserid-
 == Getting Involved ==
 
 == Maintainers ==
-* [Shane Tomlinson](https://shanetomlinson.com) - shane@shanetomlinson.com or stomlinson@mozilla.com 
+* [Shane Tomlinson](https://shanetomlinson.com) - shane@shanetomlinson.com or stomlinson@mozilla.com
 * [Marcel Bokhorst](http://blog.bokhorst.biz)
 
 
@@ -108,8 +108,15 @@ Follow these steps to install the development version:
 * Click *Install*, then *Activate Plugin*
 
 = 0.46 =
-* New Feature: Use the wordpress color picker when selecting a background color - Thanks @janw-oostendorp!
+* New Feature: Use the WordPress color picker when selecting a background color - Thanks @janw-oostendorp!
+* New Feature: Use the WordPress media picker when selecting the site logo, terms of service and privacy policy.
+* New Feature: Automatically convert site logo's into dataURIs so that any site can specify a logo.
+* New Feature: Japanese Translations - Thanks @makotokato!
+* Improvement: Separate general and advanced settings.
+* Improvement: Serve minified Javascript and CSS by default.
 * Improvement: massive refactor to make code easier to browse.
+* Bug Fix: Fix typo in Privacy Policy description - Thanks @KryDos!
+* Bug Fix: Make sure URLs are written to browserid_common.js unescaped.
 
 = 0.45 =
 * New Feature: Russian Translations - Thanks Ruslan Bekenev (@KryDos)!
@@ -328,13 +335,13 @@ Russian, French, Dutch translations. backgroundColor, termsOfService and privacy
 = 0.44 =
 Spanish translations, 8 improvements, 4 bug fixes
 
-= 0.43 = 
+= 0.43 =
 Security improvement, three bug fixes
 
 = 0.42 =
 Revert to v0.37 until update process is figured out
 
-= 0.41 = 
+= 0.41 =
 Bug fix for "missing arguments" error
 
 = 0.40 =
