@@ -23,6 +23,10 @@ define('c_bid_option_request', 'bid_request');
 define('c_bid_option_response', 'bid_response');
 define('c_bid_browserid_login_cookie', 'bid_browserid_login_' . COOKIEHASH);
 
+define('c_bid_old_options', 'browserid_options');
+define('c_bid_general_options', 'browserid_general_options');
+define('c_bid_advanced_options', 'browserid_advanced_options');
+
 
 define('c_bid_source', 'https://login.persona.org');
 define('c_bid_verifier', 'https://verifier.login.persona.org');

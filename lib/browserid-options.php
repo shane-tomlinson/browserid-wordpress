@@ -617,7 +617,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		public function Print_debug_info() {
-			$options = get_option('browserid_options');
+			$options = get_option($this->general_settings_key);
 			$request = get_option(c_bid_option_request);
 			$response = get_option(c_bid_option_response);
 			if (is_wp_error($response))
@@ -650,8 +650,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 	class MozillaPersonaOptions {
 		private $plugin_options_key = 'browserid_options';
-		private $general_settings_key = 'browserid_general_options';
-		private $advanced_settings_key = 'browserid_advanced_options';
+		private $general_settings_key = c_bid_general_options;
+		private $advanced_settings_key = c_bid_advanced_options;
 
 		// fields is a dictionary of fields, the key to each value 
 		//		is the field's name as stored in the database.
@@ -665,6 +665,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 		// loaded. When a setting is registered, it's configuration is stored 
 		// into the settings dictionary. 
 		public function Init() {
+			$this->Update_options_format();
 			$this->Load_settings();
 
 			$this->Register_general_fields();
@@ -688,6 +689,25 @@ if (!class_exists('MozillaPersonaOptions')) {
 					'manage_options',
 					$this->plugin_options_key,
 					array(&$this, 'Render_admin_page'));
+		}
+
+		private function Update_options_format() {
+			$old_options = get_option(c_bid_old_options);
+
+			$new_general_options = get_option( $this->general_settings_key );
+			$should_update_options_format = ! empty($old_options) && 
+													empty($new_general_options);
+
+			if ($should_update_options_format) {
+				// just copy the old options into each of the new options.
+				$new_general_options = array_merge( array(), $old_options );
+				update_option( $this->general_settings_key, $new_general_options );
+
+				$new_advanced_options = array_merge( array(), $old_options );
+				update_option( $this->advanced_settings_key, $new_advanced_options );
+
+				delete_option(c_bid_old_options);
+			}
 		}
 
 		private function Load_settings() {
