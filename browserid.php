@@ -80,20 +80,20 @@ if (!class_exists('MozillaPersona')) {
 			add_action('init', array(&$this, 'Init'), 0);
 
 			// frontend
-			add_action('wp_enqueue_scripts', 
-					array(&$this, 'Add_external_dependencies')); 
+			add_action('wp_enqueue_scripts',
+					array(&$this, 'Add_external_dependencies'));
 
 			// login screen
-			add_action('login_enqueue_scripts', 
+			add_action('login_enqueue_scripts',
 					array(&$this, 'Add_external_dependencies'));
 
 			// admin pages
-			add_action('admin_enqueue_scripts', 
-					array(&$this, 'Add_external_dependencies')); 
-			add_action('admin_enqueue_scripts', 
-					array(&$this, 'Add_external_dependencies_settings')); 
-			add_action('admin_print_styles-settings_page_browserid-wordpress', 
-					array(&$this, 'Add_external_dependencies_settings')); 
+			add_action('admin_enqueue_scripts',
+					array(&$this, 'Add_external_dependencies'));
+			add_action('admin_enqueue_scripts',
+					array(&$this, 'Add_external_dependencies_settings'));
+			add_action('admin_print_styles-settings_page_browserid-wordpress',
+					array(&$this, 'Add_external_dependencies_settings'));
 		}
 
 		// Initialization
@@ -218,48 +218,48 @@ if (!class_exists('MozillaPersona')) {
 		public function Add_external_dependencies() {
 			// Add the Persona button styles.
 			wp_enqueue_style('persona-style',
-					plugins_url('browserid.css', __FILE__),
+					$this->CssUrl('browserid'),
 					array(), c_bid_version);
 
 			wp_register_script('browserid',
-					$this->options->Get_persona_source() . '/include.js', 
+					$this->options->Get_persona_source() . '/include.js',
 					array(), c_bid_version, true);
 
 			// This one script takes care of all work.
 			wp_enqueue_script('browserid_common',
-					plugins_url('browserid.js', __FILE__),
+					$this->JavascriptUrl('browserid'),
 					array('jquery', 'browserid'), c_bid_version, true);
 
 			$data_array = array(
-				'urlLoginSubmit' 
+				'urlLoginSubmit'
 						=> get_site_url(null, '/'),
-				'urlLoginRedirect' 
+				'urlLoginRedirect'
 						=> $this->login->Get_login_redirect_url(),
 				'urlRegistrationRedirect'
 						=> $this->registration->Get_registration_redirect_url(),
-				'urlLogoutRedirect' 
+				'urlLogoutRedirect'
 						=> wp_logout_url(),
-				'msgError' 
+				'msgError'
 						=> $this->Get_error_message(),
-				'msgFailed' 
+				'msgFailed'
 						=> $this->verifier->Get_verification_failed_message(),
-				'isPersonaOnlyAuth' 
+				'isPersonaOnlyAuth'
 						=> $this->options->Is_browserid_only_auth(),
-				'isPersonaUsedWithComments' 
+				'isPersonaUsedWithComments'
 						=> $this->options->Is_comments(),
 
 				// From here down is passed to the Persona dialog.
-				'siteName' 
+				'siteName'
 						=> $this->options->Get_sitename(),
-				'siteLogo' 
+				'siteLogo'
 						=> $this->options->Get_sitelogo(),
-				'backgroundColor' 
+				'backgroundColor'
 						=> $this->options->Get_background_color(),
-				'termsOfService' 
+				'termsOfService'
 						=> $this->options->Get_terms_of_service(),
-				'privacyPolicy' 
+				'privacyPolicy'
 						=> $this->options->Get_privacy_policy(),
-				'loggedInUser' 
+				'loggedInUser'
 						=> $this->login->Get_browserid_logged_in_user(),
 			);
 
@@ -290,8 +290,26 @@ if (!class_exists('MozillaPersona')) {
 
 			// Enqueue js for settings page
 			wp_enqueue_script('browserid_settings',
-				plugins_url('browserid-settings.js', __FILE__),
-				array('wp-color-picker'), c_bid_version, true); 
+				$this->JavascriptUrl('browserid-settings'),
+				array('jquery', 'wp-color-picker'), c_bid_version, true);
+		}
+
+		private function JavascriptUrl($root_name) {
+			$file_name = $root_name;
+			if (! $this->options->Use_uncompressed_resources())
+				$file_name .= '.min';
+
+			$file_name .= ".js";
+			return plugins_url($file_name, __FILE__);
+		}
+
+		private function CssUrl($root_name) {
+			$file_name = $root_name;
+			if (! $this->options->Use_uncompressed_resources())
+				$file_name .= '.min';
+
+			$file_name .= ".css";
+			return plugins_url($file_name, __FILE__);
 		}
 
 		private function Set_error_from_request() {
