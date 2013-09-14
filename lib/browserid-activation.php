@@ -21,21 +21,23 @@ include_once('browserid-constants.php');
 
 if (!class_exists('MozillaPersonaPluginActivation')) {
 	class MozillaPersonaPluginActivation {
-    private $plugin_options = null;
+		private $plugin_options = null;
 
-    public function __construct($options) {
-      $this->plugin_options = $options['plugin_options'];
+		public function __construct($options) {
+			$this->plugin_options = $options['plugin_options'];
 
-			register_activation_hook($options['file'], array(&$this, 'Activate'));
-			register_deactivation_hook($options['file'], array(&$this, 'Deactivate'));
-    }
+			register_activation_hook($options['file'],
+					array(&$this, 'Activate'));
+			register_deactivation_hook($options['file'],
+					array(&$this, 'Deactivate'));
+		}
 
 		public function Activate() {
-      // Nothing to do must yet.
+			// Nothing to do must yet.
 		}
 
 		public function Deactivate() {
 			$this->plugin_options->Deactivate();
 		}
-  }
+	}
 }

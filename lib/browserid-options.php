@@ -52,7 +52,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Register() {
 			add_settings_field($this->Get_name(), $this->Get_title(),
-					array($this, 'Print_option'), 
+					array($this, 'Print_option'),
 							$this->Get_page(), $this->Get_section());
 
 			add_filter('persona_validation-' . $this->Get_name(),
@@ -91,7 +91,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 		public function Get_value() {
 			$option = get_option($this->page);
 
-			if (isset($option[$this->name]) 
+			if (isset($option[$this->name])
 					&& !empty($option[$this->name])) {
 				return $option[$this->name];
 			}
@@ -132,7 +132,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		protected function Print_option_input() {
-			wp_die('Print_option_input must be overridden for ' 
+			wp_die('Print_option_input must be overridden for '
 						. $this->Get_name());
 		}
 
@@ -160,14 +160,14 @@ if (!class_exists('MozillaPersonaOptions')) {
 			$attribute_text = ' ';
 			foreach ($attributes as $attribute_name => $attribute_value) {
 				if (! empty($attribute_value) && $attribute_name !== "html") {
-					$attribute_text .= 
+					$attribute_text .=
 						' ' . $attribute_name . '="' . esc_attr($attribute_value) . '"';
 				}
 			}
 
 			$inner_html = $this->Get_passed_option($attributes, 'html');
 
-			$text_to_print = '<' . $element_name . $attribute_text . '>' 
+			$text_to_print = '<' . $element_name . $attribute_text . '>'
 									. $inner_html . '</' . $element_name . '>';
 			return $text_to_print;
 		}
@@ -179,8 +179,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 
 		protected function Is_https() {
-			return (!empty($_SERVER['HTTPS']) 
-						&& $_SERVER['HTTPS'] !== 'off' || 
+			return (!empty($_SERVER['HTTPS'])
+						&& $_SERVER['HTTPS'] !== 'off' ||
 							$_SERVER['SERVER_PORT'] == 443);
 
 		}
@@ -204,9 +204,9 @@ if (!class_exists('MozillaPersonaOptions')) {
 		protected function Is_image_data_uri($value) {
 			return preg_match('/^data:image\//', $value);
 		}
-		
+
 		protected function Get_invalid_text($option_name) {
-			return sprintf(__('Invalid %s', c_bid_text_domain), 
+			return sprintf(__('Invalid %s', c_bid_text_domain),
 							$option_name);
 		}
 
@@ -231,7 +231,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 				'id' => $this->Get_name(),
 				'type' => 'text',
 				'size' => '50',
-				'value' => 
+				'value' =>
 					htmlspecialchars($this->Get_value(), ENT_QUOTES),
 				'name' => $this->Get_name_attribute(),
 				'class' => $this->class
@@ -249,7 +249,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function __construct($options) {
 			$this->type = $options['type'];
-			
+
 			parent::__construct($options);
 		}
 
@@ -284,7 +284,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			if ($this->Is_on_off($value)) return $value;
 
 			$this->Validation_error(
-					sprintf(__('%s must be on or off', c_bid_text_domain), 
+					sprintf(__('%s must be on or off', c_bid_text_domain),
 							$this->Get_title()));
 
 			return false;
@@ -331,7 +331,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			}
 
 			if ($this->Is_https_url($value)) return esc_url_raw($value, array('https'));
-			/*if ($this->Is_image_data_uri($value)) return $value;*/
+			if ($this->Is_image_data_uri($value)) return $value;
 
 			return $this->Validation_error(
 					$this->Get_invalid_text($this->Get_title()));
@@ -353,7 +353,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 			if (!preg_match('/^#/', $value)) $value = "#" . $value;
 
-			if (preg_match('/^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/', $value)) 
+			if (preg_match('/^#[0-9a-fA-F]{3}$|^#[0-9a-fA-F]{6}$/', $value))
 					return $value;
 
 			return $this->Validation_error(
@@ -502,7 +502,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			parent::__construct(array(
 				'name' => 'browserid_button_color',
 				'title' => __('Button color', c_bid_text_domain),
-				'default_color' => 'blue'
+				'default_value' => 'blue'
 			));
 		}
 
@@ -510,8 +510,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 			$value = trim($value);
 			if ($value === '') return $value;
 
-			if ($value === 'blue' 
-					|| $value === 'dark' 
+			if ($value === 'blue'
+					|| $value === 'dark'
 					|| $value === 'orange') {
 				return $value;
 			}
@@ -539,11 +539,11 @@ if (!class_exists('MozillaPersonaOptions')) {
 ?>
 			<li class='persona-button--select-color'>
 				<input id='<?php echo $value; ?>' name='<?php echo $this->Get_name_attribute(); ?>'
-					class='persona-button--select-color-radio' 
-					type='radio' value='<?php echo $value; ?>' <?php echo $chk; ?> /> 
-				<label class='persona-button <?php echo $value; ?>' for='<?php echo $value; ?>'> 
-					<span class='persona-button__text'><?php echo $name; ?></span> 
-				</label> 
+					class='persona-button--select-color-radio'
+					type='radio' value='<?php echo $value; ?>' <?php echo $chk; ?> />
+				<label class='persona-button <?php echo $value; ?>' for='<?php echo $value; ?>'>
+					<span class='persona-button__text'><?php echo $name; ?></span>
+				</label>
 			</li>
 <?php
 		}
@@ -560,7 +560,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			}
 
 			return $this->Validation_error(
-						sprintf(__('%s must be an http or https URL', c_bid_text_domain), 
+						sprintf(__('%s must be an http or https URL', c_bid_text_domain),
 								$this->Get_title()));
 		}
 	}
@@ -570,8 +570,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 			parent::__construct(array(
 				'name' => 'browserid_persona_source',
 				'default_value' => c_bid_source,
-				'description' => 
-						__('Default', c_bid_text_domain) . ' ' . c_bid_source, 
+				'description' =>
+						__('Default', c_bid_text_domain) . ' ' . c_bid_source,
 				'title' => __('Persona source', c_bid_text_domain),
 			));
 		}
@@ -582,7 +582,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			parent::__construct(array(
 				'name' => 'browserid_vserver',
 				'default_value' => c_bid_verifier . '/verify',
-				'description' => 
+				'description' =>
 						__('Default', c_bid_text_domain) . ' ' . c_bid_verifier . '/verify',
 				'title' => __('Verification server', c_bid_text_domain)
 			));
@@ -611,13 +611,13 @@ if (!class_exists('MozillaPersonaOptions')) {
 		public function __construct() {
 			parent::__construct(array(
 				'name' => 'browserid_debug',
-				'title' => __('Debug mode', c_bid_text_domain), 
+				'title' => __('Debug mode', c_bid_text_domain),
 				'risky' => true
 			));
 		}
 
 		public function Print_debug_info() {
-			$options = get_option('browserid_options');
+			$options = get_option($this->general_settings_key);
 			$request = get_option(c_bid_option_request);
 			$response = get_option(c_bid_option_response);
 			if (is_wp_error($response))
@@ -633,7 +633,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 				echo '<p><strong>Assertion valid until</strong>: ' . $result['expires'] . ' > ' . date('c', $result['expires'] / 1000) . '</p>';
 			}
 
-			/*echo '<p><strong>PHP audience</strong>: 
+			/*echo '<p><strong>PHP audience</strong>:
 			' . htmlentities($this->audience) . '</p>';*/
 			echo '<script type="text/javascript">';
 			echo 'document.write("<p><strong>JS audience</strong>: " + window.location.hostname + "</p>");';
@@ -647,13 +647,24 @@ if (!class_exists('MozillaPersonaOptions')) {
 		}
 	}
 
+	class MozillaPersonaUseUncompressedResources
+			extends MozillaPersonaCheckboxOption {
+		public function __construct() {
+			parent::__construct(array(
+				'name' => 'browserid_use_uncompressed_resources',
+				'title' => __('Use uncompressed resources', c_bid_text_domain),
+				'default_value' => false
+			));
+		}
+	}
+
 
 	class MozillaPersonaOptions {
 		private $plugin_options_key = 'browserid_options';
-		private $general_settings_key = 'browserid_general_options';
-		private $advanced_settings_key = 'browserid_advanced_options';
+		private $general_settings_key = c_bid_general_options;
+		private $advanced_settings_key = c_bid_advanced_options;
 
-		// fields is a dictionary of fields, the key to each value 
+		// fields is a dictionary of fields, the key to each value
 		//		is the field's name as stored in the database.
 		private $fields = array();
 
@@ -661,10 +672,11 @@ if (!class_exists('MozillaPersonaOptions')) {
 			$fields = array();
 		}
 
-		// The general approach is to register each setting each time a page is 
-		// loaded. When a setting is registered, it's configuration is stored 
-		// into the settings dictionary. 
+		// The general approach is to register each setting each time a page is
+		// loaded. When a setting is registered, it's configuration is stored
+		// into the settings dictionary.
 		public function Init() {
+			$this->Update_options_format();
 			$this->Load_settings();
 
 			$this->Register_general_fields();
@@ -675,7 +687,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 				add_action('admin_init', array(&$this, 'Register_advanced_tab'));
 				add_action('admin_init', array(&$this, 'Register_all_fields'));
 
-				add_action('admin_menu', 
+				add_action('admin_menu',
 						array(&$this, 'Add_persona_to_settings_list_action'));
 			}
 		}
@@ -688,6 +700,25 @@ if (!class_exists('MozillaPersonaOptions')) {
 					'manage_options',
 					$this->plugin_options_key,
 					array(&$this, 'Render_admin_page'));
+		}
+
+		private function Update_options_format() {
+			$old_options = get_option(c_bid_old_options);
+
+			$new_general_options = get_option( $this->general_settings_key );
+			$should_update_options_format = ! empty($old_options) &&
+													empty($new_general_options);
+
+			if ($should_update_options_format) {
+				// just copy the old options into each of the new options.
+				$new_general_options = array_merge( array(), $old_options );
+				update_option( $this->general_settings_key, $new_general_options );
+
+				$new_advanced_options = array_merge( array(), $old_options );
+				update_option( $this->advanced_settings_key, $new_advanced_options );
+
+				delete_option(c_bid_old_options);
+			}
 		}
 
 		private function Load_settings() {
@@ -714,10 +745,10 @@ if (!class_exists('MozillaPersonaOptions')) {
 			$this->plugin_settings_tabs[$this->general_settings_key] =
 														__('General', c_bid_text_domain);
 
-			register_setting($this->general_settings_key, 
+			register_setting($this->general_settings_key,
 					$this->general_settings_key, array(&$this, 'Validate_input'));
 
-			add_settings_section('section_general', 
+			add_settings_section('section_general',
 					__('General Plugin Settings', c_bid_text_domain),
 					array(&$this, 'General_settings_description'), $this->general_settings_key);
 		}
@@ -757,17 +788,18 @@ if (!class_exists('MozillaPersonaOptions')) {
 			$this->plugin_settings_tabs[$this->advanced_settings_key] =
 														__('Advanced', c_bid_text_domain);
 
-			register_setting($this->advanced_settings_key, 
+			register_setting($this->advanced_settings_key,
 					$this->advanced_settings_key, array(&$this, 'Validate_input'));
 
-			add_settings_section('section_advanced', 
-					__('Advanced Plugin Settings', c_bid_text_domain), 
+			add_settings_section('section_advanced',
+					__('Advanced Plugin Settings', c_bid_text_domain),
 					array(&$this, 'Advanced_settings_description'), $this->advanced_settings_key);
 		}
 
 		private function Register_advanced_fields() {
 			$this->Add_advanced_setting(new MozillaPersonaSource());
 			$this->Add_advanced_setting(new MozillaPersonaVerificationServer());
+			$this->Add_advanced_setting(new MozillaPersonaUseUncompressedResources());
 			$this->Add_advanced_setting(new MozillaPersonaDebug());
 		}
 
@@ -779,14 +811,14 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Advanced_settings_description() {
 			echo '<p class="persona__warning persona__warning-heading">';
-			echo __('Changing these options can cause you to be locked out of your site!', 
+			echo __('Changing these options can cause you to be locked out of your site!',
 						c_bid_text_domain);
 			echo '</p>';
 		}
 
 		public function Validate_input($input) {
 			foreach( $input as $key => $value ) {
-				$input[$key] = apply_filters( 'persona_validation-' . $key, 
+				$input[$key] = apply_filters( 'persona_validation-' . $key,
 									$value, $input );
 			}
 
@@ -908,6 +940,11 @@ if (!class_exists('MozillaPersonaOptions')) {
 
 		public function Get_button_color() {
 			return $this->Get_field_value('browserid_button_color', 'blue');
+		}
+
+		public function Use_uncompressed_resources() {
+			return $this->Get_field_value(
+					'browserid_use_uncompressed_resources');
 		}
 
 
