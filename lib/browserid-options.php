@@ -502,7 +502,7 @@ if (!class_exists('MozillaPersonaOptions')) {
 			parent::__construct(array(
 				'name' => 'browserid_button_color',
 				'title' => __('Button color', c_bid_text_domain),
-				'default_color' => 'blue'
+				'default_value' => 'blue'
 			));
 		}
 
