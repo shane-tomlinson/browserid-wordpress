@@ -96,10 +96,8 @@ if (!class_exists('MozillaPersonaComments')) {
 		}
 
 		public function Add_persona_to_comment_form_action($post_id) {
-			if (!is_user_logged_in()) {
-				$this->ui->Print_persona_button_html(
-						"js-persona__submit-comment", $this->button_html);
-			}
+			$this->ui->Print_persona_button_html(
+					"js-persona__submit-comment", $this->button_html);
 
 			// Display error message
 			// XXX can this be taken care of in browserid.php somehow?
@@ -110,12 +108,17 @@ if (!class_exists('MozillaPersonaComments')) {
 		}
 
 		public function Only_allow_comments_with_assertions_filter($approved, $commentdata) {
-			$assertion = $this->ui->Get_assertion();
-			if (empty($assertion)) {
-				if ( defined('DOING_AJAX') )
-					die(__('Comment must be submitted using Persona'));
+			global $pagenow; // this is global wordpress variable which contain a page name.
 
-				wp_die(__('Comment must be submitted using Persona'));
+			/* if user reply on comment form NOT admin page */
+			if($pagenow != 'admin-ajax.php') {
+				$assertion = $this->ui->Get_assertion();
+				if (empty($assertion)) {
+					if ( defined('DOING_AJAX') )
+						die(__('Comment must be submitted using Persona'));
+
+					wp_die(__('Comment must be submitted using Persona'));
+				}
 			}
 		}
 	}
