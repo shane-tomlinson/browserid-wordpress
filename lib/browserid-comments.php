@@ -96,10 +96,8 @@ if (!class_exists('MozillaPersonaComments')) {
 		}
 
 		public function Add_persona_to_comment_form_action($post_id) {
-			if (!is_user_logged_in()) {
-				$this->ui->Print_persona_button_html(
-						"js-persona__submit-comment", $this->button_html);
-			}
+			$this->ui->Print_persona_button_html(
+					"js-persona__submit-comment", $this->button_html);
 
 			// Display error message
 			// XXX can this be taken care of in browserid.php somehow?
