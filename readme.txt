@@ -3,7 +3,7 @@ Contributors: stomlinson, Marcel Bokhorst, M66B
 Tags: security, admin, authentication, access, widget, login, shortcode, comment, comments, discussion, bbPress, bbPress 2.0, browserid, mozilla, persona
 Requires at least: 3.1
 Tested up to: 3.6
-Stable tag: 0.46
+Stable tag: 0.47
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.htm
 
@@ -106,6 +106,9 @@ Follow these steps to install the development version:
 * Click *Upload* (a link at the top)
 * Click *Choose file* and select the file you downloaded before
 * Click *Install*, then *Activate Plugin*
+
+= 0.47 =
+* Bug Fix: Disable error reporting - thanks @jonchang!
 
 = 0.46 =
 * New Feature: Use the WordPress color picker when selecting a background color - Thanks @janw-oostendorp!
@@ -452,6 +455,7 @@ First public release
 * [@janw-oostendorp](https://github.com/janw-oostendorp) for updated Dutch translations.
 * [David Murdoch @davidmurdoch](https://github.com/davidmurdoch/) fixing jQuery 1.9+ compatability
 * [Makoto Kato @makotokato](https://github.com/makotokato) for Japanese translations.
+* [Johnathan Chang @jonchang](https://github.com/jonchang) for patch to disable  error reporting.
 
 
 This plugin uses:
