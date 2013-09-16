@@ -24,7 +24,7 @@ if (!class_exists('MozillaPersonaWidget')) {
 		}
 
 		public function Init() {
-			add_action('widgets_init', 
+			add_action('widgets_init',
 					create_function('', 'return register_widget("MozillaPersonaLoginWidget");'));
 		}
 	}
@@ -32,11 +32,11 @@ if (!class_exists('MozillaPersonaWidget')) {
 	class MozillaPersonaLoginWidget extends WP_Widget {
 		function __construct() {
 			$widget_ops = array(
-					'classname' => 'browserid_widget',
-					'description' => __('Mozilla Persona login button', 
+					'classname' => 'persona__widget',
+					'description' => __('Mozilla Persona login button',
 							c_bid_text_domain)
 					);
-			$this->WP_Widget('MozillaPersonaLoginWidget', 'Mozilla Persona', 
+			$this->WP_Widget('MozillaPersonaLoginWidget', 'Mozilla Persona',
 							$widget_ops);
 		}
 
@@ -49,7 +49,7 @@ if (!class_exists('MozillaPersonaWidget')) {
 			if (!empty($title))
 				echo $before_title . $title . $after_title;
 
-			echo "<ul><li class='only-child'>" . $persona_plugin->Get_loginout_html() . "</li></ul>";
+			echo "<ul><li class='persona__widget-button-container'>" . $persona_plugin->Get_loginout_html() . "</li></ul>";
 			echo $after_widget;
 		}
 

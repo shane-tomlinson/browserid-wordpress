@@ -400,4 +400,7 @@ input[type=radio].persona-button--select-color-radio {
 }
 
 
+.persona__widget-button-container {
+  list-style-type: none;
+}
 
