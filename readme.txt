@@ -3,7 +3,7 @@ Contributors: stomlinson, Marcel Bokhorst, M66B
 Tags: security, admin, authentication, access, widget, login, shortcode, comment, comments, discussion, bbPress, bbPress 2.0, browserid, mozilla, persona
 Requires at least: 3.1
 Tested up to: 3.6
-Stable tag: 0.47
+Stable tag: 0.48
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.htm
 
@@ -106,6 +106,9 @@ Follow these steps to install the development version:
 * Click *Upload* (a link at the top)
 * Click *Choose file* and select the file you downloaded before
 * Click *Install*, then *Activate Plugin*
+
+= 0.48 =
+* Bug Fix: Allow signed in users to comment without using Persona. Allow comments from admin panel.
 
 = 0.47 =
 * Bug Fix: Disable error reporting - thanks @jonchang!

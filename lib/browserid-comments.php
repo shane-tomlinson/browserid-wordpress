@@ -35,16 +35,16 @@ if (!class_exists('MozillaPersonaComments')) {
 		public function Init() {
 			if (! $this->is_comments_enabled) return;
 
-			add_filter('comment_form_default_fields', 
+			add_filter('comment_form_default_fields',
 					array(&$this, 'Remove_email_field_filter'));
-			add_action('comment_form', 
+			add_action('comment_form',
 					array(&$this, 'Add_persona_to_comment_form_action'));
-			add_filter('pre_comment_approved', 
+			add_filter('pre_comment_approved',
 					array(&$this, 'Only_allow_comments_with_assertions_filter'), 20, 2);
 		}
 
 		public function Is_comment() {
-			if ($this->is_comments_enabled || $this->enabled_for_bbpress) 
+			if ($this->is_comments_enabled || $this->enabled_for_bbpress)
 				return (isset($_REQUEST['browserid_comment']) ? $_REQUEST['browserid_comment'] : null);
 
 			return null;
@@ -110,6 +110,9 @@ if (!class_exists('MozillaPersonaComments')) {
 		}
 
 		public function Only_allow_comments_with_assertions_filter($approved, $commentdata) {
+			// If user is logged in, they can submit a comment.
+			if (is_user_logged_in()) return;
+
 			$assertion = $this->ui->Get_assertion();
 			if (empty($assertion)) {
 				if ( defined('DOING_AJAX') )
