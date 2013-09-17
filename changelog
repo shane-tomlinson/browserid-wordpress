@@ -1,6 +1,11 @@
+<h2>0.48</h2>
+<ul>
+<li><em>Bug Fix</em> - Allow signed in users to comment without using Persona. Allow comments from admin panel.</li>
+</ul>
+
 <h2>0.47</h2>
 <ul>
-<li><em>Bug Fix</em> - Disable error reportign - thanks @jonchang!
+<li><em>Bug Fix</em> - Disable error reportign - thanks @jonchang!</li>
 </ul>
 
 <h2>0.46</h2>
