@@ -56,7 +56,7 @@ Now you will see a red 'Sign in with Persona' button instead of the traditional 
 
 = Which server verifies the assertion? =
 
-The assertion is verified by the server at https://login.persona.org/verify.
+The assertion is verified by the server at https://verifier.login.persona.org/verify.
 
 = I get 'Login failed' =
 
