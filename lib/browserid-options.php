@@ -439,7 +439,8 @@ if (!class_exists('MozillaPersonaOptions')) {
 		public function __construct() {
 			parent::__construct(array(
 				'name' => 'browserid_only_auth',
-				'title' => __('Disable non-Persona logins', c_bid_text_domain)
+				'title' => __('Enable Persona registrations', c_bid_text_domain),
+				'description' => __('This also disables non-Persona logins', c_bid_text_domain)
 			));
 		}
 	}
