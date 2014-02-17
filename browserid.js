@@ -39,8 +39,6 @@
   // script is run. Attach a live event (yuck) so that the user is still
   // able to log out.
   liveEvent(".js-persona__logout", "click", function(event) {
-    event.preventDefault();
-
     ignoreLogout = false;
     navigator.id.logout();
   });
@@ -207,13 +205,6 @@
       // the user leaving a comment but not being logged in. Either way,
       // do not redirect the user, they are where they want to be.
       if (ignoreLogout) return;
-
-      // There is a bug in Persona with Chrome. When a user signs in, the
-      // onlogout callback is first fired. Check if a user is actually
-      // signed in before redirecting to the logout URL.
-      if (browserid_common.loggedInUser) {
-        document.location = browserid_common.urlLogoutRedirect;
-      }
     }
   });
 
