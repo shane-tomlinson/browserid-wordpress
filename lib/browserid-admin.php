@@ -96,7 +96,7 @@ if (!class_exists('MozillaPersonaAdministration')) {
 					'id' => 'logout',
 					'title' => $this->logout_html,
 					'parent' => 'user-actions',
-					'href' => '#',
+					'href' => wp_logout_url(),
 					'meta' => array(
 						'class' => 'js-persona__logout'
 					)
