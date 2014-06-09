@@ -1,9 +1,9 @@
 === Mozilla Persona (BrowserID) ===
 Contributors: stomlinson, Marcel Bokhorst, M66B
-Tags: security, admin, authentication, access, widget, login, shortcode, comment, comments, discussion, bbPress, bbPress 2.0, browserid, mozilla, persona
+Tags: security, admin, authentication, access, widget, login, shortcode, comment, comments, discussion, bbPress, bbPress 2.0, browserid, mozilla, persona, password
 Requires at least: 3.1
-Tested up to: 3.6
-Stable tag: 0.49
+Tested up to: 3.9.1
+Stable tag: 0.50
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.htm
 
@@ -106,6 +106,9 @@ Follow these steps to install the development version:
 * Click *Upload* (a link at the top)
 * Click *Choose file* and select the file you downloaded before
 * Click *Install*, then *Activate Plugin*
+
+= 0.50 =
+* New Feature: Ukranian translations - thanks Michael Yunat (http://getvoip.com)
 
 = 0.49 =
 * Bug Fix: Fix strict errors displayed on admin page. thanks @jasondmoss!
@@ -337,6 +340,21 @@ Follow these steps to install the development version:
 * Development version
 
 == Upgrade Notice ==
+
+= 0.50 =
+Ukranian translations
+
+= 0.49 =
+1 bug fix
+
+= 0.48 =
+1 bug fix
+
+= 0.47 =
+1 bug fix
+
+= 0.46 =
+4 new features, 3 improvements, 2 bug fixes
 
 = 0.45 =
 Russian, French, Dutch translations. backgroundColor, termsOfService and privacyPolicy support. Multiple Persona button styles. Multiple bug fixes.
