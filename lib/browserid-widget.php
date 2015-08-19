@@ -36,7 +36,7 @@ if (!class_exists('MozillaPersonaWidget')) {
 					'description' => __('Mozilla Persona login button',
 							c_bid_text_domain)
 					);
-			$this->WP_Widget('MozillaPersonaLoginWidget', 'Mozilla Persona',
+			parent::__construct('MozillaPersonaLoginWidget', 'Mozilla Persona',
 							$widget_ops);
 		}
 
