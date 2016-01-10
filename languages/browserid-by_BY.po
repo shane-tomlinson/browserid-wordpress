@@ -39,7 +39,7 @@ msgstr "Памылковы адказ  верыфікацыі"
 
 #: browserid.php:462
 msgid "You must already have an account to log in with Persona."
-msgstr "Вы павінны сець аккаўнт для ўваходу пра дапамозе Persona ."
+msgstr "Вы павінны мець аккаўнт для ўваходу пра дапамозе Persona ."
 
 #: browserid.php:491
 msgid "<strong>ERROR</strong>: Your account has been marked as a spammer."
