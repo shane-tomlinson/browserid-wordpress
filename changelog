@@ -1,6 +1,18 @@
+<h2>0.52</h2>
+<ul>
+<li><em>Warning Fix</em> - Updated widget for Wordpress 3.4 to handle deprecation message with WP_DEBUG.</li>
+</ul>
+
+<h2>0.51, released as 0.50</h2>
+<ul>
+<li><em>Bug Fix</em> - Logout fix</li>
+<li><em>Note</em> - Released July 2015 as version 0.50.</li>
+</ul>
+
 <h2>0.50</h2>
 <ul>
 <li><em>New Feature</em> - Ukranian Translations - Thanks Michael Yunat (http://getvoip.com)</li>
+<li><em>Note</em> - Released June 2014.</li>
 </ul>
 
 <h2>0.49</h2>
